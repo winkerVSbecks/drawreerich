@@ -5,6 +5,9 @@ import { renderScene, markDirty } from "./renderer.ts";
 import {
   getState,
   setTileSize,
+  setGridCols,
+  setGridRows,
+  setOrientation,
   setActivePath,
   createPath,
   subscribe,
@@ -17,8 +20,23 @@ const paneContainer = document.getElementById("tweakpane-container")!;
 const pane = new Pane({ container: paneContainer, title: "drawreerich" });
 
 const PARAMS = {
+  cols: getState().grid.cols,
+  rows: getState().grid.rows,
   tileSize: getState().grid.tileSize,
+  orientation: getState().grid.orientation,
 };
+
+pane
+  .addBinding(PARAMS, "cols", { label: "cols", min: 4, max: 32, step: 1 })
+  .on("change", (ev) => {
+    setGridCols(ev.value);
+  });
+
+pane
+  .addBinding(PARAMS, "rows", { label: "rows", min: 4, max: 32, step: 1 })
+  .on("change", (ev) => {
+    setGridRows(ev.value);
+  });
 
 pane.addBinding(PARAMS, "tileSize", { min: 8, max: 64, step: 1 }).on(
   "change",
@@ -26,6 +44,15 @@ pane.addBinding(PARAMS, "tileSize", { min: 8, max: 64, step: 1 }).on(
     setTileSize(ev.value);
   }
 );
+
+pane
+  .addBinding(PARAMS, "orientation", {
+    label: "orientation",
+    options: { XZ: "xz", XY: "xy", YZ: "yz" },
+  })
+  .on("change", (ev) => {
+    setOrientation(ev.value as "xz" | "xy" | "yz");
+  });
 
 // "New Path" button
 pane.addButton({ title: "New Path" }).on("click", () => {

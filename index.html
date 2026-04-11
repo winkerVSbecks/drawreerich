@@ -9,11 +9,17 @@
   <body>
     <div id="app">
       <div id="canvas-container"></div>
-      <aside id="sidebar">
-        <div id="tweakpane-container"></div>
-        <div id="path-swatches"></div>
-        <div id="grid-editor-container"></div>
-      </aside>
+      <details id="settings-panel" open>
+        <summary class="settings-toggle">
+          <span>Settings</span>
+          <span class="settings-toggle-icon" aria-hidden="true"></span>
+        </summary>
+        <div id="settings-body">
+          <div id="tweakpane-container"></div>
+          <div id="path-swatches"></div>
+          <div id="grid-editor-container"></div>
+        </div>
+      </details>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

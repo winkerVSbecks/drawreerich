@@ -6,9 +6,11 @@ import {
   getPathAtCell,
   subscribe,
 } from "./state.ts";
+import type { Orientation } from "./state.ts";
 
 const CELL_SIZE = 16;
 const GRID_PAD = 1;
+const LABEL_PAD = 14; // reserved pixels for axis labels on top and left edges
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -26,7 +28,10 @@ export function initGridEditor(container: HTMLElement) {
   resize();
   draw();
 
-  subscribe(() => draw());
+  subscribe(() => {
+    resize();
+    draw();
+  });
 
   canvas.addEventListener("mousedown", onMouseDown);
   canvas.addEventListener("mousemove", onMouseMove);
@@ -40,8 +45,8 @@ export function initGridEditor(container: HTMLElement) {
 
 function resize() {
   const { cols, rows } = getState().grid;
-  const w = cols * CELL_SIZE + GRID_PAD;
-  const h = rows * CELL_SIZE + GRID_PAD;
+  const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
+  const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
   const dpr = window.devicePixelRatio;
   canvas.width = w * dpr;
   canvas.height = h * dpr;
@@ -50,10 +55,11 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
+/** Convert a pointer position to a grid cell, accounting for the label padding. */
 function cellAtXY(clientX: number, clientY: number): { col: number; row: number } | null {
   const rect = canvas.getBoundingClientRect();
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
+  const x = clientX - rect.left - LABEL_PAD;
+  const y = clientY - rect.top - LABEL_PAD;
   const col = Math.floor(x / CELL_SIZE);
   const row = Math.floor(y / CELL_SIZE);
   const { cols, rows } = getState().grid;
@@ -126,52 +132,83 @@ function onTouchEnd() {
   painting = false;
 }
 
+/** Return the horizontal and vertical axis names for the current orientation. */
+function axisLabels(orientation: Orientation): { h: string; v: string } {
+  switch (orientation) {
+    case "xz":
+      return { h: "X", v: "Z" };
+    case "xy":
+      return { h: "X", v: "Y" };
+    case "yz":
+      return { h: "Y", v: "Z" };
+  }
+}
+
 function draw() {
   const { grid, paths, activePathId } = getState();
-  const { cols, rows } = grid;
-  const w = cols * CELL_SIZE + GRID_PAD;
-  const h = rows * CELL_SIZE + GRID_PAD;
+  const { cols, rows, orientation } = grid;
+  const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
+  const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
 
   ctx.clearRect(0, 0, w, h);
 
-  // Draw grid background
+  // Draw background
   ctx.fillStyle = "#0d1117";
   ctx.fillRect(0, 0, w, h);
 
-  // Draw grid lines
+  // --- Axis labels ---
+  const labels = axisLabels(orientation);
+  ctx.fillStyle = "#556";
+  ctx.font = "9px monospace";
+
+  // Horizontal axis label centred above the grid
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    `${labels.h} →`,
+    LABEL_PAD + (cols * CELL_SIZE) / 2,
+    LABEL_PAD / 2
+  );
+
+  // Vertical axis label centred to the left of the grid (rotated)
+  ctx.save();
+  ctx.translate(LABEL_PAD / 2, LABEL_PAD + (rows * CELL_SIZE) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(`${labels.v} →`, 0, 0);
+  ctx.restore();
+
+  // --- Grid lines (offset by LABEL_PAD) ---
   ctx.strokeStyle = "#2a2a4a";
   ctx.lineWidth = 0.5;
   for (let c = 0; c <= cols; c++) {
-    const x = c * CELL_SIZE + 0.5;
+    const x = LABEL_PAD + c * CELL_SIZE + 0.5;
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, h);
+    ctx.moveTo(x, LABEL_PAD);
+    ctx.lineTo(x, LABEL_PAD + rows * CELL_SIZE);
     ctx.stroke();
   }
   for (let r = 0; r <= rows; r++) {
-    const y = r * CELL_SIZE + 0.5;
+    const y = LABEL_PAD + r * CELL_SIZE + 0.5;
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
+    ctx.moveTo(LABEL_PAD, y);
+    ctx.lineTo(LABEL_PAD + cols * CELL_SIZE, y);
     ctx.stroke();
   }
 
-  // Draw all paths' cells
+  // --- Path cells (offset by LABEL_PAD) ---
   for (const path of paths) {
     const isActive = path.id === activePathId;
 
     for (const cell of path.cells) {
-      const cx = cell.col * CELL_SIZE + 1;
-      const cy = cell.row * CELL_SIZE + 1;
+      const cx = LABEL_PAD + cell.col * CELL_SIZE + 1;
+      const cy = LABEL_PAD + cell.row * CELL_SIZE + 1;
       const cw = CELL_SIZE - 1;
       const ch = CELL_SIZE - 1;
 
-      // Inactive paths are dimmed to 50% opacity
       ctx.globalAlpha = isActive ? 1.0 : 0.5;
       ctx.fillStyle = path.color;
       ctx.fillRect(cx, cy, cw, ch);
 
-      // Active path cells get a bright outline
       if (isActive) {
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1.5;
@@ -180,6 +217,5 @@ function draw() {
     }
   }
 
-  // Reset alpha
   ctx.globalAlpha = 1.0;
 }
