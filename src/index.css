@@ -60,6 +60,34 @@ body {
   padding: 12px;
 }
 
+#path-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.path-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.path-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.path-swatch.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
 #grid-editor-container {
   padding: 12px;
   border-top: 1px solid var(--border);

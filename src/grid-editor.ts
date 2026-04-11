@@ -1,4 +1,11 @@
-import { getState, addCell, removeCell, subscribe } from "./state.ts";
+import {
+  getState,
+  addCell,
+  removeCell,
+  setActivePath,
+  getPathAtCell,
+  subscribe,
+} from "./state.ts";
 
 const CELL_SIZE = 16;
 const GRID_PAD = 1;
@@ -55,13 +62,20 @@ function onMouseDown(e: MouseEvent) {
   if (!cell) return;
 
   if (e.button === 2) {
-    // Right-click: erase
+    // Right-click: erase from active path
     erasing = true;
     removeCell(cell.col, cell.row);
   } else if (e.button === 0) {
-    // Left-click: paint
-    painting = true;
-    addCell(cell.col, cell.row);
+    // Left-click: check if clicking an existing cell owned by another path
+    const ownerPath = getPathAtCell(cell.col, cell.row);
+    if (ownerPath) {
+      // Switch to the path that owns this cell
+      setActivePath(ownerPath.id);
+    } else {
+      // Paint on empty cell
+      painting = true;
+      addCell(cell.col, cell.row);
+    }
   }
 }
 
@@ -80,7 +94,7 @@ function onMouseUp() {
 }
 
 function draw() {
-  const { grid, path } = getState();
+  const { grid, paths, activePathId } = getState();
   const { cols, rows } = grid;
   const w = cols * CELL_SIZE + GRID_PAD;
   const h = rows * CELL_SIZE + GRID_PAD;
@@ -109,14 +123,30 @@ function draw() {
     ctx.stroke();
   }
 
-  // Draw filled cells
-  for (const cell of path.cells) {
-    ctx.fillStyle = path.color;
-    ctx.fillRect(
-      cell.col * CELL_SIZE + 1,
-      cell.row * CELL_SIZE + 1,
-      CELL_SIZE - 1,
-      CELL_SIZE - 1
-    );
+  // Draw all paths' cells
+  for (const path of paths) {
+    const isActive = path.id === activePathId;
+
+    for (const cell of path.cells) {
+      const cx = cell.col * CELL_SIZE + 1;
+      const cy = cell.row * CELL_SIZE + 1;
+      const cw = CELL_SIZE - 1;
+      const ch = CELL_SIZE - 1;
+
+      // Inactive paths are dimmed to 50% opacity
+      ctx.globalAlpha = isActive ? 1.0 : 0.5;
+      ctx.fillStyle = path.color;
+      ctx.fillRect(cx, cy, cw, ch);
+
+      // Active path cells get a bright outline
+      if (isActive) {
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 0.5, cy + 0.5, cw - 1, ch - 1);
+      }
+    }
   }
+
+  // Reset alpha
+  ctx.globalAlpha = 1.0;
 }
