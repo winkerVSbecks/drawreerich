@@ -19,6 +19,7 @@
 - **Orientation semantics**: XZ = floor (voxels extrude up in Y), XY = front wall (voxels extrude in Z), YZ = side wall (voxels extrude in X). Switching orientation remaps all path cell coordinates — single active orientation at all times.
 - **Save format**: `{ version: 1, grid: GridConfig, paths: Path[] }` as JSON.
 - **Responsive breakpoint**: 768px — sidebar collapses to overlay menu below this width.
+- **Delivery**: Each phase is submitted as a pull request. Work on a feature branch named `phase-N-<slug>` (e.g. `phase-1-scaffolding`), open a PR against `main` when the phase acceptance criteria are met.
 
 ---
 
@@ -37,6 +38,7 @@ Strip React from the project. Install `heerich` and `tweakpane`. Replace `index.
 - [ ] A voxel (or small group of voxels) renders on the ssam canvas with distinct top/side/front face shading
 - [ ] Tweakpane mounts in the sidebar and displays at least one control
 - [ ] No console errors on load
+- [ ] PR opened against `main` from branch `phase-1-scaffolding`
 
 ---
 
@@ -55,6 +57,7 @@ Implement `state.ts` with a single path (cells array, color, height) and a grid 
 - [ ] Right-click-drag on filled cells removes them; voxels disappear immediately
 - [ ] Voxels are positioned correctly for XZ orientation (floor plane, extruded up in Y)
 - [ ] Path cells are stored as `{col, row}` coordinates in state
+- [ ] PR opened against `main` from branch `phase-2-single-path-drawing`
 
 ---
 
@@ -75,6 +78,7 @@ Extend `state.ts` to hold an array of paths and an `activePathId`. Add a "New Pa
 - [ ] All paths render simultaneously on the 3D canvas in their respective colors
 - [ ] A path with zero cells is automatically removed from the list
 - [ ] Inactive paths are visually dimmed in the 2D grid; active path cells have a visible outline
+- [ ] PR opened against `main` from branch `phase-3-multi-path-management`
 
 ---
 
@@ -96,6 +100,7 @@ Add Tweakpane bindings for: grid cols, grid rows, tile size (heerich tile pixels
 - [ ] Voxels extrude in the correct direction for each orientation (Y for XZ, Z for XY, X for YZ)
 - [ ] The camera angle auto-adjusts to give a natural view of the active plane
 - [ ] The 2D grid editor shows axis labels matching the active orientation
+- [ ] PR opened against `main` from branch `phase-4-grid-config-orientation`
 
 ---
 
@@ -114,6 +119,7 @@ Add a height slider to the active path section in Tweakpane (controls the extrus
 - [ ] Stroke toggle shows/hides outlines on voxel faces
 - [ ] Camera type dropdown switches between isometric, oblique, and orthographic projections
 - [ ] Color picker in Tweakpane changes the active path's base color; shading updates accordingly
+- [ ] PR opened against `main` from branch `phase-5-visual-polish`
 
 ---
 
@@ -132,6 +138,7 @@ Implement `storage.ts`. On every state change, serialize the full state (`grid` 
 - [ ] "Import JSON" loads a previously exported file and renders it correctly
 - [ ] A fresh load with no localStorage shows a blank 16×16 XZ grid
 - [ ] Invalid or malformed JSON on import shows an error without crashing
+- [ ] PR opened against `main` from branch `phase-6-persistence`
 
 ---
 
@@ -151,3 +158,4 @@ Add CSS media query at 768px. Below this breakpoint, the sidebar is hidden by de
 - [ ] Tapping outside the sidebar or a close button dismisses it
 - [ ] No state is lost when opening/closing the sidebar
 - [ ] The 2D grid editor and Tweakpane controls are fully usable inside the overlay
+- [ ] PR opened against `main` from branch `phase-7-responsive-layout`
