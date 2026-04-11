@@ -1,7 +1,7 @@
 import { Heerich } from "heerich";
 import type { Face } from "heerich";
 import { getState } from "./state.ts";
-import type { Orientation } from "./state.ts";
+import type { CameraType, Orientation } from "./state.ts";
 
 /**
  * Derive three face-shade levels from a base oklch color string.
@@ -58,19 +58,28 @@ export function markDirty() {
   dirty = true;
 }
 
+function cameraConfig(type: CameraType, orientation: Orientation) {
+  const angle = cameraAngle(orientation);
+  return { type, angle };
+}
+
 function rebuildScene() {
   if (!dirty) return;
   dirty = false;
 
-  const { grid, paths } = getState();
+  const { grid, paths, stroke, cameraType } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
-    camera: { type: "isometric", angle: cameraAngle(grid.orientation) },
+    camera: cameraConfig(cameraType, grid.orientation),
   });
 
   const hasAnyCells = paths.some((p) => p.cells.length > 0);
   if (!hasAnyCells) return;
+
+  const strokeStyle = stroke
+    ? { stroke: "#222", strokeWidth: 1 }
+    : {};
 
   scene.batch(() => {
     for (const path of paths) {
@@ -78,12 +87,12 @@ function rebuildScene() {
 
       const colors = faceColors(path.color);
       const style = {
-        top: { fill: colors.top, stroke: "#222", strokeWidth: 1 },
-        left: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
-        right: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
-        front: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
-        back: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
-        bottom: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
+        top: { fill: colors.top, ...strokeStyle },
+        left: { fill: colors.side, ...strokeStyle },
+        right: { fill: colors.side, ...strokeStyle },
+        front: { fill: colors.front, ...strokeStyle },
+        back: { fill: colors.front, ...strokeStyle },
+        bottom: { fill: colors.front, ...strokeStyle },
       };
 
       for (const cell of path.cells) {
