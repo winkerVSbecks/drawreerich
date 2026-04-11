@@ -2,7 +2,13 @@ import { ssam } from "ssam";
 import type { Sketch, SketchSettings } from "ssam";
 import { Pane } from "tweakpane";
 import { renderScene, markDirty } from "./renderer.ts";
-import { getState, setTileSize, subscribe } from "./state.ts";
+import {
+  getState,
+  setTileSize,
+  setActivePath,
+  createPath,
+  subscribe,
+} from "./state.ts";
 import { initGridEditor } from "./grid-editor.ts";
 import "./index.css";
 
@@ -20,6 +26,36 @@ pane.addBinding(PARAMS, "tileSize", { min: 8, max: 64, step: 1 }).on(
     setTileSize(ev.value);
   }
 );
+
+// "New Path" button
+pane.addButton({ title: "New Path" }).on("click", () => {
+  createPath();
+});
+
+// Path swatches
+const swatchContainer = document.getElementById("path-swatches")!;
+
+function renderSwatches() {
+  const { paths, activePathId } = getState();
+  swatchContainer.innerHTML = "";
+
+  for (const path of paths) {
+    const swatch = document.createElement("button");
+    swatch.className = "path-swatch";
+    if (path.id === activePathId) {
+      swatch.classList.add("active");
+    }
+    swatch.style.backgroundColor = path.color;
+    swatch.title = path.id;
+    swatch.addEventListener("click", () => {
+      setActivePath(path.id);
+    });
+    swatchContainer.appendChild(swatch);
+  }
+}
+
+renderSwatches();
+subscribe(() => renderSwatches());
 
 // Mark 3D renderer dirty when state changes
 subscribe(() => markDirty());

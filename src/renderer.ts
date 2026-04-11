@@ -29,35 +29,40 @@ function rebuildScene() {
   if (!dirty) return;
   dirty = false;
 
-  const { grid, path } = getState();
+  const { grid, paths } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
     camera: { type: "isometric", angle: 45 },
   });
 
-  if (path.cells.length === 0) return;
+  const hasAnyCells = paths.some((p) => p.cells.length > 0);
+  if (!hasAnyCells) return;
 
-  const colors = faceColors(path.color);
-  const style = {
-    top: { fill: colors.top, stroke: "#222", strokeWidth: 1 },
-    left: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
-    right: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
-    front: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
-    back: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
-    bottom: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
-  };
-
-  // XZ orientation: col → X, row → Z, extrude up in Y (negative Y since Y points down)
   scene.batch(() => {
-    for (const cell of path.cells) {
-      for (let y = 0; y < path.height; y++) {
-        scene.addGeometry({
-          type: "box",
-          position: [cell.col, -y, cell.row],
-          size: 1,
-          style,
-        } as Parameters<typeof scene.addGeometry>[0]);
+    for (const path of paths) {
+      if (path.cells.length === 0) continue;
+
+      const colors = faceColors(path.color);
+      const style = {
+        top: { fill: colors.top, stroke: "#222", strokeWidth: 1 },
+        left: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
+        right: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
+        front: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
+        back: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
+        bottom: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
+      };
+
+      // XZ orientation: col → X, row → Z, extrude up in Y (negative Y since Y points down)
+      for (const cell of path.cells) {
+        for (let y = 0; y < path.height; y++) {
+          scene.addGeometry({
+            type: "box",
+            position: [cell.col, -y, cell.row],
+            size: 1,
+            style,
+          } as Parameters<typeof scene.addGeometry>[0]);
+        }
       }
     }
   });
