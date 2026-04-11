@@ -7,11 +7,12 @@
 }
 
 :root {
-  --sidebar-width: 300px;
+  --panel-width: 300px;
+  --panel-bg: rgba(22, 33, 62, 0.92);
+  --panel-border: #2a2a4a;
   --bg: #1a1a2e;
-  --sidebar-bg: #16213e;
-  --border: #2a2a4a;
   --text: #e0e0e0;
+  --text-muted: #6b6b8a;
 
   color-scheme: dark;
 }
@@ -25,18 +26,21 @@ body {
   color: var(--text);
 }
 
+/* ── Layout ──────────────────────────────────────────────── */
+
 #app {
-  display: flex;
+  width: 100vw;
   height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
 #canvas-container {
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
 #canvas-container canvas {
@@ -45,19 +49,75 @@ body {
   max-height: 100%;
 }
 
-#sidebar {
-  width: var(--sidebar-width);
-  flex-shrink: 0;
-  border-left: 1px solid var(--border);
-  background: var(--sidebar-bg);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+/* ── Floating settings panel ─────────────────────────────── */
+
+#settings-panel {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  width: var(--panel-width);
+  background: var(--panel-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
 }
 
+/* Summary / toggle row */
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-radius: 10px;
+  list-style: none;
+}
+
+.settings-toggle::-webkit-details-marker {
+  display: none;
+}
+
+/* Arrow icon flips on open/close */
+.settings-toggle-icon::before {
+  content: "▴";
+  font-size: 10px;
+}
+
+#settings-panel:not([open]) .settings-toggle-icon::before {
+  content: "▾";
+}
+
+/* Body: scrollable, max-height = viewport minus toggle + margins */
+#settings-body {
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-top: 1px solid var(--panel-border);
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--panel-border) transparent;
+}
+
+#settings-body::-webkit-scrollbar {
+  width: 4px;
+}
+#settings-body::-webkit-scrollbar-thumb {
+  background: var(--panel-border);
+  border-radius: 2px;
+}
+
+/* ── Panel sections ──────────────────────────────────────── */
+
 #tweakpane-container {
-  padding: 12px;
+  padding: 10px 12px 4px;
 }
 
 #path-swatches {
@@ -65,7 +125,7 @@ body {
   flex-wrap: wrap;
   gap: 6px;
   padding: 8px 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--panel-border);
 }
 
 .path-swatch {
@@ -89,7 +149,11 @@ body {
 }
 
 #grid-editor-container {
-  padding: 12px;
-  border-top: 1px solid var(--border);
-  flex: 1;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+/* Make the grid editor canvas respect the panel width */
+#grid-editor-container canvas {
+  max-width: 100%;
 }
