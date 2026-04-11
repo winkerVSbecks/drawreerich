@@ -56,7 +56,9 @@ body {
   top: 1rem;
   right: 1rem;
   z-index: 100;
-  width: var(--panel-width);
+  min-width: var(--panel-width);
+  width: max-content;
+  max-width: calc(100vw - 2rem);
   background: var(--panel-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -99,7 +101,6 @@ body {
 #settings-body {
   max-height: calc(100vh - 5rem);
   overflow-y: auto;
-  overflow-x: hidden;
   border-top: 1px solid var(--panel-border);
   /* Custom scrollbar */
   scrollbar-width: thin;
@@ -153,7 +154,3 @@ body {
   border-top: 1px solid var(--panel-border);
 }
 
-/* Make the grid editor canvas respect the panel width */
-#grid-editor-container canvas {
-  max-width: 100%;
-}
