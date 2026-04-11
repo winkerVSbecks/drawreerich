@@ -1,7 +1,6 @@
 import { Heerich } from "heerich";
 import type { Face } from "heerich";
-
-const BASE_COLOR = "oklch(0.65 0.15 250)";
+import { getState } from "./state.ts";
 
 /**
  * Derive three face-shade levels from a base oklch color string.
@@ -15,30 +14,54 @@ function faceColors(base: string) {
   };
 }
 
-const colors = faceColors(BASE_COLOR);
-
-const scene = new Heerich({
+let scene = new Heerich({
   tile: 32,
   camera: { type: "isometric", angle: 45 },
 });
 
-// Hardcoded 3×3×2 block
-scene.applyGeometry({
-  type: "box",
-  position: [0, 0, 0],
-  size: [3, 2, 3],
-  style: {
+let dirty = true;
+
+export function markDirty() {
+  dirty = true;
+}
+
+function rebuildScene() {
+  if (!dirty) return;
+  dirty = false;
+
+  const { grid, path } = getState();
+
+  scene = new Heerich({
+    tile: grid.tileSize,
+    camera: { type: "isometric", angle: 45 },
+  });
+
+  if (path.cells.length === 0) return;
+
+  const colors = faceColors(path.color);
+  const style = {
     top: { fill: colors.top, stroke: "#222", strokeWidth: 1 },
     left: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
     right: { fill: colors.side, stroke: "#222", strokeWidth: 1 },
     front: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
     back: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
     bottom: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
-  },
-} as Parameters<typeof scene.applyGeometry>[0] & {
-  position: number[];
-  size: number[];
-});
+  };
+
+  // XZ orientation: col → X, row → Z, extrude up in Y (negative Y since Y points down)
+  scene.batch(() => {
+    for (const cell of path.cells) {
+      for (let y = 0; y < path.height; y++) {
+        scene.addGeometry({
+          type: "box",
+          position: [cell.col, -y, cell.row],
+          size: 1,
+          style,
+        } as Parameters<typeof scene.addGeometry>[0]);
+      }
+    }
+  });
+}
 
 /**
  * Draw the heerich scene onto a 2D canvas context.
@@ -48,9 +71,13 @@ export function renderScene(
   width: number,
   height: number
 ) {
+  rebuildScene();
+
   ctx.clearRect(0, 0, width, height);
 
   const faces = scene.getFaces();
+  if (faces.length === 0) return;
+
   const bounds = scene.getBounds(0, faces);
 
   // Center the scene on the canvas
