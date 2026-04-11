@@ -5,6 +5,7 @@
 ## Architectural decisions
 
 - **Stack**: Plain ssam + Vite + TypeScript. No React. Remove React from package.json, add `heerich` and `tweakpane`.
+- **Package manager**: Always use `pnpm`. Do not use `npm` or `yarn`.
 - **Module structure**:
   - `src/main.ts` — entry point, layout init, wires modules together
   - `src/state.ts` — all mutable app state, single source of truth
