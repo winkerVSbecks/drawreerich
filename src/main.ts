@@ -26,8 +26,9 @@ const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height }) => {
 const settings: SketchSettings = {
   parent: "#canvas-container",
   dimensions: [600, 600],
+  pixelRatio: window.devicePixelRatio,
   mode: "2d",
-  animate: false,
+  animate: true,
 };
 
 ssam(sketch, settings);
