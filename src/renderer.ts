@@ -1,6 +1,7 @@
 import { Heerich } from "heerich";
 import type { Face } from "heerich";
 import { getState } from "./state.ts";
+import type { Orientation } from "./state.ts";
 
 /**
  * Derive three face-shade levels from a base oklch color string.
@@ -12,6 +13,38 @@ function faceColors(base: string) {
     side: base,
     front: `oklch(from ${base} calc(l - 0.15) c h)`,
   };
+}
+
+/** Map a 2D grid cell to a 3D voxel position based on orientation. */
+function voxelPosition(
+  col: number,
+  row: number,
+  y: number,
+  orientation: Orientation
+): [number, number, number] {
+  switch (orientation) {
+    case "xz":
+      // col → X, row → Z, extrude up in -Y
+      return [col, -y, row];
+    case "xy":
+      // col → X, row → Y (row 0 = top), extrude in -Z
+      return [col, -row, -y];
+    case "yz":
+      // col → Y (col 0 = top), row → Z, extrude in X
+      return [y, -col, row];
+  }
+}
+
+/** Choose a camera angle that gives a natural view of the active plane. */
+function cameraAngle(orientation: Orientation): number {
+  switch (orientation) {
+    case "xz":
+      return 45; // standard isometric floor view
+    case "xy":
+      return 30; // front-wall: rotate toward the viewer
+    case "yz":
+      return 60; // side-wall: rotate away from the viewer
+  }
 }
 
 let scene = new Heerich({
@@ -33,7 +66,7 @@ function rebuildScene() {
 
   scene = new Heerich({
     tile: grid.tileSize,
-    camera: { type: "isometric", angle: 45 },
+    camera: { type: "isometric", angle: cameraAngle(grid.orientation) },
   });
 
   const hasAnyCells = paths.some((p) => p.cells.length > 0);
@@ -53,12 +86,11 @@ function rebuildScene() {
         bottom: { fill: colors.front, stroke: "#222", strokeWidth: 1 },
       };
 
-      // XZ orientation: col → X, row → Z, extrude up in Y (negative Y since Y points down)
       for (const cell of path.cells) {
         for (let y = 0; y < path.height; y++) {
           scene.addGeometry({
             type: "box",
-            position: [cell.col, -y, cell.row],
+            position: voxelPosition(cell.col, cell.row, y, grid.orientation),
             size: 1,
             style,
           } as Parameters<typeof scene.addGeometry>[0]);

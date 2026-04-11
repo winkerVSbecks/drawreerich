@@ -112,6 +112,30 @@ export function setTileSize(size: number) {
   notify();
 }
 
+export function setGridCols(cols: number) {
+  const newCols = Math.max(4, Math.min(32, cols));
+  state.grid.cols = newCols;
+  for (const path of state.paths) {
+    path.cells = path.cells.filter((c) => c.col < newCols);
+  }
+  notify();
+}
+
+export function setGridRows(rows: number) {
+  const newRows = Math.max(4, Math.min(32, rows));
+  state.grid.rows = newRows;
+  for (const path of state.paths) {
+    path.cells = path.cells.filter((c) => c.row < newRows);
+  }
+  notify();
+}
+
+export function setOrientation(orientation: Orientation) {
+  if (state.grid.orientation === orientation) return;
+  state.grid.orientation = orientation;
+  notify();
+}
+
 export function addCell(col: number, row: number) {
   // If any path already owns this cell, do nothing
   if (getPathAtCell(col, row)) return;
