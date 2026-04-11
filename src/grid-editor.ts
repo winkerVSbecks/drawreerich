@@ -32,6 +32,10 @@ export function initGridEditor(container: HTMLElement) {
   canvas.addEventListener("mousemove", onMouseMove);
   window.addEventListener("mouseup", onMouseUp);
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+  canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+  canvas.addEventListener("touchend", onTouchEnd);
 }
 
 function resize() {
@@ -46,10 +50,10 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function cellAt(e: MouseEvent): { col: number; row: number } | null {
+function cellAtXY(clientX: number, clientY: number): { col: number; row: number } | null {
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
   const col = Math.floor(x / CELL_SIZE);
   const row = Math.floor(y / CELL_SIZE);
   const { cols, rows } = getState().grid;
@@ -57,22 +61,20 @@ function cellAt(e: MouseEvent): { col: number; row: number } | null {
   return { col, row };
 }
 
+// --- Mouse handlers ---
+
 function onMouseDown(e: MouseEvent) {
-  const cell = cellAt(e);
+  const cell = cellAtXY(e.clientX, e.clientY);
   if (!cell) return;
 
   if (e.button === 2) {
-    // Right-click: erase from active path
     erasing = true;
     removeCell(cell.col, cell.row);
   } else if (e.button === 0) {
-    // Left-click: check if clicking an existing cell owned by another path
     const ownerPath = getPathAtCell(cell.col, cell.row);
     if (ownerPath) {
-      // Switch to the path that owns this cell
       setActivePath(ownerPath.id);
     } else {
-      // Paint on empty cell
       painting = true;
       addCell(cell.col, cell.row);
     }
@@ -81,7 +83,7 @@ function onMouseDown(e: MouseEvent) {
 
 function onMouseMove(e: MouseEvent) {
   if (!painting && !erasing) return;
-  const cell = cellAt(e);
+  const cell = cellAtXY(e.clientX, e.clientY);
   if (!cell) return;
 
   if (painting) addCell(cell.col, cell.row);
@@ -91,6 +93,37 @@ function onMouseMove(e: MouseEvent) {
 function onMouseUp() {
   painting = false;
   erasing = false;
+}
+
+// --- Touch handlers ---
+
+function onTouchStart(e: TouchEvent) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const cell = cellAtXY(touch.clientX, touch.clientY);
+  if (!cell) return;
+
+  const ownerPath = getPathAtCell(cell.col, cell.row);
+  if (ownerPath) {
+    setActivePath(ownerPath.id);
+  } else {
+    painting = true;
+    addCell(cell.col, cell.row);
+  }
+}
+
+function onTouchMove(e: TouchEvent) {
+  e.preventDefault();
+  if (!painting) return;
+  const touch = e.touches[0];
+  const cell = cellAtXY(touch.clientX, touch.clientY);
+  if (!cell) return;
+
+  addCell(cell.col, cell.row);
+}
+
+function onTouchEnd() {
+  painting = false;
 }
 
 function draw() {
