@@ -231,6 +231,22 @@ export function hasCell(col: number, row: number): boolean {
 }
 
 /**
+ * Clear all paths, resetting to a single fresh empty path.
+ */
+export function clearAllPaths() {
+  state.paths.length = 0;
+  const newPath: Path = {
+    id: makePathId(),
+    cells: [],
+    color: randomColor(),
+    height: 2,
+  };
+  state.paths.push(newPath);
+  state.activePathId = newPath.id;
+  notify();
+}
+
+/**
  * Replace the entire app state with the given grid config and paths.
  * Used by storage restore and JSON import.
  */

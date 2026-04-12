@@ -18,6 +18,7 @@ import {
   setStroke,
   setCameraType,
   replaceState,
+  clearAllPaths,
   hslToHex,
 } from "../state.ts";
 import type { GridConfig, Path } from "../state.ts";
@@ -381,6 +382,62 @@ describe("setCameraType", () => {
     expect(getState().cameraType).toBe("oblique");
     setCameraType("orthographic");
     expect(getState().cameraType).toBe("orthographic");
+  });
+});
+
+// ─── clearAllPaths ──────────────────────────────────────────────────────────
+
+describe("clearAllPaths", () => {
+  beforeEach(resetState);
+
+  it("resets to a single empty path", () => {
+    addCell(1, 1);
+    createPath();
+    addCell(2, 2);
+    expect(getState().paths.length).toBe(2);
+
+    clearAllPaths();
+
+    expect(getState().paths).toHaveLength(1);
+    expect(getState().paths[0].cells).toEqual([]);
+  });
+
+  it("sets the new path as active", () => {
+    clearAllPaths();
+
+    const s = getState();
+    expect(s.activePathId).toBe(s.paths[0].id);
+  });
+
+  it("removes all existing cells", () => {
+    addCell(0, 0);
+    addCell(1, 1);
+    createPath();
+    addCell(3, 3);
+
+    clearAllPaths();
+
+    expect(hasCell(0, 0)).toBe(false);
+    expect(hasCell(1, 1)).toBe(false);
+    expect(hasCell(3, 3)).toBe(false);
+  });
+
+  it("notifies subscribers", () => {
+    const listener = vi.fn();
+    subscribe(listener);
+    listener.mockClear();
+
+    clearAllPaths();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("new path has a valid id, color, and default height", () => {
+    clearAllPaths();
+
+    const path = getState().paths[0];
+    expect(path.id).toMatch(/^path-\d+$/);
+    expect(path.color).toMatch(/^#[0-9a-f]{6}$/);
+    expect(path.height).toBe(2);
   });
 });
 

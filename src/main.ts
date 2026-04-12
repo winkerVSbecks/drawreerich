@@ -15,6 +15,7 @@ import {
   setStroke,
   setCameraType,
   createPath,
+  clearAllPaths,
   subscribe,
 } from "./state.ts";
 import type { CameraType } from "./state.ts";
@@ -118,6 +119,17 @@ pathFolder.addButton({ title: "New Path" }).on("click", () => {
 
 // --- Persistence controls ---
 const fileFolder = pane.addFolder({ title: "File" });
+
+fileFolder.addButton({ title: "Clear All" }).on("click", () => {
+  if (confirm("Clear all paths? This cannot be undone.")) {
+    clearAllPaths();
+    syncParamsFromState();
+  }
+});
+
+fileFolder.addButton({ title: "Export Image" }).on("click", () => {
+  if (doExportFrame) doExportFrame();
+});
 
 fileFolder.addButton({ title: "Export JSON" }).on("click", () => {
   exportJSON();
@@ -230,7 +242,10 @@ initGridEditor(gridContainer);
 startAutoSave();
 
 // Ssam sketch
-const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height }) => {
+let doExportFrame: (() => void) | null = null;
+
+const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame }) => {
+  doExportFrame = exportFrame;
   renderScene(ctx, width, height);
 
   wrap.render = () => {

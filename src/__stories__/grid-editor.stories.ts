@@ -8,6 +8,7 @@ import {
   addCell,
   getActivePath,
   createPath,
+  setPathColor,
 } from "../state.ts";
 import { resetState } from "./helpers.ts";
 
@@ -126,8 +127,9 @@ export const ClickExistingCellSwitchesPath: Story = {
     addCell(3, 3);
     const firstPathId = getActivePath()!.id;
 
-    // Create second path and add a cell
-    createPath();
+    // Create second path with a fixed color (avoid random color in visual tests)
+    const secondPath = createPath();
+    setPathColor(secondPath.id, "#cc3366");
     addCell(5, 5);
 
     // Click on the first path's cell — should switch back
