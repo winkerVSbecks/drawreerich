@@ -25,13 +25,13 @@ export function voxelPosition(
 ): [number, number, number] {
   switch (orientation) {
     case "xz":
-      // col → X, row → Z, extrude up in -Y, depth offsets along Y
-      return [col, -y + depth, row];
+      // col → X, row → Z, extrude up in -Y, depth offsets along -Y
+      return [col, -y - depth, row];
     case "xy":
-      // col → X, row → Y (row 0 = top), extrude in -Z, depth offsets along Z
+      // col → X, row → Y (row 0 = top), extrude in -Z, depth offsets along -Z
       return [col, -row, -y - depth];
     case "yz":
-      // col → Y (col 0 = top), row → Z, extrude in X, depth offsets along X
+      // col → Y (col 0 = top), row → Z, extrude in +X, depth offsets along +X
       return [y + depth, -col, row];
   }
 }
@@ -82,7 +82,7 @@ export function planePosition(
   const cr = (rows - 1) / 2;
   switch (orientation) {
     case "xz":
-      return { position: [cx, depth, cr], size: [cols, 0.05, rows] };
+      return { position: [cx, -depth, cr], size: [cols, 0.05, rows] };
     case "xy":
       return { position: [cx, -cr, -depth], size: [cols, rows, 0.05] };
     case "yz":

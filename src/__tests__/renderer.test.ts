@@ -33,7 +33,7 @@ describe("faceColors", () => {
 describe("voxelPosition", () => {
   describe("xz orientation (depth 0)", () => {
     it("maps col→X, row→Z, extrude up in -Y", () => {
-      expect(voxelPosition(3, 5, 0, 0, "xz")).toEqual([3, 0, 5]);
+      expect(voxelPosition(3, 5, 0, 0, "xz")).toEqual([3, -0, 5]);
       expect(voxelPosition(3, 5, 2, 0, "xz")).toEqual([3, -2, 5]);
     });
   });
@@ -53,16 +53,16 @@ describe("voxelPosition", () => {
   });
 
   it("handles zero values", () => {
-    expect(voxelPosition(0, 0, 0, 0, "xz")).toEqual([0, 0, 0]);
+    expect(voxelPosition(0, 0, 0, 0, "xz")).toEqual([0, -0, 0]);
     expect(voxelPosition(0, 0, 0, 0, "xy")).toEqual([0, -0, -0]);
     expect(voxelPosition(0, 0, 0, 0, "yz")).toEqual([0, -0, 0]);
   });
 
   describe("xz orientation with non-zero depth", () => {
-    it("offsets voxels along Y axis", () => {
-      // depth offsets along +Y
-      expect(voxelPosition(3, 5, 0, 4, "xz")).toEqual([3, 4, 5]);
-      expect(voxelPosition(3, 5, 2, 4, "xz")).toEqual([3, 2, 5]);
+    it("offsets voxels along -Y axis", () => {
+      // depth offsets along -Y (same direction as extrusion)
+      expect(voxelPosition(3, 5, 0, 4, "xz")).toEqual([3, -4, 5]);
+      expect(voxelPosition(3, 5, 2, 4, "xz")).toEqual([3, -6, 5]);
     });
   });
 
@@ -88,7 +88,7 @@ describe("voxelPosition", () => {
 describe("planePosition", () => {
   it("returns correct position and size for xz", () => {
     const p = planePosition(3, 16, 16, "xz");
-    expect(p.position).toEqual([7.5, 3, 7.5]);
+    expect(p.position).toEqual([7.5, -3, 7.5]);
     expect(p.size).toEqual([16, 0.05, 16]);
   });
 
