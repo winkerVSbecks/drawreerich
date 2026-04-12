@@ -4,14 +4,20 @@ import { Pane } from "tweakpane";
 import { renderScene, markDirty } from "./renderer.ts";
 import {
   getState,
+  getActivePath,
   setTileSize,
   setGridCols,
   setGridRows,
   setOrientation,
   setActivePath,
+  setPathHeight,
+  setPathColor,
+  setStroke,
+  setCameraType,
   createPath,
   subscribe,
 } from "./state.ts";
+import type { CameraType } from "./state.ts";
 import { initGridEditor } from "./grid-editor.ts";
 import "./index.css";
 
@@ -24,6 +30,8 @@ const PARAMS = {
   rows: getState().grid.rows,
   tileSize: getState().grid.tileSize,
   orientation: getState().grid.orientation,
+  cameraType: getState().cameraType,
+  stroke: getState().stroke,
 };
 
 pane
@@ -54,8 +62,53 @@ pane
     setOrientation(ev.value as "xz" | "xy" | "yz");
   });
 
+pane
+  .addBinding(PARAMS, "cameraType", {
+    label: "camera",
+    options: {
+      Isometric: "isometric",
+      Oblique: "oblique",
+      Orthographic: "orthographic",
+    },
+  })
+  .on("change", (ev) => {
+    setCameraType(ev.value as CameraType);
+  });
+
+pane.addBinding(PARAMS, "stroke", { label: "stroke" }).on("change", (ev) => {
+  setStroke(ev.value);
+});
+
+// --- Active Path controls ---
+const activePath = getActivePath();
+const PATH_PARAMS = {
+  height: activePath?.height ?? 2,
+  color: activePath?.color ?? "#4477bb",
+};
+
+const pathFolder = pane.addFolder({ title: "Active Path" });
+
+const heightBinding = pathFolder
+  .addBinding(PATH_PARAMS, "height", {
+    label: "height",
+    min: 1,
+    max: 10,
+    step: 1,
+  })
+  .on("change", (ev) => {
+    const ap = getActivePath();
+    if (ap) setPathHeight(ap.id, ev.value);
+  });
+
+const colorBinding = pathFolder
+  .addBinding(PATH_PARAMS, "color", { label: "color" })
+  .on("change", (ev) => {
+    const ap = getActivePath();
+    if (ap) setPathColor(ap.id, ev.value);
+  });
+
 // "New Path" button
-pane.addButton({ title: "New Path" }).on("click", () => {
+pathFolder.addButton({ title: "New Path" }).on("click", () => {
   createPath();
 });
 
@@ -83,6 +136,21 @@ function renderSwatches() {
 
 renderSwatches();
 subscribe(() => renderSwatches());
+
+// Sync active path controls when active path changes
+let prevActiveId = getState().activePathId;
+subscribe(() => {
+  const ap = getActivePath();
+  if (!ap) return;
+  // Only refresh bindings when active path switches or its properties change externally
+  if (ap.id !== prevActiveId) {
+    prevActiveId = ap.id;
+    PATH_PARAMS.height = ap.height;
+    PATH_PARAMS.color = ap.color;
+    heightBinding.refresh();
+    colorBinding.refresh();
+  }
+});
 
 // Mark 3D renderer dirty when state changes
 subscribe(() => markDirty());

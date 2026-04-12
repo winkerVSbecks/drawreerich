@@ -19,10 +19,14 @@ export interface GridConfig {
   orientation: Orientation;
 }
 
+export type CameraType = "isometric" | "oblique" | "orthographic";
+
 export interface AppState {
   grid: GridConfig;
   paths: Path[];
   activePathId: string;
+  stroke: boolean;
+  cameraType: CameraType;
 }
 
 type Listener = () => void;
@@ -31,11 +35,23 @@ const listeners: Listener[] = [];
 
 let nextPathNum = 1;
 
-function randomOklchColor(): string {
-  const l = 0.55 + Math.random() * 0.2; // 0.55–0.75
-  const c = 0.1 + Math.random() * 0.12; // 0.10–0.22
-  const h = Math.floor(Math.random() * 360);
-  return `oklch(${l.toFixed(2)} ${c.toFixed(2)} ${h})`;
+function hslToHex(h: number, s: number, l: number): string {
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h * 12) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+function randomColor(): string {
+  const h = Math.random();
+  const s = 0.5 + Math.random() * 0.3; // 50–80%
+  const l = 0.45 + Math.random() * 0.15; // 45–60%
+  return hslToHex(h, s, l);
 }
 
 function makePathId(): string {
@@ -45,7 +61,7 @@ function makePathId(): string {
 const initialPath: Path = {
   id: makePathId(),
   cells: [],
-  color: "oklch(0.65 0.15 250)",
+  color: "#4477bb",
   height: 2,
 };
 
@@ -58,6 +74,8 @@ const state: AppState = {
   },
   paths: [initialPath],
   activePathId: initialPath.id,
+  stroke: true,
+  cameraType: "isometric",
 };
 
 function notify() {
@@ -91,7 +109,7 @@ export function createPath(): Path {
   const path: Path = {
     id: makePathId(),
     cells: [],
-    color: randomOklchColor(),
+    color: randomColor(),
     height: 2,
   };
   state.paths.push(path);
@@ -171,13 +189,39 @@ function removePath(id: string) {
       const newPath = {
         id: makePathId(),
         cells: [],
-        color: randomOklchColor(),
+        color: randomColor(),
         height: 2,
       };
       state.paths.push(newPath);
       state.activePathId = newPath.id;
     }
   }
+}
+
+export function setPathHeight(id: string, height: number) {
+  const path = state.paths.find((p) => p.id === id);
+  if (path) {
+    path.height = height;
+    notify();
+  }
+}
+
+export function setPathColor(id: string, color: string) {
+  const path = state.paths.find((p) => p.id === id);
+  if (path) {
+    path.color = color;
+    notify();
+  }
+}
+
+export function setStroke(enabled: boolean) {
+  state.stroke = enabled;
+  notify();
+}
+
+export function setCameraType(type: CameraType) {
+  state.cameraType = type;
+  notify();
 }
 
 export function hasCell(col: number, row: number): boolean {
