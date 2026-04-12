@@ -7,7 +7,7 @@ import type { CameraType, Orientation } from "./state.ts";
  * Derive three face-shade levels from a base oklch color string.
  * top = lighter, side = base, front = darker.
  */
-function faceColors(base: string) {
+export function faceColors(base: string) {
   return {
     top: `oklch(from ${base} calc(l + 0.15) c h)`,
     side: base,
@@ -16,7 +16,7 @@ function faceColors(base: string) {
 }
 
 /** Map a 2D grid cell to a 3D voxel position based on orientation. */
-function voxelPosition(
+export function voxelPosition(
   col: number,
   row: number,
   y: number,
@@ -36,7 +36,7 @@ function voxelPosition(
 }
 
 /** Choose a camera angle that gives a natural view of the active plane. */
-function cameraAngle(orientation: Orientation): number {
+export function cameraAngle(orientation: Orientation): number {
   switch (orientation) {
     case "xz":
       return 45; // standard isometric floor view
@@ -58,7 +58,7 @@ export function markDirty() {
   dirty = true;
 }
 
-function cameraConfig(type: CameraType, orientation: Orientation) {
+export function cameraConfig(type: CameraType, orientation: Orientation) {
   const angle = cameraAngle(orientation);
   return { type, angle };
 }

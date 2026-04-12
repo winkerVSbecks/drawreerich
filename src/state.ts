@@ -35,7 +35,7 @@ const listeners: Listener[] = [];
 
 let nextPathNum = 1;
 
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
   const a = s * Math.min(l, 1 - l);
   const f = (n: number) => {
     const k = (n + h * 12) % 12;

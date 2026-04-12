@@ -133,7 +133,7 @@ function onTouchEnd() {
 }
 
 /** Return the horizontal and vertical axis names for the current orientation. */
-function axisLabels(orientation: Orientation): { h: string; v: string } {
+export function axisLabels(orientation: Orientation): { h: string; v: string } {
   switch (orientation) {
     case "xz":
       return { h: "X", v: "Z" };

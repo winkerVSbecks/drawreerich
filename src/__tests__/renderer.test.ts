@@ -1,0 +1,101 @@
+import { describe, it, expect } from "vitest";
+import { faceColors, voxelPosition, cameraAngle, cameraConfig } from "../renderer.ts";
+
+// ─── faceColors ──────────────────────────────────────────────────────────────
+
+describe("faceColors", () => {
+  it("returns top, side, and front keys", () => {
+    const colors = faceColors("#4477bb");
+    expect(colors).toHaveProperty("top");
+    expect(colors).toHaveProperty("side");
+    expect(colors).toHaveProperty("front");
+  });
+
+  it("side equals the base color", () => {
+    const base = "#ff0000";
+    const colors = faceColors(base);
+    expect(colors.side).toBe(base);
+  });
+
+  it("top is lighter (oklch calc(l + 0.15))", () => {
+    const colors = faceColors("#aabbcc");
+    expect(colors.top).toContain("calc(l + 0.15)");
+  });
+
+  it("front is darker (oklch calc(l - 0.15))", () => {
+    const colors = faceColors("#aabbcc");
+    expect(colors.front).toContain("calc(l - 0.15)");
+  });
+});
+
+// ─── voxelPosition ───────────────────────────────────────────────────────────
+
+describe("voxelPosition", () => {
+  describe("xz orientation", () => {
+    it("maps col→X, row→Z, extrude up in -Y", () => {
+      expect(voxelPosition(3, 5, 0, "xz")).toEqual([3, -0, 5]);
+      expect(voxelPosition(3, 5, 2, "xz")).toEqual([3, -2, 5]);
+    });
+  });
+
+  describe("xy orientation", () => {
+    it("maps col→X, row→Y (inverted), extrude in -Z", () => {
+      expect(voxelPosition(3, 5, 0, "xy")).toEqual([3, -5, -0]);
+      expect(voxelPosition(3, 5, 2, "xy")).toEqual([3, -5, -2]);
+    });
+  });
+
+  describe("yz orientation", () => {
+    it("maps col→Y (inverted), row→Z, extrude in X", () => {
+      expect(voxelPosition(3, 5, 0, "yz")).toEqual([0, -3, 5]);
+      expect(voxelPosition(3, 5, 2, "yz")).toEqual([2, -3, 5]);
+    });
+  });
+
+  it("handles zero values", () => {
+    expect(voxelPosition(0, 0, 0, "xz")).toEqual([0, -0, 0]);
+    expect(voxelPosition(0, 0, 0, "xy")).toEqual([0, -0, -0]);
+    expect(voxelPosition(0, 0, 0, "yz")).toEqual([0, -0, 0]);
+  });
+});
+
+// ─── cameraAngle ─────────────────────────────────────────────────────────────
+
+describe("cameraAngle", () => {
+  it("returns 45 for xz", () => {
+    expect(cameraAngle("xz")).toBe(45);
+  });
+
+  it("returns 30 for xy", () => {
+    expect(cameraAngle("xy")).toBe(30);
+  });
+
+  it("returns 60 for yz", () => {
+    expect(cameraAngle("yz")).toBe(60);
+  });
+});
+
+// ─── cameraConfig ────────────────────────────────────────────────────────────
+
+describe("cameraConfig", () => {
+  it("returns type and angle for isometric xz", () => {
+    expect(cameraConfig("isometric", "xz")).toEqual({
+      type: "isometric",
+      angle: 45,
+    });
+  });
+
+  it("returns type and angle for oblique xy", () => {
+    expect(cameraConfig("oblique", "xy")).toEqual({
+      type: "oblique",
+      angle: 30,
+    });
+  });
+
+  it("returns type and angle for orthographic yz", () => {
+    expect(cameraConfig("orthographic", "yz")).toEqual({
+      type: "orthographic",
+      angle: 60,
+    });
+  });
+});

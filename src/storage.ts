@@ -15,7 +15,7 @@ function serialize(): string {
   return JSON.stringify(data);
 }
 
-function isValidSaveData(data: unknown): data is SaveData {
+export function isValidSaveData(data: unknown): data is SaveData {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
   if (d.version !== 1) return false;
