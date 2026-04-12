@@ -71,22 +71,39 @@ export function cameraConfig(type: CameraType, orientation: Orientation, delta: 
   return { type, angle };
 }
 
-/** Build the plane position for a given depth and orientation. */
+/** Build the plane geometry params for a given depth and orientation. */
 export function planePosition(
   depth: number,
   cols: number,
   rows: number,
   orientation: Orientation
-): { position: [number, number, number]; size: [number, number, number] } {
-  const cx = (cols - 1) / 2;
-  const cr = (rows - 1) / 2;
+): {
+  position: [number, number, number];
+  size: [number, number, number];
+  scale: [number, number, number];
+} {
   switch (orientation) {
     case "xz":
-      return { position: [cx, -depth, cr], size: [cols, 0.05, rows] };
+      // Floor plane: spans X=[0..cols), Z=[0..rows), at Y=-depth
+      return {
+        position: [0, -depth, 0],
+        size: [cols, 1, rows],
+        scale: [1, 0.1, 1],
+      };
     case "xy":
-      return { position: [cx, -cr, -depth], size: [cols, rows, 0.05] };
+      // Front wall: spans X=[0..cols), Y=[-(rows-1)..0], at Z=-depth
+      return {
+        position: [0, -(rows - 1), -depth],
+        size: [cols, rows, 1],
+        scale: [1, 1, 0.1],
+      };
     case "yz":
-      return { position: [depth, -cx, cr], size: [0.05, cols, rows] };
+      // Side wall: spans Y=[-(cols-1)..0], Z=[0..rows), at X=depth
+      return {
+        position: [depth, -(cols - 1), 0],
+        size: [1, cols, rows],
+        scale: [0.1, 1, 1],
+      };
   }
 }
 
@@ -121,6 +138,8 @@ function rebuildScene() {
       type: "box",
       position: plane.position,
       size: plane.size,
+      scale: plane.scale,
+      opaque: false,
       style: planeStyle,
     } as Parameters<typeof scene.addGeometry>[0]);
 

@@ -86,22 +86,41 @@ describe("voxelPosition", () => {
 // ─── planePosition ──────────────────────────────────────────────────────────
 
 describe("planePosition", () => {
-  it("returns correct position and size for xz", () => {
+  it("returns correct position, size, and scale for xz", () => {
     const p = planePosition(3, 16, 16, "xz");
-    expect(p.position).toEqual([7.5, -3, 7.5]);
-    expect(p.size).toEqual([16, 0.05, 16]);
+    expect(p.position).toEqual([0, -3, 0]);
+    expect(p.size).toEqual([16, 1, 16]);
+    expect(p.scale).toEqual([1, 0.1, 1]);
   });
 
-  it("returns correct position and size for xy", () => {
+  it("returns correct position, size, and scale for xy", () => {
     const p = planePosition(3, 16, 16, "xy");
-    expect(p.position).toEqual([7.5, -7.5, -3]);
-    expect(p.size).toEqual([16, 16, 0.05]);
+    expect(p.position).toEqual([0, -15, -3]);
+    expect(p.size).toEqual([16, 16, 1]);
+    expect(p.scale).toEqual([1, 1, 0.1]);
   });
 
-  it("returns correct position and size for yz", () => {
+  it("returns correct position, size, and scale for yz", () => {
     const p = planePosition(3, 16, 16, "yz");
-    expect(p.position).toEqual([3, -7.5, 7.5]);
-    expect(p.size).toEqual([0.05, 16, 16]);
+    expect(p.position).toEqual([3, -15, 0]);
+    expect(p.size).toEqual([1, 16, 16]);
+    expect(p.scale).toEqual([0.1, 1, 1]);
+  });
+
+  it("aligns with voxel positions at depth 0", () => {
+    // XZ: voxel at (0,0) → [0, 0, 0], plane starts at [0, 0, 0]
+    const xz = planePosition(0, 16, 16, "xz");
+    expect(xz.position).toEqual([0, -0, 0]);
+
+    // XY: voxel at (0,0) → [0, 0, 0], plane starts at [0, -15, 0]
+    // voxel at (0,15) → [0, -15, 0], which matches plane start
+    const xy = planePosition(0, 16, 16, "xy");
+    expect(xy.position).toEqual([0, -15, -0]);
+
+    // YZ: voxel at (0,0) → [0, 0, 0], plane starts at [0, -15, 0]
+    // voxel at (15,0) → [0, -15, 0], which matches plane start
+    const yz = planePosition(0, 16, 16, "yz");
+    expect(yz.position).toEqual([0, -15, 0]);
   });
 });
 
