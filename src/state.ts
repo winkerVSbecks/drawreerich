@@ -229,3 +229,44 @@ export function hasCell(col: number, row: number): boolean {
     p.cells.some((c) => c.col === col && c.row === row)
   );
 }
+
+/**
+ * Replace the entire app state with the given grid config and paths.
+ * Used by storage restore and JSON import.
+ */
+export function replaceState(grid: GridConfig, paths: Path[]) {
+  state.grid.cols = grid.cols;
+  state.grid.rows = grid.rows;
+  state.grid.tileSize = grid.tileSize;
+  state.grid.orientation = grid.orientation;
+
+  state.paths.length = 0;
+  for (const p of paths) {
+    state.paths.push(p);
+  }
+
+  // Ensure at least one path exists
+  if (state.paths.length === 0) {
+    const newPath: Path = {
+      id: makePathId(),
+      cells: [],
+      color: "#4477bb",
+      height: 2,
+    };
+    state.paths.push(newPath);
+  }
+
+  state.activePathId = state.paths[0].id;
+
+  // Advance nextPathNum past any existing path IDs to avoid collisions
+  let maxNum = 0;
+  for (const p of state.paths) {
+    const match = p.id.match(/^path-(\d+)$/);
+    if (match) {
+      maxNum = Math.max(maxNum, parseInt(match[1], 10));
+    }
+  }
+  nextPathNum = maxNum + 1;
+
+  notify();
+}
