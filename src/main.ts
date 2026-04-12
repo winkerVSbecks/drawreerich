@@ -19,7 +19,11 @@ import {
 } from "./state.ts";
 import type { CameraType } from "./state.ts";
 import { initGridEditor } from "./grid-editor.ts";
+import { tryRestore, startAutoSave, exportJSON, importJSON } from "./storage.ts";
 import "./index.css";
+
+// Restore saved state from localStorage before reading PARAMS
+tryRestore();
 
 // Tweakpane setup
 const paneContainer = document.getElementById("tweakpane-container")!;
@@ -112,6 +116,43 @@ pathFolder.addButton({ title: "New Path" }).on("click", () => {
   createPath();
 });
 
+// --- Persistence controls ---
+const fileFolder = pane.addFolder({ title: "File" });
+
+fileFolder.addButton({ title: "Export JSON" }).on("click", () => {
+  exportJSON();
+});
+
+fileFolder.addButton({ title: "Import JSON" }).on("click", () => {
+  importJSON()
+    .then(() => {
+      syncParamsFromState();
+    })
+    .catch((err: Error) => {
+      alert(err.message);
+    });
+});
+
+// --- Sync Tweakpane PARAMS from state (after restore or import) ---
+function syncParamsFromState() {
+  const s = getState();
+  PARAMS.cols = s.grid.cols;
+  PARAMS.rows = s.grid.rows;
+  PARAMS.tileSize = s.grid.tileSize;
+  PARAMS.orientation = s.grid.orientation;
+  PARAMS.cameraType = s.cameraType;
+  PARAMS.stroke = s.stroke;
+  pane.refresh();
+
+  const ap = getActivePath();
+  if (ap) {
+    PATH_PARAMS.height = ap.height;
+    PATH_PARAMS.color = ap.color;
+    heightBinding.refresh();
+    colorBinding.refresh();
+  }
+}
+
 // Path swatches
 const swatchContainer = document.getElementById("path-swatches")!;
 
@@ -158,6 +199,9 @@ subscribe(() => markDirty());
 // Grid editor
 const gridContainer = document.getElementById("grid-editor-container")!;
 initGridEditor(gridContainer);
+
+// Start auto-saving state to localStorage
+startAutoSave();
 
 // Ssam sketch
 const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height }) => {
