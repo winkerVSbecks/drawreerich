@@ -17,6 +17,8 @@ import {
   setPathColor,
   setStroke,
   setCameraType,
+  setCameraAngleDelta,
+  resetCameraAngle,
   replaceState,
   clearAllPaths,
   hslToHex,
@@ -438,6 +440,85 @@ describe("clearAllPaths", () => {
     expect(path.id).toMatch(/^path-\d+$/);
     expect(path.color).toMatch(/^#[0-9a-f]{6}$/);
     expect(path.height).toBe(2);
+  });
+});
+
+// ─── setCameraAngleDelta ─────────────────────────────────────────────────────
+
+describe("setCameraAngleDelta", () => {
+  beforeEach(resetState);
+
+  it("updates cameraAngleDelta", () => {
+    setCameraAngleDelta(20);
+    expect(getState().cameraAngleDelta).toBe(20);
+  });
+
+  it("accepts negative values", () => {
+    setCameraAngleDelta(-30);
+    expect(getState().cameraAngleDelta).toBe(-30);
+  });
+
+  it("clamps to maximum 60", () => {
+    setCameraAngleDelta(100);
+    expect(getState().cameraAngleDelta).toBe(60);
+  });
+
+  it("clamps to minimum -60", () => {
+    setCameraAngleDelta(-100);
+    expect(getState().cameraAngleDelta).toBe(-60);
+  });
+
+  it("notifies subscribers", () => {
+    const listener = vi.fn();
+    subscribe(listener);
+    listener.mockClear();
+
+    setCameraAngleDelta(10);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── resetCameraAngle ───────────────────────────────────────────────────────
+
+describe("resetCameraAngle", () => {
+  beforeEach(resetState);
+
+  it("resets cameraAngleDelta to 0", () => {
+    setCameraAngleDelta(25);
+    expect(getState().cameraAngleDelta).toBe(25);
+
+    resetCameraAngle();
+    expect(getState().cameraAngleDelta).toBe(0);
+  });
+
+  it("notifies subscribers", () => {
+    setCameraAngleDelta(10);
+    const listener = vi.fn();
+    subscribe(listener);
+    listener.mockClear();
+
+    resetCameraAngle();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── setOrientation resets cameraAngleDelta ─────────────────────────────────
+
+describe("setOrientation resets cameraAngleDelta", () => {
+  beforeEach(resetState);
+
+  it("resets cameraAngleDelta to 0 when orientation changes", () => {
+    setCameraAngleDelta(30);
+    expect(getState().cameraAngleDelta).toBe(30);
+
+    setOrientation("xy");
+    expect(getState().cameraAngleDelta).toBe(0);
+  });
+
+  it("does not reset cameraAngleDelta when orientation is unchanged", () => {
+    setCameraAngleDelta(30);
+    setOrientation("xz"); // already xz, no-op
+    expect(getState().cameraAngleDelta).toBe(30);
   });
 });
 

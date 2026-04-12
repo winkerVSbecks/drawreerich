@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/web-components-vite";
 import { expect } from "storybook/test";
 import { renderScene, markDirty } from "../renderer.ts";
-import { replaceState, addCell } from "../state.ts";
+import { replaceState, addCell, setCameraAngleDelta } from "../state.ts";
 import { resetState, hasVisiblePixels } from "./helpers.ts";
 
 function createCanvas(width: number, height: number) {
@@ -129,5 +129,67 @@ export const CachedSceneStillRenders: Story = {
     const canvas = canvasElement.querySelector("canvas")!;
     const ctx = canvas.getContext("2d")!;
     await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
+  },
+};
+
+export const CameraRotationDelta: Story = {
+  render: () => {
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.gap = "8px";
+
+    // Render at delta 0
+    resetState();
+    addCell(4, 4);
+    addCell(5, 5);
+    addCell(6, 4);
+    setCameraAngleDelta(0);
+    markDirty();
+    const canvas0 = createCanvas(400, 400);
+    canvas0.dataset.delta = "0";
+    renderScene(canvas0.getContext("2d")!, 400, 400);
+    container.appendChild(canvas0);
+
+    // Render at delta 20
+    setCameraAngleDelta(20);
+    markDirty();
+    const canvas20 = createCanvas(400, 400);
+    canvas20.dataset.delta = "20";
+    renderScene(canvas20.getContext("2d")!, 400, 400);
+    container.appendChild(canvas20);
+
+    return container;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas0 = canvasElement.querySelector(
+      'canvas[data-delta="0"]',
+    ) as HTMLCanvasElement;
+    const canvas20 = canvasElement.querySelector(
+      'canvas[data-delta="20"]',
+    ) as HTMLCanvasElement;
+
+    const ctx0 = canvas0.getContext("2d")!;
+    const ctx20 = canvas20.getContext("2d")!;
+
+    // Both should have visible content
+    await expect(hasVisiblePixels(ctx0, 400, 400)).toBe(true);
+    await expect(hasVisiblePixels(ctx20, 400, 400)).toBe(true);
+
+    // The pixel data should differ between the two renders
+    const data0 = ctx0.getImageData(0, 0, 400, 400).data;
+    const data20 = ctx20.getImageData(0, 0, 400, 400).data;
+
+    let diffCount = 0;
+    for (let i = 0; i < data0.length; i += 4) {
+      if (
+        data0[i] !== data20[i] ||
+        data0[i + 1] !== data20[i + 1] ||
+        data0[i + 2] !== data20[i + 2] ||
+        data0[i + 3] !== data20[i + 3]
+      ) {
+        diffCount++;
+      }
+    }
+    await expect(diffCount).toBeGreaterThan(0);
   },
 };

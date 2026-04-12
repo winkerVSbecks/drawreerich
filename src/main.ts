@@ -14,6 +14,8 @@ import {
   setPathColor,
   setStroke,
   setCameraType,
+  setCameraAngleDelta,
+  resetCameraAngle,
   createPath,
   clearAllPaths,
   subscribe,
@@ -79,6 +81,10 @@ pane
   .on("change", (ev) => {
     setCameraType(ev.value as CameraType);
   });
+
+pane.addButton({ title: "Reset Camera" }).on("click", () => {
+  resetCameraAngle();
+});
 
 pane.addBinding(PARAMS, "stroke", { label: "stroke" }).on("change", (ev) => {
   setStroke(ev.value);
@@ -242,9 +248,49 @@ startAutoSave();
 // Ssam sketch
 let doExportFrame: (() => void) | null = null;
 
-const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame }) => {
+const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame, canvas }) => {
   doExportFrame = exportFrame;
   renderScene(ctx, width, height);
+
+  // Camera rotation via pointer drag
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartDelta = 0;
+
+  canvas.addEventListener("pointerdown", (e: PointerEvent) => {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartDelta = getState().cameraAngleDelta;
+    canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", (e: PointerEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    // Convert pixels to degrees: ~0.5° per pixel
+    const newDelta = dragStartDelta + dx * 0.5;
+    setCameraAngleDelta(newDelta);
+    markDirty();
+  });
+
+  canvas.addEventListener("pointerup", (e: PointerEvent) => {
+    if (isDragging) {
+      isDragging = false;
+      canvas.releasePointerCapture(e.pointerId);
+    }
+  });
+
+  canvas.addEventListener("pointercancel", (e: PointerEvent) => {
+    if (isDragging) {
+      isDragging = false;
+      canvas.releasePointerCapture(e.pointerId);
+    }
+  });
+
+  canvas.style.cursor = "grab";
+  canvas.addEventListener("pointerdown", () => { canvas.style.cursor = "grabbing"; });
+  canvas.addEventListener("pointerup", () => { canvas.style.cursor = "grab"; });
+  canvas.addEventListener("pointercancel", () => { canvas.style.cursor = "grab"; });
 
   wrap.render = () => {
     renderScene(ctx, width, height);

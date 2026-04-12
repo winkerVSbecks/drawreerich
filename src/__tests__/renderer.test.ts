@@ -62,16 +62,31 @@ describe("voxelPosition", () => {
 // ─── cameraAngle ─────────────────────────────────────────────────────────────
 
 describe("cameraAngle", () => {
-  it("returns 45 for xz", () => {
+  it("returns 45 for xz with no delta", () => {
     expect(cameraAngle("xz")).toBe(45);
   });
 
-  it("returns 30 for xy", () => {
+  it("returns 30 for xy with no delta", () => {
     expect(cameraAngle("xy")).toBe(30);
   });
 
-  it("returns 60 for yz", () => {
+  it("returns 60 for yz with no delta", () => {
     expect(cameraAngle("yz")).toBe(60);
+  });
+
+  it("adds delta to base angle", () => {
+    expect(cameraAngle("xz", 10)).toBe(55);
+    expect(cameraAngle("xz", -10)).toBe(35);
+  });
+
+  it("clamps result to minimum 1°", () => {
+    // xy base is 30, delta -40 would give -10 → clamp to 1
+    expect(cameraAngle("xy", -40)).toBe(1);
+  });
+
+  it("clamps result to maximum 89°", () => {
+    // yz base is 60, delta +40 would give 100 → clamp to 89
+    expect(cameraAngle("yz", 40)).toBe(89);
   });
 });
 
@@ -95,6 +110,13 @@ describe("cameraConfig", () => {
   it("returns type and angle for orthographic yz", () => {
     expect(cameraConfig("orthographic", "yz")).toEqual({
       type: "orthographic",
+      angle: 60,
+    });
+  });
+
+  it("includes delta in the angle", () => {
+    expect(cameraConfig("isometric", "xz", 15)).toEqual({
+      type: "isometric",
       angle: 60,
     });
   });

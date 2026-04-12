@@ -27,6 +27,7 @@ export interface AppState {
   activePathId: string;
   stroke: boolean;
   cameraType: CameraType;
+  cameraAngleDelta: number;
 }
 
 type Listener = () => void;
@@ -76,6 +77,7 @@ const state: AppState = {
   activePathId: initialPath.id,
   stroke: true,
   cameraType: "isometric",
+  cameraAngleDelta: 0,
 };
 
 function notify() {
@@ -151,6 +153,7 @@ export function setGridRows(rows: number) {
 export function setOrientation(orientation: Orientation) {
   if (state.grid.orientation === orientation) return;
   state.grid.orientation = orientation;
+  state.cameraAngleDelta = 0;
   notify();
 }
 
@@ -224,6 +227,17 @@ export function setCameraType(type: CameraType) {
   notify();
 }
 
+export function setCameraAngleDelta(delta: number) {
+  // Clamp to ±60° to prevent degenerate views
+  state.cameraAngleDelta = Math.max(-60, Math.min(60, delta));
+  notify();
+}
+
+export function resetCameraAngle() {
+  state.cameraAngleDelta = 0;
+  notify();
+}
+
 export function hasCell(col: number, row: number): boolean {
   return state.paths.some((p) =>
     p.cells.some((c) => c.col === col && c.row === row)
@@ -273,6 +287,7 @@ export function replaceState(grid: GridConfig, paths: Path[]) {
   }
 
   state.activePathId = state.paths[0].id;
+  state.cameraAngleDelta = 0;
 
   // Advance nextPathNum past any existing path IDs to avoid collisions
   let maxNum = 0;
