@@ -228,10 +228,8 @@ menuButton.addEventListener("click", openSidebar);
 overlayBackdrop.addEventListener("click", closeSidebar);
 
 settingsSummary.addEventListener("click", (e) => {
-  if (window.matchMedia("(max-width: 767px)").matches) {
-    e.preventDefault();
-    closeSidebar();
-  }
+  e.preventDefault();
+  closeSidebar();
 });
 
 // Grid editor
