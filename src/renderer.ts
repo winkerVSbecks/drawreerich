@@ -28,11 +28,11 @@ export function voxelPosition(
       // col → X, row → Z, extrude up in -Y, depth offsets along -Y
       return [col, -y - depth, row];
     case "xy":
-      // col → X, row → Y (row 0 = top), extrude in -Z, depth offsets along -Z
-      return [col, -row, -y - depth];
+      // col → X, row → Y (+Y = down), extrude in -Z, depth offsets along -Z
+      return [col, row, -y - depth];
     case "yz":
-      // col → Y (col 0 = top), row → Z, extrude in +X, depth offsets along +X
-      return [y + depth, -col, row];
+      // col → Y (+Y = down), row → Z, extrude in +X, depth offsets along +X
+      return [y + depth, col, row];
   }
 }
 
@@ -94,19 +94,19 @@ export function planePosition(
         scaleOrigin: [0.5, 1, 0.5],
       };
     case "xy":
-      // Front wall: spans X=[0..cols), Y=[-(rows-1)..0], at Z=-depth
+      // Front wall: spans X=[0..cols), Y=[0..rows), at Z=-depth
       // scaleOrigin Z=1 anchors the thin slab to the back edge
       return {
-        position: [0, -(rows - 1), -depth],
+        position: [0, 0, -depth],
         size: [cols, rows, 1],
         scale: [1, 1, 0.1],
         scaleOrigin: [0.5, 0.5, 1],
       };
     case "yz":
-      // Side wall: spans Y=[-(cols-1)..0], Z=[0..rows), at X=depth
+      // Side wall: spans Y=[0..cols), Z=[0..rows), at X=depth
       // scaleOrigin X=0 anchors the thin slab to the back edge
       return {
-        position: [depth, -(cols - 1), 0],
+        position: [depth, 0, 0],
         size: [1, cols, rows],
         scale: [0.1, 1, 1],
         scaleOrigin: [0, 0.5, 0.5],

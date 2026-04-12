@@ -39,23 +39,23 @@ describe("voxelPosition", () => {
   });
 
   describe("xy orientation (depth 0)", () => {
-    it("maps col→X, row→Y (inverted), extrude in -Z", () => {
-      expect(voxelPosition(3, 5, 0, 0, "xy")).toEqual([3, -5, -0]);
-      expect(voxelPosition(3, 5, 2, 0, "xy")).toEqual([3, -5, -2]);
+    it("maps col→X, row→Y, extrude in -Z", () => {
+      expect(voxelPosition(3, 5, 0, 0, "xy")).toEqual([3, 5, -0]);
+      expect(voxelPosition(3, 5, 2, 0, "xy")).toEqual([3, 5, -2]);
     });
   });
 
   describe("yz orientation (depth 0)", () => {
-    it("maps col→Y (inverted), row→Z, extrude in X", () => {
-      expect(voxelPosition(3, 5, 0, 0, "yz")).toEqual([0, -3, 5]);
-      expect(voxelPosition(3, 5, 2, 0, "yz")).toEqual([2, -3, 5]);
+    it("maps col→Y, row→Z, extrude in +X", () => {
+      expect(voxelPosition(3, 5, 0, 0, "yz")).toEqual([0, 3, 5]);
+      expect(voxelPosition(3, 5, 2, 0, "yz")).toEqual([2, 3, 5]);
     });
   });
 
   it("handles zero values", () => {
     expect(voxelPosition(0, 0, 0, 0, "xz")).toEqual([0, -0, 0]);
-    expect(voxelPosition(0, 0, 0, 0, "xy")).toEqual([0, -0, -0]);
-    expect(voxelPosition(0, 0, 0, 0, "yz")).toEqual([0, -0, 0]);
+    expect(voxelPosition(0, 0, 0, 0, "xy")).toEqual([0, 0, -0]);
+    expect(voxelPosition(0, 0, 0, 0, "yz")).toEqual([0, 0, 0]);
   });
 
   describe("xz orientation with non-zero depth", () => {
@@ -69,16 +69,16 @@ describe("voxelPosition", () => {
   describe("xy orientation with non-zero depth", () => {
     it("offsets voxels along -Z axis", () => {
       // depth offsets along -Z
-      expect(voxelPosition(3, 5, 0, 4, "xy")).toEqual([3, -5, -4]);
-      expect(voxelPosition(3, 5, 2, 4, "xy")).toEqual([3, -5, -6]);
+      expect(voxelPosition(3, 5, 0, 4, "xy")).toEqual([3, 5, -4]);
+      expect(voxelPosition(3, 5, 2, 4, "xy")).toEqual([3, 5, -6]);
     });
   });
 
   describe("yz orientation with non-zero depth", () => {
     it("offsets voxels along +X axis", () => {
       // depth offsets along +X
-      expect(voxelPosition(3, 5, 0, 4, "yz")).toEqual([4, -3, 5]);
-      expect(voxelPosition(3, 5, 2, 4, "yz")).toEqual([6, -3, 5]);
+      expect(voxelPosition(3, 5, 0, 4, "yz")).toEqual([4, 3, 5]);
+      expect(voxelPosition(3, 5, 2, 4, "yz")).toEqual([6, 3, 5]);
     });
   });
 });
@@ -96,7 +96,7 @@ describe("planePosition", () => {
 
   it("returns correct position, size, scale, and scaleOrigin for xy", () => {
     const p = planePosition(3, 16, 16, "xy");
-    expect(p.position).toEqual([0, -15, -3]);
+    expect(p.position).toEqual([0, 0, -3]);
     expect(p.size).toEqual([16, 16, 1]);
     expect(p.scale).toEqual([1, 1, 0.1]);
     expect(p.scaleOrigin).toEqual([0.5, 0.5, 1]);
@@ -104,7 +104,7 @@ describe("planePosition", () => {
 
   it("returns correct position, size, scale, and scaleOrigin for yz", () => {
     const p = planePosition(3, 16, 16, "yz");
-    expect(p.position).toEqual([3, -15, 0]);
+    expect(p.position).toEqual([3, 0, 0]);
     expect(p.size).toEqual([1, 16, 16]);
     expect(p.scale).toEqual([0.1, 1, 1]);
     expect(p.scaleOrigin).toEqual([0, 0.5, 0.5]);
@@ -115,15 +115,13 @@ describe("planePosition", () => {
     const xz = planePosition(0, 16, 16, "xz");
     expect(xz.position).toEqual([0, -0, 0]);
 
-    // XY: voxel at (0,0) → [0, 0, 0], plane starts at [0, -15, 0]
-    // voxel at (0,15) → [0, -15, 0], which matches plane start
+    // XY: voxel at (0,0) → [0, 0, 0], plane starts at [0, 0, 0]
     const xy = planePosition(0, 16, 16, "xy");
-    expect(xy.position).toEqual([0, -15, -0]);
+    expect(xy.position).toEqual([0, 0, -0]);
 
-    // YZ: voxel at (0,0) → [0, 0, 0], plane starts at [0, -15, 0]
-    // voxel at (15,0) → [0, -15, 0], which matches plane start
+    // YZ: voxel at (0,0) → [0, 0, 0], plane starts at [0, 0, 0]
     const yz = planePosition(0, 16, 16, "yz");
-    expect(yz.position).toEqual([0, -15, 0]);
+    expect(yz.position).toEqual([0, 0, 0]);
   });
 });
 
