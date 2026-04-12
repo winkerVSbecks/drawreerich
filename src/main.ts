@@ -238,6 +238,11 @@ settingsSummary.addEventListener("click", (e) => {
   closeSidebar();
 });
 
+// Open panel by default on large screens
+if (window.matchMedia("(min-width: 768px)").matches) {
+  openSidebar();
+}
+
 // Grid editor
 const gridContainer = document.getElementById("grid-editor-container")!;
 initGridEditor(gridContainer);
