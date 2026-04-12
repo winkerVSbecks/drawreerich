@@ -78,17 +78,21 @@ body {
 
 #settings-panel {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: 0;
+  right: 0;
+  bottom: 0;
   z-index: 100;
-  min-width: var(--panel-width);
   width: max-content;
+  min-width: var(--panel-width);
   max-width: calc(100vw - 2rem);
   background: var(--panel-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border: none;
+  border-bottom: 1px solid var(--panel-border);
+  border-radius: 0;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
 }
 
 /* Summary / toggle row */
@@ -124,7 +128,7 @@ body {
 
 /* Body: scrollable, max-height = viewport minus toggle + margins */
 #settings-body {
-  max-height: calc(100vh - 5rem);
+  max-height: calc(100dvh - 3rem);
   overflow-y: auto;
   border-top: 1px solid var(--panel-border);
   /* Custom scrollbar */
@@ -182,7 +186,7 @@ body {
 /* ── Hamburger menu button ────────────────────────────────── */
 
 #menu-button {
-  display: none;
+  display: flex;
   position: fixed;
   top: 1rem;
   right: 1rem;
@@ -215,49 +219,25 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparent;
   z-index: 99;
 }
 
-/* ── Responsive layout (< 768px) ─────────────────────────── */
+/* ── Sidebar-open state (universal) ──────────────────────── */
 
-@media (max-width: 767px) {
-  #menu-button {
-    display: flex;
-  }
+#app.sidebar-open #settings-panel {
+  transform: translateX(0);
+}
 
-  #settings-panel {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    border-radius: 0;
-    border: none;
-    border-bottom: 1px solid var(--panel-border);
-    transform: translateX(100%);
-    transition: transform 0.25s ease;
-  }
+#app.sidebar-open #menu-button {
+  display: none;
+}
 
-  #settings-body {
-    max-height: calc(100dvh - 3rem);
-  }
+#app.sidebar-open #overlay-backdrop {
+  display: block;
+}
 
-  #app.sidebar-open #settings-panel {
-    transform: translateX(0);
-  }
-
-  #app.sidebar-open #menu-button {
-    display: none;
-  }
-
-  #app.sidebar-open #overlay-backdrop {
-    display: block;
-  }
-
-  /* Summary acts as close button on mobile */
-  #app.sidebar-open .settings-toggle-icon::before {
-    content: '✕';
-  }
+/* Summary acts as close button when panel is open */
+#app.sidebar-open .settings-toggle-icon::before {
+  content: '✕';
 }
