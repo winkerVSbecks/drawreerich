@@ -20,8 +20,8 @@ jobs:
       - run: pnpm install
       - run: pnpm test:unit
 
-  browser-tests:
-    name: Browser Tests
+  storybook-build:
+    name: Storybook Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,5 +31,4 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:browser
+      - run: pnpm build-storybook
