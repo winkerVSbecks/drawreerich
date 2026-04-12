@@ -5,7 +5,7 @@ import "../index.css";
 function renderLayout(): HTMLDivElement {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = `
-    <div id="app" style="width:1024px;height:768px;position:relative;overflow:hidden;">
+    <div id="app" style="width:100vw;height:100vh;position:relative;overflow:hidden;">
       <div id="canvas-container"></div>
       <button id="menu-button" aria-label="Open settings">
         <span class="hamburger-bar"></span>
@@ -27,8 +27,28 @@ function renderLayout(): HTMLDivElement {
   return wrapper;
 }
 
+const desktopViewport = {
+  name: "Desktop",
+  styles: { width: "1024px", height: "768px" },
+  type: "desktop" as const,
+};
+
+const mobileViewport = {
+  name: "Mobile",
+  styles: { width: "375px", height: "667px" },
+  type: "mobile" as const,
+};
+
 const meta: Meta = {
   title: "Layout",
+  parameters: {
+    viewport: {
+      viewports: {
+        desktop: desktopViewport,
+        mobile: mobileViewport,
+      },
+    },
+  },
 };
 
 export default meta;
@@ -39,6 +59,23 @@ type Story = StoryObj;
 
 export const HamburgerVisibleAtDesktopWidth: Story = {
   render: renderLayout,
+  parameters: {
+    viewport: { defaultViewport: "desktop" },
+  },
+  play: async ({ canvasElement }) => {
+    const menuButton = canvasElement.querySelector("#menu-button")!;
+    const style = window.getComputedStyle(menuButton);
+    await expect(style.display).toBe("flex");
+  },
+};
+
+// ─── Hamburger button visible at mobile width ──────────────────────────────
+
+export const HamburgerVisibleAtMobileWidth: Story = {
+  render: renderLayout,
+  parameters: {
+    viewport: { defaultViewport: "mobile" },
+  },
   play: async ({ canvasElement }) => {
     const menuButton = canvasElement.querySelector("#menu-button")!;
     const style = window.getComputedStyle(menuButton);
@@ -50,6 +87,9 @@ export const HamburgerVisibleAtDesktopWidth: Story = {
 
 export const SettingsPanelHiddenByDefault: Story = {
   render: renderLayout,
+  parameters: {
+    viewport: { defaultViewport: "desktop" },
+  },
   play: async ({ canvasElement }) => {
     const panel = canvasElement.querySelector("#settings-panel")!;
     const style = window.getComputedStyle(panel);
@@ -75,6 +115,9 @@ export const BackdropDismissesPanel: Story = {
     });
 
     return wrapper;
+  },
+  parameters: {
+    viewport: { defaultViewport: "desktop" },
   },
   play: async ({ canvasElement }) => {
     const app = canvasElement.querySelector("#app")!;
