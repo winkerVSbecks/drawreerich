@@ -196,6 +196,32 @@ subscribe(() => {
 // Mark 3D renderer dirty when state changes
 subscribe(() => markDirty());
 
+// Responsive sidebar toggle
+const menuButton = document.getElementById("menu-button")!;
+const overlayBackdrop = document.getElementById("overlay-backdrop")!;
+const appEl = document.getElementById("app")!;
+const settingsPanel = document.getElementById("settings-panel") as HTMLDetailsElement;
+const settingsSummary = settingsPanel.querySelector(".settings-toggle") as HTMLElement;
+
+function openSidebar(): void {
+  settingsPanel.open = true;
+  appEl.classList.add("sidebar-open");
+}
+
+function closeSidebar(): void {
+  appEl.classList.remove("sidebar-open");
+}
+
+menuButton.addEventListener("click", openSidebar);
+overlayBackdrop.addEventListener("click", closeSidebar);
+
+settingsSummary.addEventListener("click", (e) => {
+  if (window.matchMedia("(max-width: 767px)").matches) {
+    e.preventDefault();
+    closeSidebar();
+  }
+});
+
 // Grid editor
 const gridContainer = document.getElementById("grid-editor-container")!;
 initGridEditor(gridContainer);
