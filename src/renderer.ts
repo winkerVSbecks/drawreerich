@@ -35,8 +35,8 @@ export function voxelPosition(
   }
 }
 
-/** Choose a camera angle that gives a natural view of the active plane. */
-export function cameraAngle(orientation: Orientation): number {
+/** Base camera angle for each orientation. */
+function baseAngle(orientation: Orientation): number {
   switch (orientation) {
     case "xz":
       return 45; // standard isometric floor view
@@ -45,6 +45,13 @@ export function cameraAngle(orientation: Orientation): number {
     case "yz":
       return 60; // side-wall: rotate away from the viewer
   }
+}
+
+/** Choose a camera angle that gives a natural view of the active plane, offset by delta. */
+export function cameraAngle(orientation: Orientation, delta: number = 0): number {
+  const base = baseAngle(orientation);
+  // Clamp result to 1–89° to prevent degenerate views (0° or 90°)
+  return Math.max(1, Math.min(89, base + delta));
 }
 
 let scene = new Heerich({
@@ -58,8 +65,8 @@ export function markDirty() {
   dirty = true;
 }
 
-export function cameraConfig(type: CameraType, orientation: Orientation) {
-  const angle = cameraAngle(orientation);
+export function cameraConfig(type: CameraType, orientation: Orientation, delta: number = 0) {
+  const angle = cameraAngle(orientation, delta);
   return { type, angle };
 }
 
@@ -67,11 +74,11 @@ function rebuildScene() {
   if (!dirty) return;
   dirty = false;
 
-  const { grid, paths, stroke, cameraType } = getState();
+  const { grid, paths, stroke, cameraType, cameraAngleDelta } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, grid.orientation),
+    camera: cameraConfig(cameraType, grid.orientation, cameraAngleDelta),
   });
 
   const hasAnyCells = paths.some((p) => p.cells.length > 0);
