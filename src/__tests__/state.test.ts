@@ -19,6 +19,7 @@ import {
   setCameraType,
   setCameraAngleDelta,
   resetCameraAngle,
+  setActivePlaneDepth,
   replaceState,
   clearAllPaths,
   hslToHex,
@@ -37,7 +38,7 @@ function resetState() {
     orientation: "xz",
   };
   const paths: Path[] = [
-    { id: "path-100", cells: [], color: "#4477bb", height: 2 },
+    { id: "path-100", cells: [], color: "#4477bb", height: 2, depth: 0 },
   ];
   replaceState(grid, paths);
   // Also reset stroke and camera which replaceState doesn't cover
@@ -522,6 +523,73 @@ describe("setOrientation resets cameraAngleDelta", () => {
   });
 });
 
+// ─── setActivePlaneDepth ────────────────────────────────────────────────────
+
+describe("setActivePlaneDepth", () => {
+  beforeEach(resetState);
+
+  it("updates activePlaneDepth", () => {
+    setActivePlaneDepth(5);
+    expect(getState().activePlaneDepth).toBe(5);
+  });
+
+  it("clamps to minimum 0", () => {
+    setActivePlaneDepth(-5);
+    expect(getState().activePlaneDepth).toBe(0);
+  });
+
+  it("clamps to maximum 20", () => {
+    setActivePlaneDepth(25);
+    expect(getState().activePlaneDepth).toBe(20);
+  });
+
+  it("notifies subscribers", () => {
+    const listener = vi.fn();
+    subscribe(listener);
+    listener.mockClear();
+
+    setActivePlaneDepth(3);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── createPath inherits activePlaneDepth ───────────────────────────────────
+
+describe("createPath inherits activePlaneDepth", () => {
+  beforeEach(resetState);
+
+  it("new path inherits current activePlaneDepth", () => {
+    setActivePlaneDepth(7);
+    const newPath = createPath();
+    expect(newPath.depth).toBe(7);
+  });
+
+  it("new path gets depth 0 when activePlaneDepth is 0", () => {
+    const newPath = createPath();
+    expect(newPath.depth).toBe(0);
+  });
+});
+
+// ─── setOrientation resets activePlaneDepth ─────────────────────────────────
+
+describe("setOrientation resets activePlaneDepth", () => {
+  beforeEach(resetState);
+
+  it("resets activePlaneDepth to 0 when orientation changes", () => {
+    setActivePlaneDepth(10);
+    expect(getState().activePlaneDepth).toBe(10);
+
+    setOrientation("xy");
+    expect(getState().activePlaneDepth).toBe(0);
+  });
+
+  it("does not reset activePlaneDepth when orientation is unchanged", () => {
+    setActivePlaneDepth(10);
+    setOrientation("xz"); // already xz, no-op
+    expect(getState().activePlaneDepth).toBe(10);
+  });
+});
+
 // ─── replaceState ────────────────────────────────────────────────────────────
 
 describe("replaceState", () => {
@@ -535,7 +603,7 @@ describe("replaceState", () => {
       orientation: "yz",
     };
     const paths: Path[] = [
-      { id: "path-50", cells: [{ col: 1, row: 2 }], color: "#aabb00", height: 3 },
+      { id: "path-50", cells: [{ col: 1, row: 2 }], color: "#aabb00", height: 3, depth: 5 },
     ];
     replaceState(grid, paths);
 
@@ -544,7 +612,24 @@ describe("replaceState", () => {
     expect(s.grid.orientation).toBe("yz");
     expect(s.paths).toHaveLength(1);
     expect(s.paths[0].id).toBe("path-50");
+    expect(s.paths[0].depth).toBe(5);
     expect(s.activePathId).toBe("path-50");
+  });
+
+  it("defaults missing depth fields to 0", () => {
+    const grid: GridConfig = {
+      cols: 8,
+      rows: 8,
+      tileSize: 16,
+      orientation: "xz",
+    };
+    // Simulate old data without depth field
+    const paths = [
+      { id: "path-60", cells: [], color: "#000000", height: 1 },
+    ] as Path[];
+    replaceState(grid, paths);
+
+    expect(getState().paths[0].depth).toBe(0);
   });
 
   it("creates a fallback path if given empty paths array", () => {
@@ -569,7 +654,7 @@ describe("replaceState", () => {
       orientation: "xz",
     };
     const paths: Path[] = [
-      { id: "path-500", cells: [], color: "#000000", height: 1 },
+      { id: "path-500", cells: [], color: "#000000", height: 1, depth: 0 },
     ];
     replaceState(grid, paths);
 

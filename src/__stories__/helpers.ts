@@ -13,7 +13,7 @@ export function resetState() {
     orientation: "xz",
   };
   const paths: Path[] = [
-    { id: "path-100", cells: [], color: "#4477bb", height: 2 },
+    { id: "path-100", cells: [], color: "#4477bb", height: 2, depth: 0 },
   ];
   replaceState(grid, paths);
   setStroke(true);

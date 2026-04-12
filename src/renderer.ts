@@ -15,23 +15,24 @@ export function faceColors(base: string) {
   };
 }
 
-/** Map a 2D grid cell to a 3D voxel position based on orientation. */
+/** Map a 2D grid cell to a 3D voxel position based on orientation and depth. */
 export function voxelPosition(
   col: number,
   row: number,
   y: number,
+  depth: number,
   orientation: Orientation
 ): [number, number, number] {
   switch (orientation) {
     case "xz":
-      // col → X, row → Z, extrude up in -Y
-      return [col, -y, row];
+      // col → X, row → Z, extrude up in -Y, depth offsets along Y
+      return [col, -y + depth, row];
     case "xy":
-      // col → X, row → Y (row 0 = top), extrude in -Z
-      return [col, -row, -y];
+      // col → X, row → Y (row 0 = top), extrude in -Z, depth offsets along Z
+      return [col, -row, -y - depth];
     case "yz":
-      // col → Y (col 0 = top), row → Z, extrude in X
-      return [y, -col, row];
+      // col → Y (col 0 = top), row → Z, extrude in X, depth offsets along X
+      return [y + depth, -col, row];
   }
 }
 
@@ -70,25 +71,59 @@ export function cameraConfig(type: CameraType, orientation: Orientation, delta: 
   return { type, angle };
 }
 
+/** Build the plane position for a given depth and orientation. */
+export function planePosition(
+  depth: number,
+  cols: number,
+  rows: number,
+  orientation: Orientation
+): { position: [number, number, number]; size: [number, number, number] } {
+  const cx = (cols - 1) / 2;
+  const cr = (rows - 1) / 2;
+  switch (orientation) {
+    case "xz":
+      return { position: [cx, depth, cr], size: [cols, 0.05, rows] };
+    case "xy":
+      return { position: [cx, -cr, -depth], size: [cols, rows, 0.05] };
+    case "yz":
+      return { position: [depth, -cx, cr], size: [0.05, cols, rows] };
+  }
+}
+
 function rebuildScene() {
   if (!dirty) return;
   dirty = false;
 
-  const { grid, paths, stroke, cameraType, cameraAngleDelta } = getState();
+  const { grid, paths, stroke, cameraType, cameraAngleDelta, activePlaneDepth } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
     camera: cameraConfig(cameraType, grid.orientation, cameraAngleDelta),
   });
 
-  const hasAnyCells = paths.some((p) => p.cells.length > 0);
-  if (!hasAnyCells) return;
+  const planeStyle = {
+    top: { fill: "rgba(255,255,255,0.12)" },
+    left: { fill: "rgba(255,255,255,0.08)" },
+    right: { fill: "rgba(255,255,255,0.08)" },
+    front: { fill: "rgba(255,255,255,0.08)" },
+    back: { fill: "rgba(255,255,255,0.08)" },
+    bottom: { fill: "rgba(255,255,255,0.08)" },
+  };
 
   const strokeStyle = stroke
     ? { stroke: "#222", strokeWidth: 1 }
     : {};
 
   scene.batch(() => {
+    // Add the semi-transparent active plane
+    const plane = planePosition(activePlaneDepth, grid.cols, grid.rows, grid.orientation);
+    scene.addGeometry({
+      type: "box",
+      position: plane.position,
+      size: plane.size,
+      style: planeStyle,
+    } as Parameters<typeof scene.addGeometry>[0]);
+
     for (const path of paths) {
       if (path.cells.length === 0) continue;
 
@@ -106,7 +141,7 @@ function rebuildScene() {
         for (let y = 0; y < path.height; y++) {
           scene.addGeometry({
             type: "box",
-            position: voxelPosition(cell.col, cell.row, y, grid.orientation),
+            position: voxelPosition(cell.col, cell.row, y, path.depth, grid.orientation),
             size: 1,
             style,
           } as Parameters<typeof scene.addGeometry>[0]);

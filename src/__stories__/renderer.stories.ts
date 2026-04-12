@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/web-components-vite";
 import { expect } from "storybook/test";
 import { renderScene, markDirty } from "../renderer.ts";
-import { replaceState, addCell, setCameraAngleDelta } from "../state.ts";
+import { replaceState, addCell, setCameraAngleDelta, setActivePlaneDepth } from "../state.ts";
 import { resetState, hasVisiblePixels } from "./helpers.ts";
 
 function createCanvas(width: number, height: number) {
@@ -85,6 +85,7 @@ export const DifferentOrientations: Story = {
             cells: [{ col: 2, row: 2 }],
             color: "#4477bb",
             height: 2,
+            depth: 0,
           },
         ],
       );
@@ -191,5 +192,83 @@ export const CameraRotationDelta: Story = {
       }
     }
     await expect(diffCount).toBeGreaterThan(0);
+  },
+};
+
+export const PlaneAtEachOrientation: Story = {
+  render: () => {
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.gap = "8px";
+
+    for (const orientation of ["xz", "xy", "yz"] as const) {
+      replaceState(
+        { cols: 16, rows: 16, tileSize: 32, orientation },
+        [{ id: "path-1", cells: [], color: "#4477bb", height: 2, depth: 0 }],
+      );
+      setActivePlaneDepth(5);
+      markDirty();
+      const canvas = createCanvas(400, 400);
+      canvas.dataset.orientation = orientation;
+      const ctx = canvas.getContext("2d")!;
+      renderScene(ctx, 400, 400);
+      container.appendChild(canvas);
+    }
+
+    return container;
+  },
+  play: async ({ canvasElement }) => {
+    // Each orientation should render visible content (the plane geometry)
+    for (const orientation of ["xz", "xy", "yz"]) {
+      const canvas = canvasElement.querySelector(
+        `canvas[data-orientation="${orientation}"]`,
+      ) as HTMLCanvasElement;
+      const ctx = canvas.getContext("2d")!;
+      await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
+    }
+  },
+};
+
+export const PathsAtMultipleDepths: Story = {
+  render: () => {
+    resetState();
+    replaceState(
+      { cols: 16, rows: 16, tileSize: 32, orientation: "xz" },
+      [
+        {
+          id: "path-1",
+          cells: [{ col: 4, row: 4 }, { col: 5, row: 4 }, { col: 6, row: 4 }],
+          color: "#4477bb",
+          height: 2,
+          depth: 0,
+        },
+        {
+          id: "path-2",
+          cells: [{ col: 4, row: 8 }, { col: 5, row: 8 }, { col: 6, row: 8 }],
+          color: "#bb4444",
+          height: 2,
+          depth: 5,
+        },
+        {
+          id: "path-3",
+          cells: [{ col: 4, row: 12 }, { col: 5, row: 12 }, { col: 6, row: 12 }],
+          color: "#44bb44",
+          height: 2,
+          depth: 10,
+        },
+      ],
+    );
+    setActivePlaneDepth(5);
+    markDirty();
+
+    const canvas = createCanvas(600, 600);
+    const ctx = canvas.getContext("2d")!;
+    renderScene(ctx, 600, 600);
+    return canvas;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = canvasElement.querySelector("canvas")!;
+    const ctx = canvas.getContext("2d")!;
+    await expect(hasVisiblePixels(ctx, 600, 600)).toBe(true);
   },
 };

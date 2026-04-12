@@ -35,6 +35,8 @@ export function isValidSaveData(data: unknown): data is SaveData {
     if (typeof path.color !== "string") return false;
     if (typeof path.height !== "number") return false;
     if (!Array.isArray(path.cells)) return false;
+    // depth is optional for backwards compatibility — defaults to 0 in replaceState
+    if (path.depth !== undefined && typeof path.depth !== "number") return false;
   }
 
   return true;

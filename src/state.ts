@@ -8,6 +8,7 @@ export interface Path {
   cells: Cell[];
   color: string;
   height: number;
+  depth: number;
 }
 
 export type Orientation = "xz" | "xy" | "yz";
@@ -28,6 +29,7 @@ export interface AppState {
   stroke: boolean;
   cameraType: CameraType;
   cameraAngleDelta: number;
+  activePlaneDepth: number;
 }
 
 type Listener = () => void;
@@ -64,6 +66,7 @@ const initialPath: Path = {
   cells: [],
   color: "#4477bb",
   height: 2,
+  depth: 0,
 };
 
 const state: AppState = {
@@ -78,6 +81,7 @@ const state: AppState = {
   stroke: true,
   cameraType: "isometric",
   cameraAngleDelta: 0,
+  activePlaneDepth: 0,
 };
 
 function notify() {
@@ -113,6 +117,7 @@ export function createPath(): Path {
     cells: [],
     color: randomColor(),
     height: 2,
+    depth: state.activePlaneDepth,
   };
   state.paths.push(path);
   state.activePathId = path.id;
@@ -154,6 +159,7 @@ export function setOrientation(orientation: Orientation) {
   if (state.grid.orientation === orientation) return;
   state.grid.orientation = orientation;
   state.cameraAngleDelta = 0;
+  state.activePlaneDepth = 0;
   notify();
 }
 
@@ -189,11 +195,12 @@ function removePath(id: string) {
     if (state.paths.length > 0) {
       state.activePathId = state.paths[0].id;
     } else {
-      const newPath = {
+      const newPath: Path = {
         id: makePathId(),
         cells: [],
         color: randomColor(),
         height: 2,
+        depth: state.activePlaneDepth,
       };
       state.paths.push(newPath);
       state.activePathId = newPath.id;
@@ -238,6 +245,11 @@ export function resetCameraAngle() {
   notify();
 }
 
+export function setActivePlaneDepth(depth: number) {
+  state.activePlaneDepth = Math.max(0, Math.min(20, depth));
+  notify();
+}
+
 export function hasCell(col: number, row: number): boolean {
   return state.paths.some((p) =>
     p.cells.some((c) => c.col === col && c.row === row)
@@ -254,6 +266,7 @@ export function clearAllPaths() {
     cells: [],
     color: randomColor(),
     height: 2,
+    depth: state.activePlaneDepth,
   };
   state.paths.push(newPath);
   state.activePathId = newPath.id;
@@ -272,7 +285,7 @@ export function replaceState(grid: GridConfig, paths: Path[]) {
 
   state.paths.length = 0;
   for (const p of paths) {
-    state.paths.push(p);
+    state.paths.push({ ...p, depth: p.depth ?? 0 });
   }
 
   // Ensure at least one path exists
@@ -282,12 +295,14 @@ export function replaceState(grid: GridConfig, paths: Path[]) {
       cells: [],
       color: "#4477bb",
       height: 2,
+      depth: 0,
     };
     state.paths.push(newPath);
   }
 
   state.activePathId = state.paths[0].id;
   state.cameraAngleDelta = 0;
+  state.activePlaneDepth = 0;
 
   // Advance nextPathNum past any existing path IDs to avoid collisions
   let maxNum = 0;

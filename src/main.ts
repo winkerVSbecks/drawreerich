@@ -16,11 +16,12 @@ import {
   setCameraType,
   setCameraAngleDelta,
   resetCameraAngle,
+  setActivePlaneDepth,
   createPath,
   clearAllPaths,
   subscribe,
 } from "./state.ts";
-import type { CameraType } from "./state.ts";
+import type { CameraType, Orientation } from "./state.ts";
 import { initGridEditor } from "./grid-editor.ts";
 import { tryRestore, startAutoSave, exportJSON, importJSON } from "./storage.ts";
 import "./index.css";
@@ -32,6 +33,15 @@ tryRestore();
 const paneContainer = document.getElementById("tweakpane-container")!;
 const pane = new Pane({ container: paneContainer, title: "drawreerich" });
 
+/** Return the depth axis label for the current orientation. */
+function depthAxisLabel(orientation: Orientation): string {
+  switch (orientation) {
+    case "xz": return "depth (Y)";
+    case "xy": return "depth (Z)";
+    case "yz": return "depth (X)";
+  }
+}
+
 const PARAMS = {
   cols: getState().grid.cols,
   rows: getState().grid.rows,
@@ -39,6 +49,7 @@ const PARAMS = {
   orientation: getState().grid.orientation,
   cameraType: getState().cameraType,
   stroke: getState().stroke,
+  activePlaneDepth: getState().activePlaneDepth,
 };
 
 pane
@@ -67,6 +78,10 @@ pane
   })
   .on("change", (ev) => {
     setOrientation(ev.value as "xz" | "xy" | "yz");
+    // Update depth slider label and value after orientation reset
+    depthBinding.label = depthAxisLabel(ev.value as Orientation);
+    PARAMS.activePlaneDepth = 0;
+    depthBinding.refresh();
   });
 
 pane
@@ -85,6 +100,17 @@ pane
 pane.addButton({ title: "Reset Camera" }).on("click", () => {
   resetCameraAngle();
 });
+
+const depthBinding = pane
+  .addBinding(PARAMS, "activePlaneDepth", {
+    label: depthAxisLabel(getState().grid.orientation),
+    min: 0,
+    max: 20,
+    step: 1,
+  })
+  .on("change", (ev) => {
+    setActivePlaneDepth(ev.value);
+  });
 
 pane.addBinding(PARAMS, "stroke", { label: "stroke" }).on("change", (ev) => {
   setStroke(ev.value);
@@ -160,6 +186,8 @@ function syncParamsFromState() {
   PARAMS.orientation = s.grid.orientation;
   PARAMS.cameraType = s.cameraType;
   PARAMS.stroke = s.stroke;
+  PARAMS.activePlaneDepth = s.activePlaneDepth;
+  depthBinding.label = depthAxisLabel(s.grid.orientation);
   pane.refresh();
 
   const ap = getActivePath();
