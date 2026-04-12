@@ -82,9 +82,9 @@ body {
   right: 0;
   bottom: 0;
   z-index: 100;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
+  width: max-content;
+  min-width: var(--panel-width);
+  max-width: calc(100vw - 2rem);
   background: var(--panel-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
