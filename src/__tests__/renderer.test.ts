@@ -86,25 +86,28 @@ describe("voxelPosition", () => {
 // ─── planePosition ──────────────────────────────────────────────────────────
 
 describe("planePosition", () => {
-  it("returns correct position, size, and scale for xz", () => {
+  it("returns correct position, size, scale, and scaleOrigin for xz", () => {
     const p = planePosition(3, 16, 16, "xz");
     expect(p.position).toEqual([0, -3, 0]);
     expect(p.size).toEqual([16, 1, 16]);
     expect(p.scale).toEqual([1, 0.1, 1]);
+    expect(p.scaleOrigin).toEqual([0.5, 1, 0.5]);
   });
 
-  it("returns correct position, size, and scale for xy", () => {
+  it("returns correct position, size, scale, and scaleOrigin for xy", () => {
     const p = planePosition(3, 16, 16, "xy");
     expect(p.position).toEqual([0, -15, -3]);
     expect(p.size).toEqual([16, 16, 1]);
     expect(p.scale).toEqual([1, 1, 0.1]);
+    expect(p.scaleOrigin).toEqual([0.5, 0.5, 1]);
   });
 
-  it("returns correct position, size, and scale for yz", () => {
+  it("returns correct position, size, scale, and scaleOrigin for yz", () => {
     const p = planePosition(3, 16, 16, "yz");
     expect(p.position).toEqual([3, -15, 0]);
     expect(p.size).toEqual([1, 16, 16]);
     expect(p.scale).toEqual([0.1, 1, 1]);
+    expect(p.scaleOrigin).toEqual([0, 0.5, 0.5]);
   });
 
   it("aligns with voxel positions at depth 0", () => {

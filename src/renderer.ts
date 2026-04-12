@@ -81,28 +81,35 @@ export function planePosition(
   position: [number, number, number];
   size: [number, number, number];
   scale: [number, number, number];
+  scaleOrigin: [number, number, number];
 } {
   switch (orientation) {
     case "xz":
       // Floor plane: spans X=[0..cols), Z=[0..rows), at Y=-depth
+      // scaleOrigin Y=1 anchors the thin slab to the bottom edge
       return {
         position: [0, -depth, 0],
         size: [cols, 1, rows],
         scale: [1, 0.1, 1],
+        scaleOrigin: [0.5, 1, 0.5],
       };
     case "xy":
       // Front wall: spans X=[0..cols), Y=[-(rows-1)..0], at Z=-depth
+      // scaleOrigin Z=1 anchors the thin slab to the back edge
       return {
         position: [0, -(rows - 1), -depth],
         size: [cols, rows, 1],
         scale: [1, 1, 0.1],
+        scaleOrigin: [0.5, 0.5, 1],
       };
     case "yz":
       // Side wall: spans Y=[-(cols-1)..0], Z=[0..rows), at X=depth
+      // scaleOrigin X=0 anchors the thin slab to the back edge
       return {
         position: [depth, -(cols - 1), 0],
         size: [1, cols, rows],
         scale: [0.1, 1, 1],
+        scaleOrigin: [0, 0.5, 0.5],
       };
   }
 }
@@ -119,12 +126,12 @@ function rebuildScene() {
   });
 
   const planeStyle = {
-    top: { fill: "rgba(255,255,255,0.12)" },
-    left: { fill: "rgba(255,255,255,0.08)" },
-    right: { fill: "rgba(255,255,255,0.08)" },
-    front: { fill: "rgba(255,255,255,0.08)" },
-    back: { fill: "rgba(255,255,255,0.08)" },
-    bottom: { fill: "rgba(255,255,255,0.08)" },
+    top: { fill: "rgba(255,255,255,0.12)", stroke: "rgba(255,255,255,0.12)", strokeWidth: 1 },
+    left: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
+    right: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
+    front: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
+    back: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
+    bottom: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
   };
 
   const strokeStyle = stroke
@@ -139,6 +146,7 @@ function rebuildScene() {
       position: plane.position,
       size: plane.size,
       scale: plane.scale,
+      scaleOrigin: plane.scaleOrigin,
       opaque: false,
       style: planeStyle,
     } as Parameters<typeof scene.addGeometry>[0]);
