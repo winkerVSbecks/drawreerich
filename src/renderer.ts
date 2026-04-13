@@ -65,6 +65,54 @@ let scene = new Heerich({
 
 let dirty = true;
 
+// Stable offset cache — recomputed only when grid/camera config changes, not when cells are drawn
+let cachedOffset: { x: number; y: number } | null = null;
+let cachedOffsetKey = '';
+
+/**
+ * Compute a stable canvas offset by centering the grid plane at depth 0.
+ * This reference doesn't move as cells are added/removed.
+ */
+function computeStableOffset(
+  width: number,
+  height: number,
+): { x: number; y: number } {
+  const { grid, cameraType, cameraAngleDelta } = getState();
+  const key = `${grid.cols},${grid.rows},${grid.tileSize},${grid.orientation},${cameraType},${cameraAngleDelta},${width},${height}`;
+
+  if (cachedOffset && cachedOffsetKey === key) return cachedOffset;
+
+  const refScene = new Heerich({
+    tile: grid.tileSize,
+    camera: cameraConfig(cameraType, grid.orientation, cameraAngleDelta),
+  });
+
+  const plane = planePosition(0, grid.cols, grid.rows, grid.orientation);
+  refScene.addGeometry({
+    type: 'box',
+    position: plane.position,
+    size: plane.size,
+    scale: plane.scale,
+    scaleOrigin: plane.scaleOrigin,
+    opaque: false,
+    style: {},
+  } as Parameters<typeof refScene.addGeometry>[0]);
+
+  const planeFaces = refScene.getFaces();
+  if (planeFaces.length === 0) {
+    cachedOffset = { x: width / 2, y: height / 2 };
+  } else {
+    const bounds = refScene.getBounds(0, planeFaces);
+    cachedOffset = {
+      x: width / 2 - (bounds.x + bounds.w / 2),
+      y: height / 2 - (bounds.y + bounds.h / 2),
+    };
+  }
+
+  cachedOffsetKey = key;
+  return cachedOffset;
+}
+
 export function markDirty() {
   dirty = true;
 }
@@ -245,11 +293,7 @@ export function renderScene(
   const faces = scene.getFaces();
   if (faces.length === 0) return;
 
-  const bounds = scene.getBounds(0, faces);
-
-  // Center the scene on the canvas
-  const offsetX = width / 2 - (bounds.x + bounds.w / 2);
-  const offsetY = height / 2 - (bounds.y + bounds.h / 2);
+  const { x: offsetX, y: offsetY } = computeStableOffset(width, height);
 
   ctx.save();
   ctx.translate(offsetX, offsetY);

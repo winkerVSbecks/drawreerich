@@ -181,7 +181,7 @@ const heightBinding = pathFolder
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
-const colorBinding = pathFolder
+pathFolder
   .addBinding(PATH_PARAMS, 'color', { label: 'color' })
   .on('change', (ev) => {
     const ap = getActivePath();
@@ -202,8 +202,6 @@ fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
   applyPalette();
 });
 
-fileFolder.addButton({ title: "Clear All" }).on("click", () => {
-  if (confirm("Clear all paths? This cannot be undone.")) {
 fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
   if (confirm('Clear all paths? This cannot be undone.')) {
     clearAllPaths();
