@@ -29,7 +29,7 @@ export const PaletteAppliedScene: Story = {
 
     // Set up a scene with paths coloured by palette
     replaceState(
-      { cols: 16, rows: 16, tileSize: 32, orientation: "xz" },
+      { cols: 16, rows: 16, tileSize: 32 },
       [
         {
           id: "path-1",
@@ -103,7 +103,7 @@ export const RegeneratePaletteRecolours: Story = {
     setPathColorSource(palette1.pathColors);
 
     replaceState(
-      { cols: 16, rows: 16, tileSize: 32, orientation: "xz" },
+      { cols: 16, rows: 16, tileSize: 32 },
       [
         {
           id: "path-1",

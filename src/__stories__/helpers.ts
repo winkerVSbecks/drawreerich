@@ -10,7 +10,6 @@ export function resetState() {
     cols: 16,
     rows: 16,
     tileSize: 32,
-    orientation: "xz",
   };
   const paths: Path[] = [
     { id: "path-100", cells: [], color: "#4477bb", height: 2, depth: 0 },

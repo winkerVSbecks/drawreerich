@@ -1,24 +1,25 @@
-import { getState, replaceState, subscribe } from "./state.ts";
-import type { GridConfig, Path } from "./state.ts";
+import { getState, replaceState, subscribe, ROTATION_PRESETS } from "./state.ts";
+import type { GridConfig, Path, Rotation } from "./state.ts";
 
 const STORAGE_KEY = "drawreerich-state";
 
 interface SaveData {
-  version: 1;
-  grid: GridConfig;
+  version: 1 | 2;
+  grid: GridConfig & { orientation?: string };
   paths: Path[];
+  rotation?: Rotation;
 }
 
 function serialize(): string {
-  const { grid, paths } = getState();
-  const data: SaveData = { version: 1, grid, paths };
+  const { grid, paths, rotation } = getState();
+  const data: SaveData = { version: 2, grid, paths, rotation };
   return JSON.stringify(data);
 }
 
 export function isValidSaveData(data: unknown): data is SaveData {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
-  if (d.version !== 1) return false;
+  if (d.version !== 1 && d.version !== 2) return false;
   if (typeof d.grid !== "object" || d.grid === null) return false;
   if (!Array.isArray(d.paths)) return false;
 
@@ -26,7 +27,11 @@ export function isValidSaveData(data: unknown): data is SaveData {
   if (typeof grid.cols !== "number") return false;
   if (typeof grid.rows !== "number") return false;
   if (typeof grid.tileSize !== "number") return false;
-  if (!["xz", "xy", "yz"].includes(grid.orientation as string)) return false;
+
+  // v1 had orientation in grid; v2 uses top-level rotation
+  if (d.version === 1) {
+    if (!["xz", "xy", "yz"].includes(grid.orientation as string)) return false;
+  }
 
   for (const p of d.paths as unknown[]) {
     if (typeof p !== "object" || p === null) return false;
@@ -46,13 +51,31 @@ export function isValidSaveData(data: unknown): data is SaveData {
  * Attempt to restore state from localStorage.
  * Call this before reading state for UI initialization.
  */
+/** Convert a legacy v1 orientation string to a Rotation. */
+function migrateOrientation(orientation: string): Rotation {
+  switch (orientation) {
+    case "xy":
+      return ROTATION_PRESETS.xy;
+    case "yz":
+      return ROTATION_PRESETS.yz;
+    default:
+      return ROTATION_PRESETS.xz;
+  }
+}
+
 export function tryRestore(): boolean {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
     const data = JSON.parse(raw);
     if (!isValidSaveData(data)) return false;
-    replaceState(data.grid, data.paths);
+
+    const rotation =
+      data.version === 1
+        ? migrateOrientation(data.grid.orientation ?? "xz")
+        : data.rotation;
+
+    replaceState(data.grid, data.paths, rotation);
     return true;
   } catch {
     return false;
@@ -111,7 +134,11 @@ export function importJSON(): Promise<void> {
             reject(new Error("Invalid or malformed JSON file."));
             return;
           }
-          replaceState(data.grid, data.paths);
+          const rotation =
+            data.version === 1
+              ? migrateOrientation(data.grid.orientation ?? "xz")
+              : data.rotation;
+          replaceState(data.grid, data.paths, rotation);
           resolve();
         } catch {
           reject(new Error("Failed to parse JSON file."));

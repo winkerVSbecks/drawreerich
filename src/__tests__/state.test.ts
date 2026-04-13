@@ -12,7 +12,7 @@ import {
   setGridCols,
   setGridRows,
   setTileSize,
-  setOrientation,
+  setRotation,
   setPathHeight,
   setPathColor,
   setStroke,
@@ -35,7 +35,6 @@ function resetState() {
     cols: 16,
     rows: 16,
     tileSize: 32,
-    orientation: "xz",
   };
   const paths: Path[] = [
     { id: "path-100", cells: [], color: "#4477bb", height: 2, depth: 0 },
@@ -58,6 +57,7 @@ describe("getState", () => {
     expect(s).toHaveProperty("activePathId");
     expect(s).toHaveProperty("stroke");
     expect(s).toHaveProperty("cameraType");
+    expect(s).toHaveProperty("rotation");
   });
 
   it("reflects resetState values", () => {
@@ -222,7 +222,6 @@ describe("removeCell", () => {
 
   it("auto-removes empty path and creates a fallback", () => {
     addCell(1, 1);
-    const pathCount = getState().paths.length;
     removeCell(1, 1);
     // The path was auto-removed but a fallback is created if it was the only path
     expect(getState().paths.length).toBeGreaterThanOrEqual(1);
@@ -293,23 +292,28 @@ describe("setTileSize", () => {
   });
 });
 
-// ─── setOrientation ──────────────────────────────────────────────────────────
+// ─── setRotation ─────────────────────────────────────────────────────────────
 
-describe("setOrientation", () => {
+describe("setRotation", () => {
   beforeEach(resetState);
 
-  it("changes orientation", () => {
-    setOrientation("xy");
-    expect(getState().grid.orientation).toBe("xy");
+  it("changes rotation", () => {
+    setRotation({ x: 1, y: 2, z: 3 });
+    expect(getState().rotation).toEqual({ x: 1, y: 2, z: 3 });
   });
 
-  it("no-ops when orientation is the same", () => {
+  it("normalizes values to 0-3", () => {
+    setRotation({ x: 4, y: 5, z: -1 });
+    expect(getState().rotation).toEqual({ x: 0, y: 1, z: 3 });
+  });
+
+  it("notifies subscribers", () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
 
-    setOrientation("xz"); // already xz
-    expect(listener).not.toHaveBeenCalled();
+    setRotation({ x: 1, y: 0, z: 0 });
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -493,26 +497,6 @@ describe("resetCameraAngle", () => {
   });
 });
 
-// ─── setOrientation resets cameraAngleDelta ─────────────────────────────────
-
-describe("setOrientation resets cameraAngleDelta", () => {
-  beforeEach(resetState);
-
-  it("resets cameraAngleDelta to 0 when orientation changes", () => {
-    setCameraAngleDelta(30);
-    expect(getState().cameraAngleDelta).toBe(30);
-
-    setOrientation("xy");
-    expect(getState().cameraAngleDelta).toBe(0);
-  });
-
-  it("does not reset cameraAngleDelta when orientation is unchanged", () => {
-    setCameraAngleDelta(30);
-    setOrientation("xz"); // already xz, no-op
-    expect(getState().cameraAngleDelta).toBe(30);
-  });
-});
-
 // ─── setActivePlaneDepth ────────────────────────────────────────────────────
 
 describe("setActivePlaneDepth", () => {
@@ -560,26 +544,6 @@ describe("createPath inherits activePlaneDepth", () => {
   });
 });
 
-// ─── setOrientation resets activePlaneDepth ─────────────────────────────────
-
-describe("setOrientation resets activePlaneDepth", () => {
-  beforeEach(resetState);
-
-  it("resets activePlaneDepth to 0 when orientation changes", () => {
-    setActivePlaneDepth(10);
-    expect(getState().activePlaneDepth).toBe(10);
-
-    setOrientation("xy");
-    expect(getState().activePlaneDepth).toBe(0);
-  });
-
-  it("does not reset activePlaneDepth when orientation is unchanged", () => {
-    setActivePlaneDepth(10);
-    setOrientation("xz"); // already xz, no-op
-    expect(getState().activePlaneDepth).toBe(10);
-  });
-});
-
 // ─── replaceState ────────────────────────────────────────────────────────────
 
 describe("replaceState", () => {
@@ -590,20 +554,30 @@ describe("replaceState", () => {
       cols: 8,
       rows: 8,
       tileSize: 16,
-      orientation: "yz",
     };
     const paths: Path[] = [
       { id: "path-50", cells: [{ col: 1, row: 2 }], color: "#aabb00", height: 3, depth: 5 },
     ];
-    replaceState(grid, paths);
+    replaceState(grid, paths, { x: 1, y: 0, z: 0 });
 
     const s = getState();
     expect(s.grid.cols).toBe(8);
-    expect(s.grid.orientation).toBe("yz");
+    expect(s.rotation).toEqual({ x: 1, y: 0, z: 0 });
     expect(s.paths).toHaveLength(1);
     expect(s.paths[0].id).toBe("path-50");
     expect(s.paths[0].depth).toBe(5);
     expect(s.activePathId).toBe("path-50");
+  });
+
+  it("defaults rotation to {0,0,0} when not provided", () => {
+    const grid: GridConfig = {
+      cols: 8,
+      rows: 8,
+      tileSize: 16,
+    };
+    replaceState(grid, []);
+
+    expect(getState().rotation).toEqual({ x: 0, y: 0, z: 0 });
   });
 
   it("defaults missing depth fields to 0", () => {
@@ -611,7 +585,6 @@ describe("replaceState", () => {
       cols: 8,
       rows: 8,
       tileSize: 16,
-      orientation: "xz",
     };
     // Simulate old data without depth field
     const paths = [
@@ -627,7 +600,6 @@ describe("replaceState", () => {
       cols: 8,
       rows: 8,
       tileSize: 16,
-      orientation: "xz",
     };
     replaceState(grid, []);
 
@@ -641,7 +613,6 @@ describe("replaceState", () => {
       cols: 8,
       rows: 8,
       tileSize: 16,
-      orientation: "xz",
     };
     const paths: Path[] = [
       { id: "path-500", cells: [], color: "#000000", height: 1, depth: 0 },
@@ -663,7 +634,6 @@ describe("replaceState", () => {
       cols: 8,
       rows: 8,
       tileSize: 16,
-      orientation: "xz",
     };
     replaceState(grid, []);
     expect(listener).toHaveBeenCalled();

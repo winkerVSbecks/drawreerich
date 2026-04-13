@@ -1,7 +1,7 @@
 import { Heerich } from 'heerich';
 import type { Face } from 'heerich';
 import { getState } from './state.ts';
-import type { CameraType, Orientation } from './state.ts';
+import type { CameraType, Rotation } from './state.ts';
 
 /**
  * Derive three face-shade levels from a base oklch color string.
@@ -15,47 +15,21 @@ export function faceColors(base: string) {
   };
 }
 
-/** Map a 2D grid cell to a 3D voxel position based on orientation and depth. */
+/** Map a 2D grid cell to a 3D voxel position (always XZ plane). */
 export function voxelPosition(
   col: number,
   row: number,
   y: number,
   depth: number,
-  orientation: Orientation,
 ): [number, number, number] {
-  switch (orientation) {
-    case 'xz':
-      // col → X, row → Z, extrude up in -Y, depth offsets along -Y
-      return [col, -y - depth, row];
-    case 'xy':
-      // col → X, row → Y (+Y = down), extrude in -Z, depth offsets along -Z
-      return [col, row, -y - depth];
-    case 'yz':
-      // col → Y (+Y = down), row → Z, extrude in +X, depth offsets along +X
-      return [y + depth, col, row];
-  }
+  // col → X, row → Z, extrude up in -Y, depth offsets along -Y
+  return [col, -y - depth, row];
 }
 
-/** Base camera angle for each orientation. */
-function baseAngle(orientation: Orientation): number {
-  switch (orientation) {
-    case 'xz':
-      return 45; // standard isometric floor view
-    case 'xy':
-      return 30; // front-wall: rotate toward the viewer
-    case 'yz':
-      return 60; // side-wall: rotate away from the viewer
-  }
-}
-
-/** Choose a camera angle that gives a natural view of the active plane, offset by delta. */
-export function cameraAngle(
-  orientation: Orientation,
-  delta: number = 0,
-): number {
-  const base = baseAngle(orientation);
+/** Camera angle: fixed 45° base, offset by delta. */
+export function cameraAngle(delta: number = 0): number {
   // Clamp result to 1–89° to prevent degenerate views (0° or 90°)
-  return Math.max(1, Math.min(89, base + delta));
+  return Math.max(1, Math.min(89, 45 + delta));
 }
 
 let scene = new Heerich({
@@ -82,17 +56,17 @@ function computeStableOffset(
   width: number,
   height: number,
 ): { x: number; y: number } {
-  const { grid, cameraType, cameraAngleDelta } = getState();
-  const key = `${grid.cols},${grid.rows},${grid.tileSize},${grid.orientation},${cameraType},${cameraAngleDelta},${width},${height}`;
+  const { grid, cameraType, cameraAngleDelta, rotation } = getState();
+  const key = `${grid.cols},${grid.rows},${grid.tileSize},${rotation.x},${rotation.y},${rotation.z},${cameraType},${cameraAngleDelta},${width},${height}`;
 
   if (cachedOffset && cachedOffsetKey === key) return cachedOffset;
 
   const refScene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, grid.orientation, cameraAngleDelta),
+    camera: cameraConfig(cameraType, cameraAngleDelta),
   });
 
-  const plane = planePosition(0, grid.cols, grid.rows, grid.orientation);
+  const plane = planePosition(0, grid.cols, grid.rows);
   refScene.addGeometry({
     type: 'box',
     position: plane.position,
@@ -102,6 +76,8 @@ function computeStableOffset(
     opaque: false,
     style: {},
   } as Parameters<typeof refScene.addGeometry>[0]);
+
+  applyRotation(refScene, rotation);
 
   const planeFaces = refScene.getFaces();
   if (planeFaces.length === 0) {
@@ -124,54 +100,38 @@ export function markDirty() {
 
 export function cameraConfig(
   type: CameraType,
-  orientation: Orientation,
   delta: number = 0,
 ) {
-  const angle = cameraAngle(orientation, delta);
+  const angle = cameraAngle(delta);
   return { type, angle };
 }
 
-/** Build the plane geometry params for a given depth and orientation. */
+/** Build the plane geometry params for a given depth (always XZ plane). */
 export function planePosition(
   depth: number,
   cols: number,
   rows: number,
-  orientation: Orientation,
 ): {
   position: [number, number, number];
   size: [number, number, number];
   scale: [number, number, number];
   scaleOrigin: [number, number, number];
 } {
-  switch (orientation) {
-    case 'xz':
-      // Floor plane: spans X=[0..cols), Z=[0..rows), at Y=-depth
-      // scaleOrigin Y=1 anchors the thin slab to the bottom edge
-      return {
-        position: [0, -depth, 0],
-        size: [cols, 1, rows],
-        scale: [1, 0.1, 1],
-        scaleOrigin: [0.5, 1, 0.5],
-      };
-    case 'xy':
-      // Front wall: spans X=[0..cols), Y=[0..rows), at Z=-depth
-      // scaleOrigin Z=1 anchors the thin slab to the back edge
-      return {
-        position: [0, 0, -depth],
-        size: [cols, rows, 1],
-        scale: [1, 1, 0.1],
-        scaleOrigin: [0.5, 0.5, 1],
-      };
-    case 'yz':
-      // Side wall: spans Y=[0..cols), Z=[0..rows), at X=depth
-      // scaleOrigin X=0 anchors the thin slab to the back edge
-      return {
-        position: [depth, 0, 0],
-        size: [1, cols, rows],
-        scale: [0.1, 1, 1],
-        scaleOrigin: [0, 0.5, 0.5],
-      };
-  }
+  // Floor plane: spans X=[0..cols), Z=[0..rows), at Y=-depth
+  // scaleOrigin Y=1 anchors the thin slab to the bottom edge
+  return {
+    position: [0, -depth, 0],
+    size: [cols, 1, rows],
+    scale: [1, 0.1, 1],
+    scaleOrigin: [0.5, 1, 0.5],
+  };
+}
+
+/** Apply rotation turns to a heerich scene. */
+function applyRotation(target: Heerich, rotation: Rotation) {
+  if (rotation.x) target.rotate({ axis: 'x', turns: rotation.x });
+  if (rotation.y) target.rotate({ axis: 'y', turns: rotation.y });
+  if (rotation.z) target.rotate({ axis: 'z', turns: rotation.z });
 }
 
 function rebuildScene() {
@@ -185,11 +145,12 @@ function rebuildScene() {
     cameraType,
     cameraAngleDelta,
     activePlaneDepth,
+    rotation,
   } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, grid.orientation, cameraAngleDelta),
+    camera: cameraConfig(cameraType, cameraAngleDelta),
   });
 
   const planeStyle = {
@@ -232,12 +193,7 @@ function rebuildScene() {
   scene.batch(() => {
     // Add the semi-transparent active plane (skipped during export)
     if (showPlane) {
-      const plane = planePosition(
-        activePlaneDepth,
-        grid.cols,
-        grid.rows,
-        grid.orientation,
-      );
+      const plane = planePosition(activePlaneDepth, grid.cols, grid.rows);
       scene.addGeometry({
         type: 'box',
         position: plane.position,
@@ -266,13 +222,7 @@ function rebuildScene() {
         for (let y = 0; y < path.height; y++) {
           scene.addGeometry({
             type: 'box',
-            position: voxelPosition(
-              cell.col,
-              cell.row,
-              y,
-              path.depth,
-              grid.orientation,
-            ),
+            position: voxelPosition(cell.col, cell.row, y, path.depth),
             size: 1,
             style,
           } as Parameters<typeof scene.addGeometry>[0]);
@@ -280,6 +230,9 @@ function rebuildScene() {
       }
     }
   });
+
+  // Apply rotation after building all geometry
+  applyRotation(scene, rotation);
 }
 
 /**

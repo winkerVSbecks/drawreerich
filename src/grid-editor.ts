@@ -6,22 +6,14 @@ import {
   getPathAtCell,
   subscribe,
 } from "./state.ts";
-import type { Orientation } from "./state.ts";
 
 const CELL_SIZE = 16;
 const GRID_PAD = 1;
 const LABEL_PAD = 14; // reserved pixels for axis labels on top and left edges
 
-/** Return the horizontal and vertical axis names for the current orientation. */
-export function axisLabels(orientation: Orientation): { h: string; v: string } {
-  switch (orientation) {
-    case "xz":
-      return { h: "X", v: "Z" };
-    case "xy":
-      return { h: "X", v: "Y" };
-    case "yz":
-      return { h: "Y", v: "Z" };
-  }
+/** Return the horizontal and vertical axis names (always XZ plane). */
+export function axisLabels(): { h: string; v: string } {
+  return { h: "X", v: "Z" };
 }
 
 export class GridEditor {
@@ -157,7 +149,7 @@ export class GridEditor {
 
   private draw(): void {
     const { grid, paths, activePathId } = getState();
-    const { cols, rows, orientation } = grid;
+    const { cols, rows } = grid;
     const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
     const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
 
@@ -168,7 +160,7 @@ export class GridEditor {
     this.ctx.fillRect(0, 0, w, h);
 
     // --- Axis labels ---
-    const labels = axisLabels(orientation);
+    const labels = axisLabels();
     this.ctx.fillStyle = "#556";
     this.ctx.font = "9px monospace";
 
