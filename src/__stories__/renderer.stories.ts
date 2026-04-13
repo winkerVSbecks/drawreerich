@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/web-components-vite";
 import { expect } from "storybook/test";
 import { renderScene, markDirty } from "../renderer.ts";
-import { replaceState, addCell, setCameraAngleDelta, setActivePlaneDepth } from "../state.ts";
+import { replaceState, addCell, setCameraAngleDelta, setActivePlaneDepth, setStroke } from "../state.ts";
 import { resetState, hasVisiblePixels } from "./helpers.ts";
 
 function createCanvas(width: number, height: number) {
@@ -222,6 +222,68 @@ export const PlaneAtEachOrientation: Story = {
       const ctx = canvas.getContext("2d")!;
       await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
     }
+  },
+};
+
+export const StrokeToggle: Story = {
+  render: () => {
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.gap = "8px";
+
+    // Render with stroke enabled
+    resetState();
+    addCell(4, 4);
+    addCell(5, 4);
+    addCell(4, 5);
+    setStroke(true);
+    markDirty();
+    const canvasOn = createCanvas(400, 400);
+    canvasOn.dataset.stroke = "on";
+    renderScene(canvasOn.getContext("2d")!, 400, 400);
+    container.appendChild(canvasOn);
+
+    // Render with stroke disabled
+    setStroke(false);
+    markDirty();
+    const canvasOff = createCanvas(400, 400);
+    canvasOff.dataset.stroke = "off";
+    renderScene(canvasOff.getContext("2d")!, 400, 400);
+    container.appendChild(canvasOff);
+
+    return container;
+  },
+  play: async ({ canvasElement }) => {
+    const canvasOn = canvasElement.querySelector(
+      'canvas[data-stroke="on"]',
+    ) as HTMLCanvasElement;
+    const canvasOff = canvasElement.querySelector(
+      'canvas[data-stroke="off"]',
+    ) as HTMLCanvasElement;
+
+    const ctxOn = canvasOn.getContext("2d")!;
+    const ctxOff = canvasOff.getContext("2d")!;
+
+    // Both renders should produce visible content
+    await expect(hasVisiblePixels(ctxOn, 400, 400)).toBe(true);
+    await expect(hasVisiblePixels(ctxOff, 400, 400)).toBe(true);
+
+    // Disabling stroke must change the rendered output
+    const dataOn = ctxOn.getImageData(0, 0, 400, 400).data;
+    const dataOff = ctxOff.getImageData(0, 0, 400, 400).data;
+
+    let diffCount = 0;
+    for (let i = 0; i < dataOn.length; i += 4) {
+      if (
+        dataOn[i] !== dataOff[i] ||
+        dataOn[i + 1] !== dataOff[i + 1] ||
+        dataOn[i + 2] !== dataOff[i + 2] ||
+        dataOn[i + 3] !== dataOff[i + 3]
+      ) {
+        diffCount++;
+      }
+    }
+    await expect(diffCount).toBeGreaterThan(0);
   },
 };
 
