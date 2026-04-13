@@ -115,4 +115,28 @@ describe("isValidSaveData", () => {
     const badPath = { id: "p-1", cells: "none", color: "#000", height: 1 };
     expect(isValidSaveData({ ...validData, paths: [badPath] })).toBe(false);
   });
+
+  it("accepts paths without a depth field (backwards compatibility)", () => {
+    const data = {
+      ...validData,
+      paths: [{ id: "path-1", cells: [], color: "#000", height: 1 }],
+    };
+    expect(isValidSaveData(data)).toBe(true);
+  });
+
+  it("accepts paths with a numeric depth field", () => {
+    const data = {
+      ...validData,
+      paths: [{ id: "path-1", cells: [], color: "#000", height: 1, depth: 5 }],
+    };
+    expect(isValidSaveData(data)).toBe(true);
+  });
+
+  it("rejects paths with a non-numeric depth field", () => {
+    const data = {
+      ...validData,
+      paths: [{ id: "path-1", cells: [], color: "#000", height: 1, depth: "deep" }],
+    };
+    expect(isValidSaveData(data)).toBe(false);
+  });
 });

@@ -62,7 +62,7 @@ export const ResizesOnGridChange: Story = {
     const canvas = canvasElement.querySelector("canvas")!;
     replaceState(
       { cols: 8, rows: 8, tileSize: 32, orientation: "xz" },
-      [{ id: "path-200", cells: [], color: "#4477bb", height: 2 }],
+      [{ id: "path-200", cells: [], color: "#4477bb", height: 2, depth: 0 }],
     );
     // width = 8 * 16 + 1 + 14 = 143
     await expect(canvas.style.width).toBe("143px");
