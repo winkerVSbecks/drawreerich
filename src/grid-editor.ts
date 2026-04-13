@@ -12,126 +12,6 @@ const CELL_SIZE = 16;
 const GRID_PAD = 1;
 const LABEL_PAD = 14; // reserved pixels for axis labels on top and left edges
 
-let canvas: HTMLCanvasElement;
-let ctx: CanvasRenderingContext2D;
-let painting = false;
-let erasing = false;
-
-export function initGridEditor(container: HTMLElement) {
-  canvas = document.createElement("canvas");
-  canvas.style.display = "block";
-  canvas.style.cursor = "crosshair";
-  container.appendChild(canvas);
-
-  ctx = canvas.getContext("2d")!;
-
-  resize();
-  draw();
-
-  subscribe(() => {
-    resize();
-    draw();
-  });
-
-  canvas.addEventListener("mousedown", onMouseDown);
-  canvas.addEventListener("mousemove", onMouseMove);
-  window.addEventListener("mouseup", onMouseUp);
-  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-
-  canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-  canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-  canvas.addEventListener("touchend", onTouchEnd);
-}
-
-function resize() {
-  const { cols, rows } = getState().grid;
-  const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
-  const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
-  const dpr = window.devicePixelRatio;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  canvas.style.width = `${w}px`;
-  canvas.style.height = `${h}px`;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-/** Convert a pointer position to a grid cell, accounting for the label padding. */
-function cellAtXY(clientX: number, clientY: number): { col: number; row: number } | null {
-  const rect = canvas.getBoundingClientRect();
-  const x = clientX - rect.left - LABEL_PAD;
-  const y = clientY - rect.top - LABEL_PAD;
-  const col = Math.floor(x / CELL_SIZE);
-  const row = Math.floor(y / CELL_SIZE);
-  const { cols, rows } = getState().grid;
-  if (col < 0 || col >= cols || row < 0 || row >= rows) return null;
-  return { col, row };
-}
-
-// --- Mouse handlers ---
-
-function onMouseDown(e: MouseEvent) {
-  const cell = cellAtXY(e.clientX, e.clientY);
-  if (!cell) return;
-
-  if (e.button === 2) {
-    erasing = true;
-    removeCell(cell.col, cell.row);
-  } else if (e.button === 0) {
-    const ownerPath = getPathAtCell(cell.col, cell.row);
-    if (ownerPath) {
-      setActivePath(ownerPath.id);
-    } else {
-      painting = true;
-      addCell(cell.col, cell.row);
-    }
-  }
-}
-
-function onMouseMove(e: MouseEvent) {
-  if (!painting && !erasing) return;
-  const cell = cellAtXY(e.clientX, e.clientY);
-  if (!cell) return;
-
-  if (painting) addCell(cell.col, cell.row);
-  if (erasing) removeCell(cell.col, cell.row);
-}
-
-function onMouseUp() {
-  painting = false;
-  erasing = false;
-}
-
-// --- Touch handlers ---
-
-function onTouchStart(e: TouchEvent) {
-  e.preventDefault();
-  const touch = e.touches[0];
-  const cell = cellAtXY(touch.clientX, touch.clientY);
-  if (!cell) return;
-
-  const ownerPath = getPathAtCell(cell.col, cell.row);
-  if (ownerPath) {
-    setActivePath(ownerPath.id);
-  } else {
-    painting = true;
-    addCell(cell.col, cell.row);
-  }
-}
-
-function onTouchMove(e: TouchEvent) {
-  e.preventDefault();
-  if (!painting) return;
-  const touch = e.touches[0];
-  const cell = cellAtXY(touch.clientX, touch.clientY);
-  if (!cell) return;
-
-  addCell(cell.col, cell.row);
-}
-
-function onTouchEnd() {
-  painting = false;
-}
-
 /** Return the horizontal and vertical axis names for the current orientation. */
 export function axisLabels(orientation: Orientation): { h: string; v: string } {
   switch (orientation) {
@@ -144,78 +24,217 @@ export function axisLabels(orientation: Orientation): { h: string; v: string } {
   }
 }
 
-function draw() {
-  const { grid, paths, activePathId } = getState();
-  const { cols, rows, orientation } = grid;
-  const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
-  const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
+export class GridEditor {
+  readonly canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private painting = false;
+  private erasing = false;
+  private unsubscribe: () => void;
+  private boundMouseUp: () => void;
 
-  ctx.clearRect(0, 0, w, h);
+  constructor(doc: Document) {
+    this.canvas = doc.createElement("canvas");
+    this.canvas.style.display = "block";
+    this.canvas.style.cursor = "crosshair";
 
-  // Draw background
-  ctx.fillStyle = "#0d1117";
-  ctx.fillRect(0, 0, w, h);
+    this.ctx = this.canvas.getContext("2d")!;
 
-  // --- Axis labels ---
-  const labels = axisLabels(orientation);
-  ctx.fillStyle = "#556";
-  ctx.font = "9px monospace";
+    this.resize();
+    this.draw();
 
-  // Horizontal axis label centred above the grid
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(
-    `${labels.h} →`,
-    LABEL_PAD + (cols * CELL_SIZE) / 2,
-    LABEL_PAD / 2
-  );
+    this.unsubscribe = subscribe(() => {
+      this.resize();
+      this.draw();
+    });
 
-  // Vertical axis label centred to the left of the grid (rotated)
-  ctx.save();
-  ctx.translate(LABEL_PAD / 2, LABEL_PAD + (rows * CELL_SIZE) / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText(`${labels.v} →`, 0, 0);
-  ctx.restore();
+    this.boundMouseUp = () => this.onMouseUp();
 
-  // --- Grid lines (offset by LABEL_PAD) ---
-  ctx.strokeStyle = "#2a2a4a";
-  ctx.lineWidth = 0.5;
-  for (let c = 0; c <= cols; c++) {
-    const x = LABEL_PAD + c * CELL_SIZE + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x, LABEL_PAD);
-    ctx.lineTo(x, LABEL_PAD + rows * CELL_SIZE);
-    ctx.stroke();
-  }
-  for (let r = 0; r <= rows; r++) {
-    const y = LABEL_PAD + r * CELL_SIZE + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(LABEL_PAD, y);
-    ctx.lineTo(LABEL_PAD + cols * CELL_SIZE, y);
-    ctx.stroke();
+    this.canvas.addEventListener("mousedown", (e) => this.onMouseDown(e));
+    this.canvas.addEventListener("mousemove", (e) => this.onMouseMove(e));
+    window.addEventListener("mouseup", this.boundMouseUp);
+    this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    this.canvas.addEventListener("touchstart", (e) => this.onTouchStart(e), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchmove", (e) => this.onTouchMove(e), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchend", () => this.onTouchEnd());
   }
 
-  // --- Path cells (offset by LABEL_PAD) ---
-  for (const path of paths) {
-    const isActive = path.id === activePathId;
+  dispose(): void {
+    this.unsubscribe();
+    window.removeEventListener("mouseup", this.boundMouseUp);
+  }
 
-    for (const cell of path.cells) {
-      const cx = LABEL_PAD + cell.col * CELL_SIZE + 1;
-      const cy = LABEL_PAD + cell.row * CELL_SIZE + 1;
-      const cw = CELL_SIZE - 1;
-      const ch = CELL_SIZE - 1;
+  private resize(): void {
+    const { cols, rows } = getState().grid;
+    const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
+    const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
+    const dpr = window.devicePixelRatio;
+    this.canvas.width = w * dpr;
+    this.canvas.height = h * dpr;
+    this.canvas.style.width = `${w}px`;
+    this.canvas.style.height = `${h}px`;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
 
-      ctx.globalAlpha = isActive ? 1.0 : 0.5;
-      ctx.fillStyle = path.color;
-      ctx.fillRect(cx, cy, cw, ch);
+  private cellAtXY(
+    clientX: number,
+    clientY: number
+  ): { col: number; row: number } | null {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = clientX - rect.left - LABEL_PAD;
+    const y = clientY - rect.top - LABEL_PAD;
+    const col = Math.floor(x / CELL_SIZE);
+    const row = Math.floor(y / CELL_SIZE);
+    const { cols, rows } = getState().grid;
+    if (col < 0 || col >= cols || row < 0 || row >= rows) return null;
+    return { col, row };
+  }
 
-      if (isActive) {
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(cx + 0.5, cy + 0.5, cw - 1, ch - 1);
+  private onMouseDown(e: MouseEvent): void {
+    const cell = this.cellAtXY(e.clientX, e.clientY);
+    if (!cell) return;
+
+    if (e.button === 2) {
+      this.erasing = true;
+      removeCell(cell.col, cell.row);
+    } else if (e.button === 0) {
+      const ownerPath = getPathAtCell(cell.col, cell.row);
+      if (ownerPath) {
+        setActivePath(ownerPath.id);
+      } else {
+        this.painting = true;
+        addCell(cell.col, cell.row);
       }
     }
   }
 
-  ctx.globalAlpha = 1.0;
+  private onMouseMove(e: MouseEvent): void {
+    if (!this.painting && !this.erasing) return;
+    const cell = this.cellAtXY(e.clientX, e.clientY);
+    if (!cell) return;
+
+    if (this.painting) addCell(cell.col, cell.row);
+    if (this.erasing) removeCell(cell.col, cell.row);
+  }
+
+  private onMouseUp(): void {
+    this.painting = false;
+    this.erasing = false;
+  }
+
+  private onTouchStart(e: TouchEvent): void {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const cell = this.cellAtXY(touch.clientX, touch.clientY);
+    if (!cell) return;
+
+    const ownerPath = getPathAtCell(cell.col, cell.row);
+    if (ownerPath) {
+      setActivePath(ownerPath.id);
+    } else {
+      this.painting = true;
+      addCell(cell.col, cell.row);
+    }
+  }
+
+  private onTouchMove(e: TouchEvent): void {
+    e.preventDefault();
+    if (!this.painting) return;
+    const touch = e.touches[0];
+    const cell = this.cellAtXY(touch.clientX, touch.clientY);
+    if (!cell) return;
+
+    addCell(cell.col, cell.row);
+  }
+
+  private onTouchEnd(): void {
+    this.painting = false;
+  }
+
+  private draw(): void {
+    const { grid, paths, activePathId } = getState();
+    const { cols, rows, orientation } = grid;
+    const w = cols * CELL_SIZE + GRID_PAD + LABEL_PAD;
+    const h = rows * CELL_SIZE + GRID_PAD + LABEL_PAD;
+
+    this.ctx.clearRect(0, 0, w, h);
+
+    // Draw background
+    this.ctx.fillStyle = "#0d1117";
+    this.ctx.fillRect(0, 0, w, h);
+
+    // --- Axis labels ---
+    const labels = axisLabels(orientation);
+    this.ctx.fillStyle = "#556";
+    this.ctx.font = "9px monospace";
+
+    // Horizontal axis label centred above the grid
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText(
+      `${labels.h} →`,
+      LABEL_PAD + (cols * CELL_SIZE) / 2,
+      LABEL_PAD / 2
+    );
+
+    // Vertical axis label centred to the left of the grid (rotated)
+    this.ctx.save();
+    this.ctx.translate(LABEL_PAD / 2, LABEL_PAD + (rows * CELL_SIZE) / 2);
+    this.ctx.rotate(-Math.PI / 2);
+    this.ctx.fillText(`${labels.v} →`, 0, 0);
+    this.ctx.restore();
+
+    // --- Grid lines (offset by LABEL_PAD) ---
+    this.ctx.strokeStyle = "#2a2a4a";
+    this.ctx.lineWidth = 0.5;
+    for (let c = 0; c <= cols; c++) {
+      const x = LABEL_PAD + c * CELL_SIZE + 0.5;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, LABEL_PAD);
+      this.ctx.lineTo(x, LABEL_PAD + rows * CELL_SIZE);
+      this.ctx.stroke();
+    }
+    for (let r = 0; r <= rows; r++) {
+      const y = LABEL_PAD + r * CELL_SIZE + 0.5;
+      this.ctx.beginPath();
+      this.ctx.moveTo(LABEL_PAD, y);
+      this.ctx.lineTo(LABEL_PAD + cols * CELL_SIZE, y);
+      this.ctx.stroke();
+    }
+
+    // --- Path cells (offset by LABEL_PAD) ---
+    for (const path of paths) {
+      const isActive = path.id === activePathId;
+
+      for (const cell of path.cells) {
+        const cx = LABEL_PAD + cell.col * CELL_SIZE + 1;
+        const cy = LABEL_PAD + cell.row * CELL_SIZE + 1;
+        const cw = CELL_SIZE - 1;
+        const ch = CELL_SIZE - 1;
+
+        this.ctx.globalAlpha = isActive ? 1.0 : 0.5;
+        this.ctx.fillStyle = path.color;
+        this.ctx.fillRect(cx, cy, cw, ch);
+
+        if (isActive) {
+          this.ctx.strokeStyle = "#ffffff";
+          this.ctx.lineWidth = 1.5;
+          this.ctx.strokeRect(cx + 0.5, cy + 0.5, cw - 1, ch - 1);
+        }
+      }
+    }
+
+    this.ctx.globalAlpha = 1.0;
+  }
+}
+
+/** Mount a grid editor canvas in `container`. Used by Storybook stories. */
+export function initGridEditor(container: HTMLElement): GridEditor {
+  const editor = new GridEditor(document);
+  container.appendChild(editor.canvas);
+  return editor;
 }

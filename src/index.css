@@ -8,7 +8,7 @@
 
 :root {
   --panel-width: 300px;
-  --panel-bg: rgba(22, 33, 62, 0.92);
+  --panel-bg: hsla(0, 0%, 10%, 0.8);
   --panel-border: #2a2a4a;
   --bg: #1a1a2e;
   --text: #e0e0e0;
@@ -150,12 +150,11 @@ body {
   padding: 10px 12px 4px;
 }
 
-#path-swatches {
+.tp-grdv-swatches {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--panel-border);
+  padding: 8px 0 4px;
 }
 
 .path-swatch {
@@ -178,9 +177,13 @@ body {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
-#grid-editor-container {
+.tp-grdv {
   padding: 8px 12px 12px;
   border-top: 1px solid var(--panel-border);
+}
+
+.tp-grdv canvas {
+  display: block;
 }
 
 /* ── Hamburger menu button ────────────────────────────────── */
@@ -191,26 +194,13 @@ body {
   top: 1rem;
   right: 1rem;
   z-index: 101;
-  width: 40px;
-  height: 40px;
   padding: 8px;
   background: var(--panel-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border-radius: 3px;
   cursor: pointer;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-}
-
-.hamburger-bar {
-  display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--text);
-  border-radius: 1px;
 }
 
 /* ── Overlay backdrop ─────────────────────────────────────── */
