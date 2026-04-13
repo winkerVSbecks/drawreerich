@@ -190,6 +190,11 @@ export function renderScene(
 
   ctx.clearRect(0, 0, width, height);
 
+  // Fill with background color
+  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#1a1a2e";
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
   const faces = scene.getFaces();
   if (faces.length === 0) return;
 
