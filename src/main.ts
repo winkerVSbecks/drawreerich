@@ -20,6 +20,7 @@ import {
   createPath,
   clearAllPaths,
   setPathColorSource,
+  replaceState,
   subscribe,
 } from './state.ts';
 import type { CameraType, Orientation } from './state.ts';
@@ -33,18 +34,56 @@ import {
 import './index.css';
 import { generatePalette } from './palette.ts';
 
+/** Seed the canvas with Tetris-style pieces on first visit. */
+function loadDefaultComposition(colors: string[]) {
+  const c = (i: number) => colors[i % colors.length] ?? '#4477bb';
+  replaceState(
+    { cols: 16, rows: 16, tileSize: 32, orientation: 'xz' },
+    [
+      // I piece – horizontal bar
+      { id: 'path-1', color: c(0), height: 2, depth: 0, cells: [
+        { col: 1, row: 7 }, { col: 2, row: 7 }, { col: 3, row: 7 }, { col: 4, row: 7 },
+      ] },
+      // O piece – 2×2 square
+      { id: 'path-2', color: c(1), height: 4, depth: 0, cells: [
+        { col: 7, row: 10 }, { col: 8, row: 10 }, { col: 7, row: 11 }, { col: 8, row: 11 },
+      ] },
+      // T piece – stem pointing down
+      { id: 'path-3', color: c(2), height: 3, depth: 0, cells: [
+        { col: 4, row: 3 }, { col: 5, row: 3 }, { col: 6, row: 3 }, { col: 5, row: 4 },
+      ] },
+      // L piece
+      { id: 'path-4', color: c(3), height: 3, depth: 0, cells: [
+        { col: 8, row: 3 }, { col: 8, row: 4 }, { col: 8, row: 5 }, { col: 9, row: 5 },
+      ] },
+      // Z piece
+      { id: 'path-5', color: c(4), height: 2, depth: 0, cells: [
+        { col: 2, row: 10 }, { col: 3, row: 10 }, { col: 3, row: 11 }, { col: 4, row: 11 },
+      ] },
+    ]
+  );
+}
+
 // Restore saved state from localStorage before reading PARAMS
-tryRestore();
+const hasRestoredState = tryRestore();
+
+// Start auto-saving state to localStorage (before loading default so it gets persisted)
+startAutoSave();
 
 // Initialize colour palette
 let currentPalette = generatePalette();
 setPathColorSource(currentPalette.pathColors);
 document.documentElement.style.setProperty("--bg", currentPalette.background);
 
-// Recolour the initial path with the first palette path colour
-const initPath = getActivePath();
-if (initPath) {
-  setPathColor(initPath.id, currentPalette.pathColors[0]);
+if (!hasRestoredState) {
+  // First visit — seed with a Tetris-style default composition
+  loadDefaultComposition(currentPalette.pathColors);
+} else {
+  // Recolour the initial path with the first palette path colour
+  const initPath = getActivePath();
+  if (initPath) {
+    setPathColor(initPath.id, currentPalette.pathColors[0]);
+  }
 }
 
 /** Apply a new palette: update background, recolour all existing paths. */
@@ -202,6 +241,11 @@ fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
   applyPalette();
 });
 
+fileFolder.addButton({ title: 'Load Demo' }).on('click', () => {
+  loadDefaultComposition(currentPalette.pathColors);
+  syncParamsFromState();
+});
+
 fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
   if (confirm('Clear all paths? This cannot be undone.')) {
     clearAllPaths();
@@ -295,9 +339,6 @@ settingsSummary.addEventListener('click', (e) => {
 if (window.matchMedia('(min-width: 768px)').matches) {
   openSidebar();
 }
-
-// Start auto-saving state to localStorage
-startAutoSave();
 
 // Ssam sketch
 let doExportFrame: (() => void) | null = null;

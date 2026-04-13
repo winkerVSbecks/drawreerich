@@ -24,7 +24,7 @@ type Story = StoryObj;
 
 export const PaletteAppliedScene: Story = {
   render: () => {
-    const palette = generatePalette();
+    const palette = generatePalette("palette-applied-scene");
     setPathColorSource(palette.pathColors);
 
     // Set up a scene with paths coloured by palette
@@ -99,7 +99,7 @@ export const PaletteAppliedScene: Story = {
 export const RegeneratePaletteRecolours: Story = {
   render: () => {
     // First palette
-    const palette1 = generatePalette();
+    const palette1 = generatePalette("regenerate-before");
     setPathColorSource(palette1.pathColors);
 
     replaceState(
@@ -126,7 +126,7 @@ export const RegeneratePaletteRecolours: Story = {
     renderScene(canvas1.getContext("2d")!, 400, 400);
 
     // Second palette (regenerate) — recolour the path
-    const palette2 = generatePalette();
+    const palette2 = generatePalette("regenerate-after");
     setPathColorSource(palette2.pathColors);
     setPathColor("path-1", palette2.pathColors[0]);
     document.documentElement.style.setProperty("--bg", palette2.background);

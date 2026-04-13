@@ -66,8 +66,10 @@ function hsl2farbrad(h: number, s: number, l: number) {
 
 export function generateColors(
   format: 'srgb' | 'hex' = 'srgb',
-  hue: number
+  hue: number,
+  seed?: string | number
 ): string[] {
+  if (seed !== undefined) Random.setSeed(seed);
   const options = newOptions(hue);
 
   const colorHSL = generateColorRamp(options as Parameters<typeof generateColorRamp>[0]);
@@ -84,7 +86,8 @@ export function generateColors(
  * Generate a colour palette using rampensau + RYB colour mixing.
  * Index 0 = background (darkest), rest = path colours.
  */
-export function generatePalette(): Palette {
+export function generatePalette(seed?: string | number): Palette {
+  if (seed !== undefined) Random.setSeed(seed);
   const hue = Random.range(0, 360);
   const colors = generateColors('hex', hue);
 
