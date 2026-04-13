@@ -1,19 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/web-components-vite";
-import { expect } from "storybook/test";
+import { expect, userEvent } from "storybook/test";
 import "../index.css";
 
-function renderLayout(): HTMLDivElement {
+function renderLayout(open = true): HTMLDivElement {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = `
     <div id="app" style="width:100vw;height:100vh;position:relative;overflow:hidden;">
       <div id="canvas-container"></div>
-      <button id="menu-button" aria-label="Open settings">
-        <span class="hamburger-bar"></span>
-        <span class="hamburger-bar"></span>
-        <span class="hamburger-bar"></span>
-      </button>
-      <div id="overlay-backdrop" aria-hidden="true"></div>
-      <details id="settings-panel">
+      <details id="settings-panel"${open ? " open" : ""}>
         <summary class="settings-toggle">
           <span>Settings</span>
           <span class="settings-toggle-icon" aria-hidden="true"></span>
@@ -27,109 +21,65 @@ function renderLayout(): HTMLDivElement {
   return wrapper;
 }
 
-const desktopViewport = {
-  name: "Desktop",
-  styles: { width: "1024px", height: "768px" },
-  type: "desktop" as const,
-};
-
-const mobileViewport = {
-  name: "Mobile",
-  styles: { width: "375px", height: "667px" },
-  type: "mobile" as const,
-};
-
 const meta: Meta = {
   title: "Layout",
-  parameters: {
-    viewport: {
-      viewports: {
-        desktop: desktopViewport,
-        mobile: mobileViewport,
-      },
-    },
-  },
 };
 
 export default meta;
 
 type Story = StoryObj;
 
-// ─── Hamburger button visible at desktop width ─────────────────────────────
+// ─── Settings panel open ────────────────────────────────────────────────────
 
-export const HamburgerVisibleAtDesktopWidth: Story = {
-  render: renderLayout,
-  parameters: {
-    viewport: { defaultViewport: "desktop" },
-  },
+export const SettingsMenuOpen: Story = {
+  render: () => renderLayout(true),
   play: async ({ canvasElement }) => {
-    const menuButton = canvasElement.querySelector("#menu-button")!;
-    const style = window.getComputedStyle(menuButton);
-    await expect(style.display).toBe("flex");
+    const panel = canvasElement.querySelector<HTMLDetailsElement>("#settings-panel")!;
+    const body = canvasElement.querySelector<HTMLElement>("#settings-body")!;
+
+    // Panel should be open and content visible
+    await expect(panel.open).toBe(true);
+    await expect(body.offsetParent).not.toBeNull();
   },
 };
 
-// ─── Hamburger button visible at mobile width ──────────────────────────────
+// ─── Settings panel closed ──────────────────────────────────────────────────
 
-export const HamburgerVisibleAtMobileWidth: Story = {
-  render: renderLayout,
-  parameters: {
-    viewport: { defaultViewport: "mobile" },
-  },
+export const SettingsMenuClosed: Story = {
+  render: () => renderLayout(false),
   play: async ({ canvasElement }) => {
-    const menuButton = canvasElement.querySelector("#menu-button")!;
-    const style = window.getComputedStyle(menuButton);
-    await expect(style.display).toBe("flex");
+    const panel = canvasElement.querySelector<HTMLDetailsElement>("#settings-panel")!;
+    const body = canvasElement.querySelector<HTMLElement>("#settings-body")!;
+    const summary = canvasElement.querySelector<HTMLElement>(".settings-toggle")!;
+
+    // Panel should be closed and content hidden
+    await expect(panel.open).toBe(false);
+    await expect(body.offsetParent).toBeNull();
+
+    // Panel height should match summary height — it doesn't cover the full viewport
+    const panelRect = panel.getBoundingClientRect();
+    const summaryRect = summary.getBoundingClientRect();
+    await expect(panelRect.height).toBeCloseTo(summaryRect.height, 0);
   },
 };
 
-// ─── Settings panel hidden by default ───────────────────────────────────────
+// ─── Summary toggles the panel open and closed ──────────────────────────────
 
-export const SettingsPanelHiddenByDefault: Story = {
-  render: renderLayout,
-  parameters: {
-    viewport: { defaultViewport: "desktop" },
-  },
+export const SettingsMenuToggle: Story = {
+  render: () => renderLayout(true),
   play: async ({ canvasElement }) => {
-    const panel = canvasElement.querySelector("#settings-panel")!;
-    const style = window.getComputedStyle(panel);
-    // Panel should be off-screen (translated to the right)
-    await expect(style.transform).toContain("matrix");
-  },
-};
+    const panel = canvasElement.querySelector<HTMLDetailsElement>("#settings-panel")!;
+    const summary = canvasElement.querySelector<HTMLElement>(".settings-toggle")!;
 
-// ─── Backdrop dismisses panel ───────────────────────────────────────────────
+    // Starts open
+    await expect(panel.open).toBe(true);
 
-export const BackdropDismissesPanel: Story = {
-  render: () => {
-    const wrapper = renderLayout();
-    const app = wrapper.querySelector("#app")!;
-    const backdrop = wrapper.querySelector("#overlay-backdrop")!;
+    // Click summary to close
+    await userEvent.click(summary);
+    await expect(panel.open).toBe(false);
 
-    // Open the sidebar
-    app.classList.add("sidebar-open");
-
-    // Wire up backdrop click to close
-    backdrop.addEventListener("click", () => {
-      app.classList.remove("sidebar-open");
-    });
-
-    return wrapper;
-  },
-  parameters: {
-    viewport: { defaultViewport: "desktop" },
-  },
-  play: async ({ canvasElement }) => {
-    const app = canvasElement.querySelector("#app")!;
-    const backdrop = canvasElement.querySelector("#overlay-backdrop")!;
-
-    // Verify sidebar is open
-    await expect(app.classList.contains("sidebar-open")).toBe(true);
-
-    // Click backdrop
-    backdrop.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
-    // Sidebar should be closed
-    await expect(app.classList.contains("sidebar-open")).toBe(false);
+    // Click summary to reopen
+    await userEvent.click(summary);
+    await expect(panel.open).toBe(true);
   },
 };
