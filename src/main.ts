@@ -1,7 +1,8 @@
-import { ssam } from "ssam";
-import type { Sketch, SketchSettings } from "ssam";
-import { Pane } from "tweakpane";
-import { renderScene, markDirty } from "./renderer.ts";
+import { ssam } from 'ssam';
+import type { Sketch, SketchSettings } from 'ssam';
+import { Pane } from 'tweakpane';
+import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
+import { renderScene, markDirty } from './renderer.ts';
 import {
   getState,
   getActivePath,
@@ -57,15 +58,19 @@ function applyPalette() {
 }
 
 // Tweakpane setup
-const paneContainer = document.getElementById("tweakpane-container")!;
-const pane = new Pane({ container: paneContainer, title: "drawreerich" });
+const paneContainer = document.getElementById('tweakpane-container')!;
+const pane = new Pane({ container: paneContainer, title: 'drawreerich' });
+pane.registerPlugin(EssentialsPlugin);
 
 /** Return the depth axis label for the current orientation. */
 function depthAxisLabel(orientation: Orientation): string {
   switch (orientation) {
-    case "xz": return "depth (Y)";
-    case "xy": return "depth (Z)";
-    case "yz": return "depth (X)";
+    case 'xz':
+      return 'depth (Y)';
+    case 'xy':
+      return 'depth (Z)';
+    case 'yz':
+      return 'depth (X)';
   }
 }
 
@@ -80,31 +85,38 @@ const PARAMS = {
 };
 
 pane
-  .addBinding(PARAMS, "cols", { label: "cols", min: 4, max: 32, step: 1 })
-  .on("change", (ev) => {
+  .addBinding(PARAMS, 'cols', { label: 'cols', min: 4, max: 32, step: 1 })
+  .on('change', (ev) => {
     setGridCols(ev.value);
   });
 
 pane
-  .addBinding(PARAMS, "rows", { label: "rows", min: 4, max: 32, step: 1 })
-  .on("change", (ev) => {
+  .addBinding(PARAMS, 'rows', { label: 'rows', min: 4, max: 32, step: 1 })
+  .on('change', (ev) => {
     setGridRows(ev.value);
   });
 
-pane.addBinding(PARAMS, "tileSize", { min: 8, max: 64, step: 1 }).on(
-  "change",
-  (ev) => {
+pane
+  .addBinding(PARAMS, 'tileSize', { min: 8, max: 64, step: 1 })
+  .on('change', (ev) => {
     setTileSize(ev.value);
-  }
-);
+  });
 
 pane
-  .addBinding(PARAMS, "orientation", {
-    label: "orientation",
-    options: { XZ: "xz", XY: "xy", YZ: "yz" },
+  .addBinding(PARAMS, 'orientation', {
+    label: 'orientation',
+    view: 'radiogrid',
+    groupName: 'scale',
+    size: [3, 1],
+    cells: (x: number) =>
+      [
+        { title: 'XZ', value: 'xz' },
+        { title: 'XY', value: 'xy' },
+        { title: 'YZ', value: 'yz' },
+      ][x],
   })
-  .on("change", (ev) => {
-    setOrientation(ev.value as "xz" | "xy" | "yz");
+  .on('change', (ev) => {
+    setOrientation(ev.value as 'xz' | 'xy' | 'yz');
     // Update depth slider label and value after orientation reset
     depthBinding.label = depthAxisLabel(ev.value as Orientation);
     PARAMS.activePlaneDepth = 0;
@@ -112,34 +124,34 @@ pane
   });
 
 pane
-  .addBinding(PARAMS, "cameraType", {
-    label: "camera",
+  .addBinding(PARAMS, 'cameraType', {
+    label: 'camera',
     options: {
-      Isometric: "isometric",
-      Oblique: "oblique",
-      Orthographic: "orthographic",
+      Isometric: 'isometric',
+      Oblique: 'oblique',
+      Orthographic: 'orthographic',
     },
   })
-  .on("change", (ev) => {
+  .on('change', (ev) => {
     setCameraType(ev.value as CameraType);
   });
 
-pane.addButton({ title: "Reset Camera" }).on("click", () => {
+pane.addButton({ title: 'Reset Camera' }).on('click', () => {
   resetCameraAngle();
 });
 
 const depthBinding = pane
-  .addBinding(PARAMS, "activePlaneDepth", {
+  .addBinding(PARAMS, 'activePlaneDepth', {
     label: depthAxisLabel(getState().grid.orientation),
     min: 0,
     max: 20,
     step: 1,
   })
-  .on("change", (ev) => {
+  .on('change', (ev) => {
     setActivePlaneDepth(ev.value);
   });
 
-pane.addBinding(PARAMS, "stroke", { label: "stroke" }).on("change", (ev) => {
+pane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
   setStroke(ev.value);
 });
 
@@ -147,29 +159,37 @@ pane.addBinding(PARAMS, "stroke", { label: "stroke" }).on("change", (ev) => {
 const activePath = getActivePath();
 const PATH_PARAMS = {
   height: activePath?.height ?? 2,
+  color: activePath?.color ?? '#4477bb',
 };
 
-const pathFolder = pane.addFolder({ title: "Active Path" });
+const pathFolder = pane.addFolder({ title: 'Active Path' });
 
 const heightBinding = pathFolder
-  .addBinding(PATH_PARAMS, "height", {
-    label: "height",
+  .addBinding(PATH_PARAMS, 'height', {
+    label: 'height',
     min: 1,
     max: 10,
     step: 1,
   })
-  .on("change", (ev) => {
+  .on('change', (ev) => {
     const ap = getActivePath();
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
+const colorBinding = pathFolder
+  .addBinding(PATH_PARAMS, 'color', { label: 'color' })
+  .on('change', (ev) => {
+    const ap = getActivePath();
+    if (ap) setPathColor(ap.id, ev.value);
+  });
+
 // "New Path" button
-pathFolder.addButton({ title: "New Path" }).on("click", () => {
+pathFolder.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
 });
 
 // --- Persistence controls ---
-const fileFolder = pane.addFolder({ title: "File" });
+const fileFolder = pane.addFolder({ title: 'File' });
 
 fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
   applyPalette();
@@ -177,20 +197,22 @@ fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
 
 fileFolder.addButton({ title: "Clear All" }).on("click", () => {
   if (confirm("Clear all paths? This cannot be undone.")) {
+fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
+  if (confirm('Clear all paths? This cannot be undone.')) {
     clearAllPaths();
     syncParamsFromState();
   }
 });
 
-fileFolder.addButton({ title: "Export Image" }).on("click", () => {
+fileFolder.addButton({ title: 'Export Image' }).on('click', () => {
   if (doExportFrame) doExportFrame();
 });
 
-fileFolder.addButton({ title: "Export JSON" }).on("click", () => {
+fileFolder.addButton({ title: 'Export JSON' }).on('click', () => {
   exportJSON();
 });
 
-fileFolder.addButton({ title: "Import JSON" }).on("click", () => {
+fileFolder.addButton({ title: 'Import JSON' }).on('click', () => {
   importJSON()
     .then(() => {
       syncParamsFromState();
@@ -221,21 +243,21 @@ function syncParamsFromState() {
 }
 
 // Path swatches
-const swatchContainer = document.getElementById("path-swatches")!;
+const swatchContainer = document.getElementById('path-swatches')!;
 
 function renderSwatches() {
   const { paths, activePathId } = getState();
-  swatchContainer.innerHTML = "";
+  swatchContainer.innerHTML = '';
 
   for (const path of paths) {
-    const swatch = document.createElement("button");
-    swatch.className = "path-swatch";
+    const swatch = document.createElement('button');
+    swatch.className = 'path-swatch';
     if (path.id === activePathId) {
-      swatch.classList.add("active");
+      swatch.classList.add('active');
     }
     swatch.style.backgroundColor = path.color;
     swatch.title = path.id;
-    swatch.addEventListener("click", () => {
+    swatch.addEventListener('click', () => {
       setActivePath(path.id);
     });
     swatchContainer.appendChild(swatch);
@@ -262,36 +284,40 @@ subscribe(() => {
 subscribe(() => markDirty());
 
 // Responsive sidebar toggle
-const menuButton = document.getElementById("menu-button")!;
-const overlayBackdrop = document.getElementById("overlay-backdrop")!;
-const appEl = document.getElementById("app")!;
-const settingsPanel = document.getElementById("settings-panel") as HTMLDetailsElement;
-const settingsSummary = settingsPanel.querySelector(".settings-toggle") as HTMLElement;
+const menuButton = document.getElementById('menu-button')!;
+const overlayBackdrop = document.getElementById('overlay-backdrop')!;
+const appEl = document.getElementById('app')!;
+const settingsPanel = document.getElementById(
+  'settings-panel',
+) as HTMLDetailsElement;
+const settingsSummary = settingsPanel.querySelector(
+  '.settings-toggle',
+) as HTMLElement;
 
 function openSidebar(): void {
   settingsPanel.open = true;
-  appEl.classList.add("sidebar-open");
+  appEl.classList.add('sidebar-open');
 }
 
 function closeSidebar(): void {
-  appEl.classList.remove("sidebar-open");
+  appEl.classList.remove('sidebar-open');
 }
 
-menuButton.addEventListener("click", openSidebar);
-overlayBackdrop.addEventListener("click", closeSidebar);
+menuButton.addEventListener('click', openSidebar);
+overlayBackdrop.addEventListener('click', closeSidebar);
 
-settingsSummary.addEventListener("click", (e) => {
+settingsSummary.addEventListener('click', (e) => {
   e.preventDefault();
   closeSidebar();
 });
 
 // Open panel by default on large screens
-if (window.matchMedia("(min-width: 768px)").matches) {
+if (window.matchMedia('(min-width: 768px)').matches) {
   openSidebar();
 }
 
 // Grid editor
-const gridContainer = document.getElementById("grid-editor-container")!;
+const gridContainer = document.getElementById('grid-editor-container')!;
 initGridEditor(gridContainer);
 
 // Start auto-saving state to localStorage
@@ -300,7 +326,14 @@ startAutoSave();
 // Ssam sketch
 let doExportFrame: (() => void) | null = null;
 
-const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame, canvas }) => {
+const sketch: Sketch<'2d'> = ({
+  wrap,
+  context: ctx,
+  width,
+  height,
+  exportFrame,
+  canvas,
+}) => {
   doExportFrame = exportFrame;
   renderScene(ctx, width, height);
 
@@ -309,14 +342,14 @@ const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame, 
   let dragStartX = 0;
   let dragStartDelta = 0;
 
-  canvas.addEventListener("pointerdown", (e: PointerEvent) => {
+  canvas.addEventListener('pointerdown', (e: PointerEvent) => {
     isDragging = true;
     dragStartX = e.clientX;
     dragStartDelta = getState().cameraAngleDelta;
     canvas.setPointerCapture(e.pointerId);
   });
 
-  canvas.addEventListener("pointermove", (e: PointerEvent) => {
+  canvas.addEventListener('pointermove', (e: PointerEvent) => {
     if (!isDragging) return;
     const dx = e.clientX - dragStartX;
     // Convert pixels to degrees: ~0.5° per pixel
@@ -325,24 +358,30 @@ const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame, 
     markDirty();
   });
 
-  canvas.addEventListener("pointerup", (e: PointerEvent) => {
+  canvas.addEventListener('pointerup', (e: PointerEvent) => {
     if (isDragging) {
       isDragging = false;
       canvas.releasePointerCapture(e.pointerId);
     }
   });
 
-  canvas.addEventListener("pointercancel", (e: PointerEvent) => {
+  canvas.addEventListener('pointercancel', (e: PointerEvent) => {
     if (isDragging) {
       isDragging = false;
       canvas.releasePointerCapture(e.pointerId);
     }
   });
 
-  canvas.style.cursor = "grab";
-  canvas.addEventListener("pointerdown", () => { canvas.style.cursor = "grabbing"; });
-  canvas.addEventListener("pointerup", () => { canvas.style.cursor = "grab"; });
-  canvas.addEventListener("pointercancel", () => { canvas.style.cursor = "grab"; });
+  canvas.style.cursor = 'grab';
+  canvas.addEventListener('pointerdown', () => {
+    canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('pointerup', () => {
+    canvas.style.cursor = 'grab';
+  });
+  canvas.addEventListener('pointercancel', () => {
+    canvas.style.cursor = 'grab';
+  });
 
   wrap.render = () => {
     renderScene(ctx, width, height);
@@ -350,9 +389,9 @@ const sketch: Sketch<"2d"> = ({ wrap, context: ctx, width, height, exportFrame, 
 };
 
 const settings: SketchSettings = {
-  parent: "#canvas-container",
+  parent: '#canvas-container',
   pixelRatio: window.devicePixelRatio,
-  mode: "2d",
+  mode: '2d',
   animate: true,
 };
 

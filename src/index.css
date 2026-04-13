@@ -8,7 +8,7 @@
 
 :root {
   --panel-width: 300px;
-  --panel-bg: rgba(22, 33, 62, 0.92);
+  --panel-bg: hsla(0, 0%, 10%, 0.8);
   --panel-border: #2a2a4a;
   --bg: #1a1a2e;
   --text: #e0e0e0;

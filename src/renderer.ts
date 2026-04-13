@@ -1,7 +1,7 @@
-import { Heerich } from "heerich";
-import type { Face } from "heerich";
-import { getState } from "./state.ts";
-import type { CameraType, Orientation } from "./state.ts";
+import { Heerich } from 'heerich';
+import type { Face } from 'heerich';
+import { getState } from './state.ts';
+import type { CameraType, Orientation } from './state.ts';
 
 /**
  * Derive three face-shade levels from a base oklch color string.
@@ -21,16 +21,16 @@ export function voxelPosition(
   row: number,
   y: number,
   depth: number,
-  orientation: Orientation
+  orientation: Orientation,
 ): [number, number, number] {
   switch (orientation) {
-    case "xz":
+    case 'xz':
       // col → X, row → Z, extrude up in -Y, depth offsets along -Y
       return [col, -y - depth, row];
-    case "xy":
+    case 'xy':
       // col → X, row → Y (+Y = down), extrude in -Z, depth offsets along -Z
       return [col, row, -y - depth];
-    case "yz":
+    case 'yz':
       // col → Y (+Y = down), row → Z, extrude in +X, depth offsets along +X
       return [y + depth, col, row];
   }
@@ -39,17 +39,20 @@ export function voxelPosition(
 /** Base camera angle for each orientation. */
 function baseAngle(orientation: Orientation): number {
   switch (orientation) {
-    case "xz":
+    case 'xz':
       return 45; // standard isometric floor view
-    case "xy":
+    case 'xy':
       return 30; // front-wall: rotate toward the viewer
-    case "yz":
+    case 'yz':
       return 60; // side-wall: rotate away from the viewer
   }
 }
 
 /** Choose a camera angle that gives a natural view of the active plane, offset by delta. */
-export function cameraAngle(orientation: Orientation, delta: number = 0): number {
+export function cameraAngle(
+  orientation: Orientation,
+  delta: number = 0,
+): number {
   const base = baseAngle(orientation);
   // Clamp result to 1–89° to prevent degenerate views (0° or 90°)
   return Math.max(1, Math.min(89, base + delta));
@@ -57,7 +60,7 @@ export function cameraAngle(orientation: Orientation, delta: number = 0): number
 
 let scene = new Heerich({
   tile: 32,
-  camera: { type: "isometric", angle: 45 },
+  camera: { type: 'isometric', angle: 45 },
 });
 
 let dirty = true;
@@ -66,7 +69,11 @@ export function markDirty() {
   dirty = true;
 }
 
-export function cameraConfig(type: CameraType, orientation: Orientation, delta: number = 0) {
+export function cameraConfig(
+  type: CameraType,
+  orientation: Orientation,
+  delta: number = 0,
+) {
   const angle = cameraAngle(orientation, delta);
   return { type, angle };
 }
@@ -76,7 +83,7 @@ export function planePosition(
   depth: number,
   cols: number,
   rows: number,
-  orientation: Orientation
+  orientation: Orientation,
 ): {
   position: [number, number, number];
   size: [number, number, number];
@@ -84,7 +91,7 @@ export function planePosition(
   scaleOrigin: [number, number, number];
 } {
   switch (orientation) {
-    case "xz":
+    case 'xz':
       // Floor plane: spans X=[0..cols), Z=[0..rows), at Y=-depth
       // scaleOrigin Y=1 anchors the thin slab to the bottom edge
       return {
@@ -93,7 +100,7 @@ export function planePosition(
         scale: [1, 0.1, 1],
         scaleOrigin: [0.5, 1, 0.5],
       };
-    case "xy":
+    case 'xy':
       // Front wall: spans X=[0..cols), Y=[0..rows), at Z=-depth
       // scaleOrigin Z=1 anchors the thin slab to the back edge
       return {
@@ -102,7 +109,7 @@ export function planePosition(
         scale: [1, 1, 0.1],
         scaleOrigin: [0.5, 0.5, 1],
       };
-    case "yz":
+    case 'yz':
       // Side wall: spans Y=[0..cols), Z=[0..rows), at X=depth
       // scaleOrigin X=0 anchors the thin slab to the back edge
       return {
@@ -118,7 +125,14 @@ function rebuildScene() {
   if (!dirty) return;
   dirty = false;
 
-  const { grid, paths, stroke, cameraType, cameraAngleDelta, activePlaneDepth } = getState();
+  const {
+    grid,
+    paths,
+    stroke,
+    cameraType,
+    cameraAngleDelta,
+    activePlaneDepth,
+  } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
@@ -126,23 +140,50 @@ function rebuildScene() {
   });
 
   const planeStyle = {
-    top: { fill: "rgba(255,255,255,0.12)", stroke: "rgba(255,255,255,0.12)", strokeWidth: 1 },
-    left: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
-    right: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
-    front: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
-    back: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
-    bottom: { fill: "rgba(255,255,255,0.08)", stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 },
+    top: {
+      fill: 'rgba(255,255,255,0.12)',
+      stroke: 'rgba(255,255,255,0.12)',
+      strokeWidth: 1,
+    },
+    left: {
+      fill: 'rgba(255,255,255,0.08)',
+      stroke: 'rgba(255,255,255,0.08)',
+      strokeWidth: 1,
+    },
+    right: {
+      fill: 'rgba(255,255,255,0.08)',
+      stroke: 'rgba(255,255,255,0.08)',
+      strokeWidth: 1,
+    },
+    front: {
+      fill: 'rgba(255,255,255,0.08)',
+      stroke: 'rgba(255,255,255,0.08)',
+      strokeWidth: 1,
+    },
+    back: {
+      fill: 'rgba(255,255,255,0.08)',
+      stroke: 'rgba(255,255,255,0.08)',
+      strokeWidth: 1,
+    },
+    bottom: {
+      fill: 'rgba(255,255,255,0.08)',
+      stroke: 'rgba(255,255,255,0.08)',
+      strokeWidth: 1,
+    },
   };
 
-  const strokeStyle = stroke
-    ? { stroke: "#222", strokeWidth: 1 }
-    : {};
+  const strokeStyle = stroke ? { stroke: '#222', strokeWidth: 1 } : {};
 
   scene.batch(() => {
     // Add the semi-transparent active plane
-    const plane = planePosition(activePlaneDepth, grid.cols, grid.rows, grid.orientation);
+    const plane = planePosition(
+      activePlaneDepth,
+      grid.cols,
+      grid.rows,
+      grid.orientation,
+    );
     scene.addGeometry({
-      type: "box",
+      type: 'box',
       position: plane.position,
       size: plane.size,
       scale: plane.scale,
@@ -167,8 +208,14 @@ function rebuildScene() {
       for (const cell of path.cells) {
         for (let y = 0; y < path.height; y++) {
           scene.addGeometry({
-            type: "box",
-            position: voxelPosition(cell.col, cell.row, y, path.depth, grid.orientation),
+            type: 'box',
+            position: voxelPosition(
+              cell.col,
+              cell.row,
+              y,
+              path.depth,
+              grid.orientation,
+            ),
             size: 1,
             style,
           } as Parameters<typeof scene.addGeometry>[0]);
@@ -184,15 +231,15 @@ function rebuildScene() {
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   width: number,
-  height: number
+  height: number,
 ) {
   rebuildScene();
 
   ctx.clearRect(0, 0, width, height);
 
   // Fill with background color
-  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#1a1a2e";
-  ctx.fillStyle = bg;
+  // const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#1a1a2e";
+  ctx.fillStyle = 'var(--bg, #1a1a2e)';
   ctx.fillRect(0, 0, width, height);
 
   const faces = scene.getFaces();
