@@ -14,6 +14,9 @@ importers:
       heerich:
         specifier: ^0.11.0
         version: 0.11.0
+      rampensau:
+        specifier: ^2.3.0
+        version: 2.3.0
       ssam:
         specifier: ^0.22.0
         version: 0.22.0
@@ -1253,6 +1256,9 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  rampensau@2.3.0:
+    resolution: {integrity: sha512-BCFPACst7DXYlZ6UZ9+lHXXwr7pNN7jWBB602e6Nn06V3Qf44wvo80lYTMnAhG2taxc/KEiMT8WEy+FdDXBFfA==}
 
   react-dom@19.2.5:
     resolution: {integrity: sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==}
@@ -2682,6 +2688,8 @@ snapshots:
   primitive-quad@2.0.0: {}
 
   punycode@2.3.1: {}
+
+  rampensau@2.3.0: {}
 
   react-dom@19.2.5(react@19.2.5):
     dependencies:

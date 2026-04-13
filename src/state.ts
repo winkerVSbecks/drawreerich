@@ -38,23 +38,23 @@ const listeners: Listener[] = [];
 
 let nextPathNum = 1;
 
-export function hslToHex(h: number, s: number, l: number): string {
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h * 12) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, "0");
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
+/** Palette-driven path color source. When set, createPath() cycles through these. */
+let pathColorSource: string[] = [];
+
+/**
+ * Set the palette colour source used by createPath().
+ * @param colors Array of 9 path colours (indices 1–9 of the palette).
+ */
+export function setPathColorSource(colors: string[]) {
+  pathColorSource = colors;
 }
 
-function randomColor(): string {
-  const h = Math.random();
-  const s = 0.5 + Math.random() * 0.3; // 50–80%
-  const l = 0.45 + Math.random() * 0.15; // 45–60%
-  return hslToHex(h, s, l);
+/** Get the palette colour for path N (0-indexed), cycling through 9 colours. */
+function paletteColor(): string {
+  if (pathColorSource.length === 0) return "#4477bb";
+  // Use total path count to determine which palette colour to assign
+  const idx = state.paths.length % pathColorSource.length;
+  return pathColorSource[idx];
 }
 
 function makePathId(): string {
@@ -115,7 +115,7 @@ export function createPath(): Path {
   const path: Path = {
     id: makePathId(),
     cells: [],
-    color: randomColor(),
+    color: paletteColor(),
     height: 2,
     depth: state.activePlaneDepth,
   };
@@ -198,7 +198,7 @@ function removePath(id: string) {
       const newPath: Path = {
         id: makePathId(),
         cells: [],
-        color: randomColor(),
+        color: paletteColor(),
         height: 2,
         depth: state.activePlaneDepth,
       };
@@ -264,7 +264,7 @@ export function clearAllPaths() {
   const newPath: Path = {
     id: makePathId(),
     cells: [],
-    color: randomColor(),
+    color: paletteColor(),
     height: 2,
     depth: state.activePlaneDepth,
   };
