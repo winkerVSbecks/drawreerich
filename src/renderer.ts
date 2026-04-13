@@ -220,7 +220,9 @@ function rebuildScene() {
     },
   };
 
-  const strokeStyle = stroke ? { stroke: '#222', strokeWidth: 1 } : {};
+  const strokeStyle = stroke
+    ? { stroke: '#222', strokeWidth: 1 }
+    : { stroke: '', strokeWidth: 0 };
 
   scene.batch(() => {
     // Add the semi-transparent active plane
