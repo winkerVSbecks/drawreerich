@@ -2,7 +2,7 @@ import { ssam } from 'ssam';
 import type { Sketch, SketchSettings } from 'ssam';
 import { Pane } from 'tweakpane';
 import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
-import { renderScene, markDirty } from './renderer.ts';
+import { renderScene, markDirty, setShowPlane } from './renderer.ts';
 import {
   getState,
   getActivePath,
@@ -254,7 +254,19 @@ fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
 });
 
 fileFolder.addButton({ title: 'Export Image' }).on('click', () => {
-  if (doExportFrame) doExportFrame();
+  const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
+  if (!canvas) return;
+  const ctx2d = canvas.getContext('2d');
+  if (!ctx2d) return;
+  setShowPlane(false);
+  markDirty();
+  renderScene(ctx2d, canvas.width, canvas.height);
+  setShowPlane(true);
+  markDirty();
+  const link = document.createElement('a');
+  link.download = 'drawreerich.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 });
 
 fileFolder.addButton({ title: 'Export JSON' }).on('click', () => {
@@ -307,51 +319,14 @@ subscribe(() => {
 // Mark 3D renderer dirty when state changes
 subscribe(() => markDirty());
 
-// Responsive sidebar toggle
-const menuButton = document.getElementById('menu-button')!;
-const overlayBackdrop = document.getElementById('overlay-backdrop')!;
-const appEl = document.getElementById('app')!;
-const settingsPanel = document.getElementById(
-  'settings-panel',
-) as HTMLDetailsElement;
-const settingsSummary = settingsPanel.querySelector(
-  '.settings-toggle',
-) as HTMLElement;
-
-function openSidebar(): void {
-  settingsPanel.open = true;
-  appEl.classList.add('sidebar-open');
-}
-
-function closeSidebar(): void {
-  appEl.classList.remove('sidebar-open');
-}
-
-menuButton.addEventListener('click', openSidebar);
-overlayBackdrop.addEventListener('click', closeSidebar);
-
-settingsSummary.addEventListener('click', (e) => {
-  e.preventDefault();
-  closeSidebar();
-});
-
-// Open panel by default on large screens
-if (window.matchMedia('(min-width: 768px)').matches) {
-  openSidebar();
-}
-
 // Ssam sketch
-let doExportFrame: (() => void) | null = null;
-
 const sketch: Sketch<'2d'> = ({
   wrap,
   context: ctx,
   width,
   height,
-  exportFrame,
   canvas,
 }) => {
-  doExportFrame = exportFrame;
   renderScene(ctx, width, height);
 
   // Camera rotation via pointer drag
@@ -400,8 +375,13 @@ const sketch: Sketch<'2d'> = ({
     canvas.style.cursor = 'grab';
   });
 
-  wrap.render = () => {
-    renderScene(ctx, width, height);
+  wrap.render = ({ width: w, height: h }: { width: number; height: number }) => {
+    renderScene(ctx, w, h);
+  };
+
+  wrap.resize = ({ width: w, height: h }: { width: number; height: number }) => {
+    markDirty();
+    renderScene(ctx, w, h);
   };
 };
 
