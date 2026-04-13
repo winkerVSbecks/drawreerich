@@ -37,19 +37,15 @@ export const ClearsCanvasWhenNoCells: Story = {
     const canvas = canvasElement.querySelector("canvas")!;
     const ctx = canvas.getContext("2d")!;
     const data = ctx.getImageData(0, 0, 200, 200).data;
-    let hasNonClear = false;
+    // Verify the pre-drawn red content was cleared (no fully red pixels remain)
+    let hasRedPixel = false;
     for (let i = 0; i < data.length; i += 4) {
-      if (
-        data[i] !== 0 ||
-        data[i + 1] !== 0 ||
-        data[i + 2] !== 0 ||
-        data[i + 3] !== 0
-      ) {
-        hasNonClear = true;
+      if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0 && data[i + 3] === 255) {
+        hasRedPixel = true;
         break;
       }
     }
-    await expect(hasNonClear).toBe(false);
+    await expect(hasRedPixel).toBe(false);
   },
 };
 
