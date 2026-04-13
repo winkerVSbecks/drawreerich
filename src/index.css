@@ -150,12 +150,11 @@ body {
   padding: 10px 12px 4px;
 }
 
-#path-swatches {
+.tp-grdv-swatches {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--panel-border);
+  padding: 8px 0 4px;
 }
 
 .path-swatch {
@@ -178,9 +177,13 @@ body {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
-#grid-editor-container {
+.tp-grdv {
   padding: 8px 12px 12px;
   border-top: 1px solid var(--panel-border);
+}
+
+.tp-grdv canvas {
+  display: block;
 }
 
 /* ── Hamburger menu button ────────────────────────────────── */

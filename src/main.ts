@@ -10,7 +10,6 @@ import {
   setGridCols,
   setGridRows,
   setOrientation,
-  setActivePath,
   setPathHeight,
   setPathColor,
   setStroke,
@@ -22,12 +21,17 @@ import {
   clearAllPaths,
   setPathColorSource,
   subscribe,
-} from "./state.ts";
-import type { CameraType, Orientation } from "./state.ts";
-import { generatePalette } from "./palette.ts";
-import { initGridEditor } from "./grid-editor.ts";
-import { tryRestore, startAutoSave, exportJSON, importJSON } from "./storage.ts";
-import "./index.css";
+} from './state.ts';
+import type { CameraType, Orientation } from './state.ts';
+import { GridEditorBladePlugin } from './grid-editor-plugin.ts';
+import {
+  tryRestore,
+  startAutoSave,
+  exportJSON,
+  importJSON,
+} from './storage.ts';
+import './index.css';
+import { generatePalette } from './palette.ts';
 
 // Restore saved state from localStorage before reading PARAMS
 tryRestore();
@@ -61,6 +65,7 @@ function applyPalette() {
 const paneContainer = document.getElementById('tweakpane-container')!;
 const pane = new Pane({ container: paneContainer, title: 'drawreerich' });
 pane.registerPlugin(EssentialsPlugin);
+pane.registerPlugin(GridEditorBladePlugin);
 
 /** Return the depth axis label for the current orientation. */
 function depthAxisLabel(orientation: Orientation): string {
@@ -188,6 +193,8 @@ pathFolder.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
 });
 
+pathFolder.addBlade({ view: 'grid-editor' });
+
 // --- Persistence controls ---
 const fileFolder = pane.addFolder({ title: 'File' });
 
@@ -242,31 +249,6 @@ function syncParamsFromState() {
   }
 }
 
-// Path swatches
-const swatchContainer = document.getElementById('path-swatches')!;
-
-function renderSwatches() {
-  const { paths, activePathId } = getState();
-  swatchContainer.innerHTML = '';
-
-  for (const path of paths) {
-    const swatch = document.createElement('button');
-    swatch.className = 'path-swatch';
-    if (path.id === activePathId) {
-      swatch.classList.add('active');
-    }
-    swatch.style.backgroundColor = path.color;
-    swatch.title = path.id;
-    swatch.addEventListener('click', () => {
-      setActivePath(path.id);
-    });
-    swatchContainer.appendChild(swatch);
-  }
-}
-
-renderSwatches();
-subscribe(() => renderSwatches());
-
 // Sync active path controls when active path changes
 let prevActiveId = getState().activePathId;
 subscribe(() => {
@@ -315,10 +297,6 @@ settingsSummary.addEventListener('click', (e) => {
 if (window.matchMedia('(min-width: 768px)').matches) {
   openSidebar();
 }
-
-// Grid editor
-const gridContainer = document.getElementById('grid-editor-container')!;
-initGridEditor(gridContainer);
 
 // Start auto-saving state to localStorage
 startAutoSave();
