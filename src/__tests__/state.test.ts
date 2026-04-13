@@ -20,9 +20,9 @@ import {
   setCameraAngleDelta,
   resetCameraAngle,
   setActivePlaneDepth,
+  setPathColorSource,
   replaceState,
   clearAllPaths,
-  hslToHex,
 } from "../state.ts";
 import type { GridConfig, Path } from "../state.ts";
 
@@ -45,26 +45,6 @@ function resetState() {
   setStroke(true);
   setCameraType("isometric");
 }
-
-// ─── hslToHex ────────────────────────────────────────────────────────────────
-
-describe("hslToHex", () => {
-  it("converts black (l=0)", () => {
-    expect(hslToHex(0, 0, 0)).toBe("#000000");
-  });
-
-  it("converts white (l=1)", () => {
-    expect(hslToHex(0, 0, 1)).toBe("#ffffff");
-  });
-
-  it("converts pure red (h=0, s=1, l=0.5)", () => {
-    expect(hslToHex(0, 1, 0.5)).toBe("#ff0000");
-  });
-
-  it("converts 50% grey (s=0, l=0.5)", () => {
-    expect(hslToHex(0, 0, 0.5)).toBe("#808080");
-  });
-});
 
 // ─── getState ────────────────────────────────────────────────────────────────
 
@@ -162,8 +142,17 @@ describe("createPath", () => {
   it("new path has empty cells and a color", () => {
     const newPath = createPath();
     expect(newPath.cells).toEqual([]);
-    expect(newPath.color).toMatch(/^#[0-9a-f]{6}$/);
+    expect(typeof newPath.color).toBe("string");
+    expect(newPath.color.length).toBeGreaterThan(0);
     expect(newPath.height).toBe(2);
+  });
+
+  it("uses palette colors when pathColorSource is set", () => {
+    setPathColorSource(["oklch(0.5 0.1 120)", "oklch(0.6 0.2 240)"]);
+    const p = createPath();
+    expect(p.color).toMatch(/^oklch\(/);
+    // Reset to avoid affecting other tests
+    setPathColorSource([]);
   });
 });
 
@@ -439,7 +428,8 @@ describe("clearAllPaths", () => {
 
     const path = getState().paths[0];
     expect(path.id).toMatch(/^path-\d+$/);
-    expect(path.color).toMatch(/^#[0-9a-f]{6}$/);
+    expect(typeof path.color).toBe("string");
+    expect(path.color.length).toBeGreaterThan(0);
     expect(path.height).toBe(2);
   });
 });

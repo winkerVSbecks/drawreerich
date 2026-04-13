@@ -11,9 +11,15 @@ importers:
       canvas-sketch-util:
         specifier: ^1.10.0
         version: 1.10.0
+      culori:
+        specifier: ^4.0.2
+        version: 4.0.2
       heerich:
         specifier: ^0.11.0
         version: 0.11.0
+      rampensau:
+        specifier: ^2.3.0
+        version: 2.3.0
       ssam:
         specifier: ^0.22.0
         version: 0.22.0
@@ -775,6 +781,10 @@ packages:
   css.escape@1.5.1:
     resolution: {integrity: sha512-YUifsXXuknHlUsmlgyY0PKzgPOr7/FjCePfHNt0jxm83wHZi44VDMQ7/fGNkjY3/jV1MC+1CmZbaHzugyeRtpg==}
 
+  culori@4.0.2:
+    resolution: {integrity: sha512-1+BhOB8ahCn4O0cep0Sh2l9KCOfOdY+BXJnKMHFFzDEouSr/el18QwXEMRlOj9UY5nCeA8UN3a/82rUWRBeyBw==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   d3-path@1.0.9:
     resolution: {integrity: sha512-VLaYcn81dtHVTjEHd8B+pbe9yHWpXKZUC87PzoFmsFrJqgFwDe/qxfp5MlfsfM1V5E/iVt0MmEbWQ7FVIXh/bg==}
 
@@ -1253,6 +1263,9 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  rampensau@2.3.0:
+    resolution: {integrity: sha512-BCFPACst7DXYlZ6UZ9+lHXXwr7pNN7jWBB602e6Nn06V3Qf44wvo80lYTMnAhG2taxc/KEiMT8WEy+FdDXBFfA==}
 
   react-dom@19.2.5:
     resolution: {integrity: sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==}
@@ -2253,6 +2266,8 @@ snapshots:
 
   css.escape@1.5.1: {}
 
+  culori@4.0.2: {}
+
   d3-path@1.0.9: {}
 
   debug@4.4.3:
@@ -2682,6 +2697,8 @@ snapshots:
   primitive-quad@2.0.0: {}
 
   punycode@2.3.1: {}
+
+  rampensau@2.3.0: {}
 
   react-dom@19.2.5(react@19.2.5):
     dependencies:

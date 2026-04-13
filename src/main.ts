@@ -19,15 +19,42 @@ import {
   setActivePlaneDepth,
   createPath,
   clearAllPaths,
+  setPathColorSource,
   subscribe,
 } from "./state.ts";
 import type { CameraType, Orientation } from "./state.ts";
+import { generatePalette } from "./palette.ts";
 import { initGridEditor } from "./grid-editor.ts";
 import { tryRestore, startAutoSave, exportJSON, importJSON } from "./storage.ts";
 import "./index.css";
 
 // Restore saved state from localStorage before reading PARAMS
 tryRestore();
+
+// Initialize colour palette
+let currentPalette = generatePalette();
+setPathColorSource(currentPalette.pathColors);
+document.documentElement.style.setProperty("--bg", currentPalette.background);
+
+// Recolour the initial path with the first palette path colour
+const initPath = getActivePath();
+if (initPath) {
+  setPathColor(initPath.id, currentPalette.pathColors[0]);
+}
+
+/** Apply a new palette: update background, recolour all existing paths. */
+function applyPalette() {
+  currentPalette = generatePalette();
+  setPathColorSource(currentPalette.pathColors);
+  document.documentElement.style.setProperty("--bg", currentPalette.background);
+
+  // Recolour all existing paths by cycling through palette colours
+  const { paths } = getState();
+  for (let i = 0; i < paths.length; i++) {
+    const color = currentPalette.pathColors[i % currentPalette.pathColors.length];
+    setPathColor(paths[i].id, color);
+  }
+}
 
 // Tweakpane setup
 const paneContainer = document.getElementById("tweakpane-container")!;
@@ -120,7 +147,6 @@ pane.addBinding(PARAMS, "stroke", { label: "stroke" }).on("change", (ev) => {
 const activePath = getActivePath();
 const PATH_PARAMS = {
   height: activePath?.height ?? 2,
-  color: activePath?.color ?? "#4477bb",
 };
 
 const pathFolder = pane.addFolder({ title: "Active Path" });
@@ -137,13 +163,6 @@ const heightBinding = pathFolder
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
-const colorBinding = pathFolder
-  .addBinding(PATH_PARAMS, "color", { label: "color" })
-  .on("change", (ev) => {
-    const ap = getActivePath();
-    if (ap) setPathColor(ap.id, ev.value);
-  });
-
 // "New Path" button
 pathFolder.addButton({ title: "New Path" }).on("click", () => {
   createPath();
@@ -151,6 +170,10 @@ pathFolder.addButton({ title: "New Path" }).on("click", () => {
 
 // --- Persistence controls ---
 const fileFolder = pane.addFolder({ title: "File" });
+
+fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
+  applyPalette();
+});
 
 fileFolder.addButton({ title: "Clear All" }).on("click", () => {
   if (confirm("Clear all paths? This cannot be undone.")) {
@@ -193,9 +216,7 @@ function syncParamsFromState() {
   const ap = getActivePath();
   if (ap) {
     PATH_PARAMS.height = ap.height;
-    PATH_PARAMS.color = ap.color;
     heightBinding.refresh();
-    colorBinding.refresh();
   }
 }
 
@@ -233,9 +254,7 @@ subscribe(() => {
   if (ap.id !== prevActiveId) {
     prevActiveId = ap.id;
     PATH_PARAMS.height = ap.height;
-    PATH_PARAMS.color = ap.color;
     heightBinding.refresh();
-    colorBinding.refresh();
   }
 });
 
