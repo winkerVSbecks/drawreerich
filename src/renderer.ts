@@ -64,6 +64,11 @@ let scene = new Heerich({
 });
 
 let dirty = true;
+let showPlane = true;
+
+export function setShowPlane(v: boolean): void {
+  showPlane = v;
+}
 
 // Stable offset cache — recomputed only when grid/camera config changes, not when cells are drawn
 let cachedOffset: { x: number; y: number } | null = null;
@@ -225,22 +230,24 @@ function rebuildScene() {
     : { stroke: '', strokeWidth: 0 };
 
   scene.batch(() => {
-    // Add the semi-transparent active plane
-    const plane = planePosition(
-      activePlaneDepth,
-      grid.cols,
-      grid.rows,
-      grid.orientation,
-    );
-    scene.addGeometry({
-      type: 'box',
-      position: plane.position,
-      size: plane.size,
-      scale: plane.scale,
-      scaleOrigin: plane.scaleOrigin,
-      opaque: false,
-      style: planeStyle,
-    } as Parameters<typeof scene.addGeometry>[0]);
+    // Add the semi-transparent active plane (skipped during export)
+    if (showPlane) {
+      const plane = planePosition(
+        activePlaneDepth,
+        grid.cols,
+        grid.rows,
+        grid.orientation,
+      );
+      scene.addGeometry({
+        type: 'box',
+        position: plane.position,
+        size: plane.size,
+        scale: plane.scale,
+        scaleOrigin: plane.scaleOrigin,
+        opaque: false,
+        style: planeStyle,
+      } as Parameters<typeof scene.addGeometry>[0]);
+    }
 
     for (const path of paths) {
       if (path.cells.length === 0) continue;
@@ -287,9 +294,8 @@ export function renderScene(
 
   ctx.clearRect(0, 0, width, height);
 
-  // Fill with background color
-  // const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#1a1a2e";
-  ctx.fillStyle = 'var(--bg, #1a1a2e)';
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#1a1a2e';
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
   const faces = scene.getFaces();
