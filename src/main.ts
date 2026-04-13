@@ -255,12 +255,17 @@ fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
 
 fileFolder.addButton({ title: 'Export Image' }).on('click', () => {
   const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
-  if (!canvas) return;
+  if (!canvas || !lastLogicalWidth || !lastLogicalHeight) return;
   const ctx2d = canvas.getContext('2d');
   if (!ctx2d) return;
+  const pr = window.devicePixelRatio;
   setShowPlane(false);
   markDirty();
-  renderScene(ctx2d, canvas.width, canvas.height);
+  // Apply the same pixel-ratio scale ssam uses so rendering coordinates match
+  ctx2d.save();
+  ctx2d.setTransform(pr, 0, 0, pr, 0, 0);
+  renderScene(ctx2d, lastLogicalWidth, lastLogicalHeight);
+  ctx2d.restore();
   setShowPlane(true);
   markDirty();
   const link = document.createElement('a');
@@ -320,6 +325,10 @@ subscribe(() => {
 subscribe(() => markDirty());
 
 // Ssam sketch
+// Track logical dimensions for export (canvas.width/height are physical pixels × pixelRatio)
+let lastLogicalWidth = 0;
+let lastLogicalHeight = 0;
+
 const sketch: Sketch<'2d'> = ({
   wrap,
   context: ctx,
@@ -327,6 +336,8 @@ const sketch: Sketch<'2d'> = ({
   height,
   canvas,
 }) => {
+  lastLogicalWidth = width;
+  lastLogicalHeight = height;
   renderScene(ctx, width, height);
 
   // Camera rotation via pointer drag
@@ -376,11 +387,15 @@ const sketch: Sketch<'2d'> = ({
   });
 
   wrap.render = ({ width: w, height: h }: { width: number; height: number }) => {
+    lastLogicalWidth = w;
+    lastLogicalHeight = h;
     renderScene(ctx, w, h);
   };
 
   wrap.resize = ({ width: w, height: h }: { width: number; height: number }) => {
     markDirty();
+    lastLogicalWidth = w;
+    lastLogicalHeight = h;
     renderScene(ctx, w, h);
   };
 };
