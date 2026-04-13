@@ -123,6 +123,10 @@ body {
   content: '▾';
 }
 
+#settings-panel:not([open]) #settings-body {
+  display: none;
+}
+
 /* Body: scrollable, max-height = viewport minus toggle + margins */
 #settings-body {
   max-height: calc(100dvh - 3rem);
@@ -182,4 +186,3 @@ body {
 .tp-grdv canvas {
   display: block;
 }
-
