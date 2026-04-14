@@ -67,12 +67,13 @@ function computeStableOffset(
   });
 
   const plane = planePosition(0, grid.cols, grid.rows);
+  const rotatedPlane = rotatePlaneScale(plane.scale, plane.scaleOrigin, rotation);
   refScene.addGeometry({
     type: 'box',
     position: plane.position,
     size: plane.size,
-    scale: plane.scale,
-    scaleOrigin: plane.scaleOrigin,
+    scale: rotatedPlane.scale,
+    scaleOrigin: rotatedPlane.scaleOrigin,
     opaque: false,
     style: {},
   } as Parameters<typeof refScene.addGeometry>[0]);
@@ -132,6 +133,35 @@ function applyRotation(target: Heerich, rotation: Rotation) {
   if (rotation.x) target.rotate({ axis: 'x', turns: rotation.x });
   if (rotation.y) target.rotate({ axis: 'y', turns: rotation.y });
   if (rotation.z) target.rotate({ axis: 'z', turns: rotation.z });
+}
+
+/**
+ * Rotate scale and scaleOrigin vectors to match heerich's _rot90 permutation.
+ * scale components are always positive (just permute).
+ * scaleOrigin components are 0-1 anchors (permute and flip on negated axes).
+ */
+function rotatePlaneScale(
+  scale: [number, number, number],
+  scaleOrigin: [number, number, number],
+  rotation: Rotation,
+): { scale: [number, number, number]; scaleOrigin: [number, number, number] } {
+  let [sx, sy, sz] = scale;
+  let [ox, oy, oz] = scaleOrigin;
+
+  for (let i = 0; i < rotation.x; i++) {
+    [sx, sy, sz] = [sx, sz, sy];
+    [ox, oy, oz] = [ox, 1 - oz, oy];
+  }
+  for (let i = 0; i < rotation.y; i++) {
+    [sx, sy, sz] = [sz, sy, sx];
+    [ox, oy, oz] = [1 - oz, oy, ox];
+  }
+  for (let i = 0; i < rotation.z; i++) {
+    [sx, sy, sz] = [sy, sx, sz];
+    [ox, oy, oz] = [1 - oy, ox, oz];
+  }
+
+  return { scale: [sx, sy, sz], scaleOrigin: [ox, oy, oz] };
 }
 
 function rebuildScene() {
@@ -194,12 +224,13 @@ function rebuildScene() {
     // Add the semi-transparent active plane (skipped during export)
     if (showPlane) {
       const plane = planePosition(activePlaneDepth, grid.cols, grid.rows);
+      const rotatedPlane = rotatePlaneScale(plane.scale, plane.scaleOrigin, rotation);
       scene.addGeometry({
         type: 'box',
         position: plane.position,
         size: plane.size,
-        scale: plane.scale,
-        scaleOrigin: plane.scaleOrigin,
+        scale: rotatedPlane.scale,
+        scaleOrigin: rotatedPlane.scaleOrigin,
         opaque: false,
         style: planeStyle,
       } as Parameters<typeof scene.addGeometry>[0]);
