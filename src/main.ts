@@ -9,7 +9,7 @@ import {
   setTileSize,
   setGridCols,
   setGridRows,
-  setOrientation,
+  setRotation,
   setPathHeight,
   setPathColor,
   setStroke,
@@ -22,8 +22,9 @@ import {
   setPathColorSource,
   replaceState,
   subscribe,
+  ROTATION_PRESETS,
 } from './state.ts';
-import type { CameraType, Orientation } from './state.ts';
+import type { CameraType } from './state.ts';
 import { GridEditorBladePlugin } from './grid-editor-plugin.ts';
 import {
   tryRestore,
@@ -38,7 +39,7 @@ import { generatePalette } from './palette.ts';
 function loadDefaultComposition(colors: string[]) {
   const c = (i: number) => colors[i % colors.length] ?? '#4477bb';
   replaceState(
-    { cols: 16, rows: 16, tileSize: 32, orientation: 'xz' },
+    { cols: 16, rows: 16, tileSize: 32 },
     [
       // I piece – horizontal bar
       { id: 'path-1', color: c(0), height: 2, depth: 0, cells: [
@@ -106,26 +107,19 @@ const pane = new Pane({ container: paneContainer, title: 'drawreerich' });
 pane.registerPlugin(EssentialsPlugin);
 pane.registerPlugin(GridEditorBladePlugin);
 
-/** Return the depth axis label for the current orientation. */
-function depthAxisLabel(orientation: Orientation): string {
-  switch (orientation) {
-    case 'xz':
-      return 'depth (Y)';
-    case 'xy':
-      return 'depth (Z)';
-    case 'yz':
-      return 'depth (X)';
-  }
-}
-
 const PARAMS = {
   cols: getState().grid.cols,
   rows: getState().grid.rows,
   tileSize: getState().grid.tileSize,
-  orientation: getState().grid.orientation,
   cameraType: getState().cameraType,
   stroke: getState().stroke,
   activePlaneDepth: getState().activePlaneDepth,
+};
+
+const ROT_PARAMS = {
+  rotX: getState().rotation.x,
+  rotY: getState().rotation.y,
+  rotZ: getState().rotation.z,
 };
 
 pane
@@ -147,27 +141,6 @@ pane
   });
 
 pane
-  .addBinding(PARAMS, 'orientation', {
-    label: 'orientation',
-    view: 'radiogrid',
-    groupName: 'scale',
-    size: [3, 1],
-    cells: (x: number) =>
-      [
-        { title: 'XZ', value: 'xz' },
-        { title: 'XY', value: 'xy' },
-        { title: 'YZ', value: 'yz' },
-      ][x],
-  })
-  .on('change', (ev) => {
-    setOrientation(ev.value as 'xz' | 'xy' | 'yz');
-    // Update depth slider label and value after orientation reset
-    depthBinding.label = depthAxisLabel(ev.value as Orientation);
-    PARAMS.activePlaneDepth = 0;
-    depthBinding.refresh();
-  });
-
-pane
   .addBinding(PARAMS, 'cameraType', {
     label: 'camera',
     options: {
@@ -184,15 +157,54 @@ pane.addButton({ title: 'Reset Camera' }).on('click', () => {
   resetCameraAngle();
 });
 
-const depthBinding = pane
+pane
   .addBinding(PARAMS, 'activePlaneDepth', {
-    label: depthAxisLabel(getState().grid.orientation),
+    label: 'depth (Y)',
     min: 0,
     max: 20,
     step: 1,
   })
   .on('change', (ev) => {
     setActivePlaneDepth(ev.value);
+  });
+
+// --- Rotation controls ---
+const rotFolder = pane.addFolder({ title: 'Rotation' });
+
+// View preset buttons
+rotFolder.addButton({ title: 'Floor (XZ)' }).on('click', () => {
+  setRotation(ROTATION_PRESETS.xz);
+  setCameraAngleDelta(0);
+  syncParamsFromState();
+});
+rotFolder.addButton({ title: 'Front (XY)' }).on('click', () => {
+  setRotation(ROTATION_PRESETS.xy);
+  setCameraAngleDelta(-15);
+  syncParamsFromState();
+});
+rotFolder.addButton({ title: 'Side (YZ)' }).on('click', () => {
+  setRotation(ROTATION_PRESETS.yz);
+  setCameraAngleDelta(15);
+  syncParamsFromState();
+});
+
+rotFolder
+  .addBinding(ROT_PARAMS, 'rotX', { label: 'X', min: 0, max: 3, step: 1 })
+  .on('change', (ev) => {
+    const r = getState().rotation;
+    setRotation({ ...r, x: ev.value });
+  });
+rotFolder
+  .addBinding(ROT_PARAMS, 'rotY', { label: 'Y', min: 0, max: 3, step: 1 })
+  .on('change', (ev) => {
+    const r = getState().rotation;
+    setRotation({ ...r, y: ev.value });
+  });
+rotFolder
+  .addBinding(ROT_PARAMS, 'rotZ', { label: 'Z', min: 0, max: 3, step: 1 })
+  .on('change', (ev) => {
+    const r = getState().rotation;
+    setRotation({ ...r, z: ev.value });
   });
 
 pane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
@@ -294,11 +306,12 @@ function syncParamsFromState() {
   PARAMS.cols = s.grid.cols;
   PARAMS.rows = s.grid.rows;
   PARAMS.tileSize = s.grid.tileSize;
-  PARAMS.orientation = s.grid.orientation;
   PARAMS.cameraType = s.cameraType;
   PARAMS.stroke = s.stroke;
   PARAMS.activePlaneDepth = s.activePlaneDepth;
-  depthBinding.label = depthAxisLabel(s.grid.orientation);
+  ROT_PARAMS.rotX = s.rotation.x;
+  ROT_PARAMS.rotY = s.rotation.y;
+  ROT_PARAMS.rotZ = s.rotation.z;
   pane.refresh();
 
   const ap = getActivePath();

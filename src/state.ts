@@ -11,13 +11,22 @@ export interface Path {
   depth: number;
 }
 
-export type Orientation = "xz" | "xy" | "yz";
+export interface Rotation {
+  x: number; // 0-3 turns (90° increments)
+  y: number;
+  z: number;
+}
+
+export const ROTATION_PRESETS = {
+  xz: { x: 0, y: 0, z: 0 },
+  xy: { x: 1, y: 0, z: 0 },
+  yz: { x: 0, y: 0, z: 1 },
+} as const;
 
 export interface GridConfig {
   cols: number;
   rows: number;
   tileSize: number;
-  orientation: Orientation;
 }
 
 export type CameraType = "isometric" | "oblique" | "orthographic";
@@ -30,6 +39,7 @@ export interface AppState {
   cameraType: CameraType;
   cameraAngleDelta: number;
   activePlaneDepth: number;
+  rotation: Rotation;
 }
 
 type Listener = () => void;
@@ -74,7 +84,6 @@ const state: AppState = {
     cols: 16,
     rows: 16,
     tileSize: 32,
-    orientation: "xz",
   },
   paths: [initialPath],
   activePathId: initialPath.id,
@@ -82,6 +91,7 @@ const state: AppState = {
   cameraType: "isometric",
   cameraAngleDelta: 0,
   activePlaneDepth: 0,
+  rotation: { x: 0, y: 0, z: 0 },
 };
 
 function notify() {
@@ -155,11 +165,12 @@ export function setGridRows(rows: number) {
   notify();
 }
 
-export function setOrientation(orientation: Orientation) {
-  if (state.grid.orientation === orientation) return;
-  state.grid.orientation = orientation;
-  state.cameraAngleDelta = 0;
-  state.activePlaneDepth = 0;
+export function setRotation(rotation: Rotation) {
+  state.rotation = {
+    x: ((rotation.x % 4) + 4) % 4,
+    y: ((rotation.y % 4) + 4) % 4,
+    z: ((rotation.z % 4) + 4) % 4,
+  };
   notify();
 }
 
@@ -277,11 +288,11 @@ export function clearAllPaths() {
  * Replace the entire app state with the given grid config and paths.
  * Used by storage restore and JSON import.
  */
-export function replaceState(grid: GridConfig, paths: Path[]) {
+export function replaceState(grid: GridConfig, paths: Path[], rotation?: Rotation) {
   state.grid.cols = grid.cols;
   state.grid.rows = grid.rows;
   state.grid.tileSize = grid.tileSize;
-  state.grid.orientation = grid.orientation;
+  state.rotation = rotation ?? { x: 0, y: 0, z: 0 };
 
   state.paths.length = 0;
   for (const p of paths) {

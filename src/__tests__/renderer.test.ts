@@ -31,157 +31,78 @@ describe("faceColors", () => {
 // ─── voxelPosition ───────────────────────────────────────────────────────────
 
 describe("voxelPosition", () => {
-  describe("xz orientation (depth 0)", () => {
-    it("maps col→X, row→Z, extrude up in -Y", () => {
-      expect(voxelPosition(3, 5, 0, 0, "xz")).toEqual([3, -0, 5]);
-      expect(voxelPosition(3, 5, 2, 0, "xz")).toEqual([3, -2, 5]);
-    });
-  });
-
-  describe("xy orientation (depth 0)", () => {
-    it("maps col→X, row→Y, extrude in -Z", () => {
-      expect(voxelPosition(3, 5, 0, 0, "xy")).toEqual([3, 5, -0]);
-      expect(voxelPosition(3, 5, 2, 0, "xy")).toEqual([3, 5, -2]);
-    });
-  });
-
-  describe("yz orientation (depth 0)", () => {
-    it("maps col→Y, row→Z, extrude in +X", () => {
-      expect(voxelPosition(3, 5, 0, 0, "yz")).toEqual([0, 3, 5]);
-      expect(voxelPosition(3, 5, 2, 0, "yz")).toEqual([2, 3, 5]);
-    });
+  it("maps col→X, row→Z, extrude up in -Y", () => {
+    expect(voxelPosition(3, 5, 0, 0)).toEqual([3, -0, 5]);
+    expect(voxelPosition(3, 5, 2, 0)).toEqual([3, -2, 5]);
   });
 
   it("handles zero values", () => {
-    expect(voxelPosition(0, 0, 0, 0, "xz")).toEqual([0, -0, 0]);
-    expect(voxelPosition(0, 0, 0, 0, "xy")).toEqual([0, 0, -0]);
-    expect(voxelPosition(0, 0, 0, 0, "yz")).toEqual([0, 0, 0]);
+    expect(voxelPosition(0, 0, 0, 0)).toEqual([0, -0, 0]);
   });
 
-  describe("xz orientation with non-zero depth", () => {
-    it("offsets voxels along -Y axis", () => {
-      // depth offsets along -Y (same direction as extrusion)
-      expect(voxelPosition(3, 5, 0, 4, "xz")).toEqual([3, -4, 5]);
-      expect(voxelPosition(3, 5, 2, 4, "xz")).toEqual([3, -6, 5]);
-    });
-  });
-
-  describe("xy orientation with non-zero depth", () => {
-    it("offsets voxels along -Z axis", () => {
-      // depth offsets along -Z
-      expect(voxelPosition(3, 5, 0, 4, "xy")).toEqual([3, 5, -4]);
-      expect(voxelPosition(3, 5, 2, 4, "xy")).toEqual([3, 5, -6]);
-    });
-  });
-
-  describe("yz orientation with non-zero depth", () => {
-    it("offsets voxels along +X axis", () => {
-      // depth offsets along +X
-      expect(voxelPosition(3, 5, 0, 4, "yz")).toEqual([4, 3, 5]);
-      expect(voxelPosition(3, 5, 2, 4, "yz")).toEqual([6, 3, 5]);
-    });
+  it("offsets voxels along -Y axis with non-zero depth", () => {
+    expect(voxelPosition(3, 5, 0, 4)).toEqual([3, -4, 5]);
+    expect(voxelPosition(3, 5, 2, 4)).toEqual([3, -6, 5]);
   });
 });
 
 // ─── planePosition ──────────────────────────────────────────────────────────
 
 describe("planePosition", () => {
-  it("returns correct position, size, scale, and scaleOrigin for xz", () => {
-    const p = planePosition(3, 16, 16, "xz");
+  it("returns correct position, size, scale, and scaleOrigin", () => {
+    const p = planePosition(3, 16, 16);
     expect(p.position).toEqual([0, -3, 0]);
     expect(p.size).toEqual([16, 1, 16]);
     expect(p.scale).toEqual([1, 0.1, 1]);
     expect(p.scaleOrigin).toEqual([0.5, 1, 0.5]);
   });
 
-  it("returns correct position, size, scale, and scaleOrigin for xy", () => {
-    const p = planePosition(3, 16, 16, "xy");
-    expect(p.position).toEqual([0, 0, -3]);
-    expect(p.size).toEqual([16, 16, 1]);
-    expect(p.scale).toEqual([1, 1, 0.1]);
-    expect(p.scaleOrigin).toEqual([0.5, 0.5, 1]);
-  });
-
-  it("returns correct position, size, scale, and scaleOrigin for yz", () => {
-    const p = planePosition(3, 16, 16, "yz");
-    expect(p.position).toEqual([3, 0, 0]);
-    expect(p.size).toEqual([1, 16, 16]);
-    expect(p.scale).toEqual([0.1, 1, 1]);
-    expect(p.scaleOrigin).toEqual([0, 0.5, 0.5]);
-  });
-
   it("aligns with voxel positions at depth 0", () => {
-    // XZ: voxel at (0,0) → [0, 0, 0], plane starts at [0, 0, 0]
-    const xz = planePosition(0, 16, 16, "xz");
-    expect(xz.position).toEqual([0, -0, 0]);
-
-    // XY: voxel at (0,0) → [0, 0, 0], plane starts at [0, 0, 0]
-    const xy = planePosition(0, 16, 16, "xy");
-    expect(xy.position).toEqual([0, 0, -0]);
-
-    // YZ: voxel at (0,0) → [0, 0, 0], plane starts at [0, 0, 0]
-    const yz = planePosition(0, 16, 16, "yz");
-    expect(yz.position).toEqual([0, 0, 0]);
+    const p = planePosition(0, 16, 16);
+    expect(p.position).toEqual([0, -0, 0]);
   });
 });
 
 // ─── cameraAngle ─────────────────────────────────────────────────────────────
 
 describe("cameraAngle", () => {
-  it("returns 45 for xz with no delta", () => {
-    expect(cameraAngle("xz")).toBe(45);
-  });
-
-  it("returns 30 for xy with no delta", () => {
-    expect(cameraAngle("xy")).toBe(30);
-  });
-
-  it("returns 60 for yz with no delta", () => {
-    expect(cameraAngle("yz")).toBe(60);
+  it("returns 45 with no delta", () => {
+    expect(cameraAngle()).toBe(45);
   });
 
   it("adds delta to base angle", () => {
-    expect(cameraAngle("xz", 10)).toBe(55);
-    expect(cameraAngle("xz", -10)).toBe(35);
+    expect(cameraAngle(10)).toBe(55);
+    expect(cameraAngle(-10)).toBe(35);
   });
 
   it("clamps result to minimum 1°", () => {
-    // xy base is 30, delta -40 would give -10 → clamp to 1
-    expect(cameraAngle("xy", -40)).toBe(1);
+    expect(cameraAngle(-50)).toBe(1);
   });
 
   it("clamps result to maximum 89°", () => {
-    // yz base is 60, delta +40 would give 100 → clamp to 89
-    expect(cameraAngle("yz", 40)).toBe(89);
+    expect(cameraAngle(50)).toBe(89);
   });
 });
 
 // ─── cameraConfig ────────────────────────────────────────────────────────────
 
 describe("cameraConfig", () => {
-  it("returns type and angle for isometric xz", () => {
-    expect(cameraConfig("isometric", "xz")).toEqual({
+  it("returns type and angle for isometric", () => {
+    expect(cameraConfig("isometric")).toEqual({
       type: "isometric",
       angle: 45,
     });
   });
 
-  it("returns type and angle for oblique xy", () => {
-    expect(cameraConfig("oblique", "xy")).toEqual({
+  it("returns type and angle for oblique", () => {
+    expect(cameraConfig("oblique")).toEqual({
       type: "oblique",
-      angle: 30,
-    });
-  });
-
-  it("returns type and angle for orthographic yz", () => {
-    expect(cameraConfig("orthographic", "yz")).toEqual({
-      type: "orthographic",
-      angle: 60,
+      angle: 45,
     });
   });
 
   it("includes delta in the angle", () => {
-    expect(cameraConfig("isometric", "xz", 15)).toEqual({
+    expect(cameraConfig("isometric", 15)).toEqual({
       type: "isometric",
       angle: 60,
     });

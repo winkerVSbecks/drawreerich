@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/web-components-vite";
 import { expect } from "storybook/test";
 import { renderScene, markDirty } from "../renderer.ts";
-import { replaceState, addCell, setCameraAngleDelta, setActivePlaneDepth, setStroke } from "../state.ts";
+import { replaceState, addCell, setCameraAngleDelta, setActivePlaneDepth, setStroke, ROTATION_PRESETS } from "../state.ts";
 import { resetState, hasVisiblePixels } from "./helpers.ts";
 
 function createCanvas(width: number, height: number) {
@@ -66,15 +66,15 @@ export const RendersVisibleContentWithCells: Story = {
   },
 };
 
-export const DifferentOrientations: Story = {
+export const DifferentRotations: Story = {
   render: () => {
     const container = document.createElement("div");
     container.style.display = "flex";
     container.style.gap = "8px";
 
-    for (const orientation of ["xz", "xy", "yz"] as const) {
+    for (const [name, rotation] of Object.entries(ROTATION_PRESETS)) {
       replaceState(
-        { cols: 16, rows: 16, tileSize: 32, orientation },
+        { cols: 16, rows: 16, tileSize: 32 },
         [
           {
             id: "path-1",
@@ -84,10 +84,11 @@ export const DifferentOrientations: Story = {
             depth: 0,
           },
         ],
+        { ...rotation },
       );
       markDirty();
       const canvas = createCanvas(400, 400);
-      canvas.dataset.orientation = orientation;
+      canvas.dataset.rotation = name;
       const ctx = canvas.getContext("2d")!;
       renderScene(ctx, 400, 400);
       container.appendChild(canvas);
@@ -96,9 +97,9 @@ export const DifferentOrientations: Story = {
     return container;
   },
   play: async ({ canvasElement }) => {
-    for (const orientation of ["xz", "xy", "yz"]) {
+    for (const name of ["xz", "xy", "yz"]) {
       const canvas = canvasElement.querySelector(
-        `canvas[data-orientation="${orientation}"]`,
+        `canvas[data-rotation="${name}"]`,
       ) as HTMLCanvasElement;
       const ctx = canvas.getContext("2d")!;
       await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
@@ -191,21 +192,22 @@ export const CameraRotationDelta: Story = {
   },
 };
 
-export const PlaneAtEachOrientation: Story = {
+export const PlaneAtEachRotation: Story = {
   render: () => {
     const container = document.createElement("div");
     container.style.display = "flex";
     container.style.gap = "8px";
 
-    for (const orientation of ["xz", "xy", "yz"] as const) {
+    for (const [name, rotation] of Object.entries(ROTATION_PRESETS)) {
       replaceState(
-        { cols: 16, rows: 16, tileSize: 32, orientation },
+        { cols: 16, rows: 16, tileSize: 32 },
         [{ id: "path-1", cells: [], color: "#4477bb", height: 2, depth: 0 }],
+        { ...rotation },
       );
       setActivePlaneDepth(5);
       markDirty();
       const canvas = createCanvas(400, 400);
-      canvas.dataset.orientation = orientation;
+      canvas.dataset.rotation = name;
       const ctx = canvas.getContext("2d")!;
       renderScene(ctx, 400, 400);
       container.appendChild(canvas);
@@ -214,10 +216,9 @@ export const PlaneAtEachOrientation: Story = {
     return container;
   },
   play: async ({ canvasElement }) => {
-    // Each orientation should render visible content (the plane geometry)
-    for (const orientation of ["xz", "xy", "yz"]) {
+    for (const name of ["xz", "xy", "yz"]) {
       const canvas = canvasElement.querySelector(
-        `canvas[data-orientation="${orientation}"]`,
+        `canvas[data-rotation="${name}"]`,
       ) as HTMLCanvasElement;
       const ctx = canvas.getContext("2d")!;
       await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
@@ -291,7 +292,7 @@ export const PathsAtMultipleDepths: Story = {
   render: () => {
     resetState();
     replaceState(
-      { cols: 16, rows: 16, tileSize: 32, orientation: "xz" },
+      { cols: 16, rows: 16, tileSize: 32 },
       [
         {
           id: "path-1",

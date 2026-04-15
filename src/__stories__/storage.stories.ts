@@ -51,7 +51,8 @@ export const RestoresValidState: Story = {
     await expect(s.grid.cols).toBe(8);
     await expect(s.grid.rows).toBe(10);
     await expect(s.grid.tileSize).toBe(24);
-    await expect(s.grid.orientation).toBe("xy");
+    // v1 orientation "xy" should be migrated to rotation {x:1, y:0, z:0}
+    await expect(s.rotation).toEqual({ x: 1, y: 0, z: 0 });
     await expect(s.paths).toHaveLength(1);
     await expect(s.paths[0].id).toBe("path-42");
     await expect(s.paths[0].cells).toEqual([{ col: 1, row: 2 }]);
@@ -150,13 +151,14 @@ export const AutoSavesOnGridConfigChange: Story = {
 
     const { grid } = getState();
     replaceState(
-      { ...grid, cols: 12, rows: 12, tileSize: 48, orientation: "yz" },
+      { ...grid, cols: 12, rows: 12, tileSize: 48 },
       getState().paths,
+      { x: 0, y: 0, z: 1 },
     );
 
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = JSON.parse(raw!);
     await expect(parsed.grid.cols).toBe(12);
-    await expect(parsed.grid.orientation).toBe("yz");
+    await expect(parsed.rotation).toEqual({ x: 0, y: 0, z: 1 });
   },
 };
