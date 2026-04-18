@@ -446,6 +446,12 @@ fileMenu.addEventListener('click', (e) => {
 });
 
 // Keyboard shortcuts
+function toggleSettingsMenuByName(name: string) {
+  const menu = settingsMenus.find((m) => m.dataset.menu === name);
+  if (!menu) return;
+  menu.open = !menu.open;
+}
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     let handled = false;
@@ -465,9 +471,33 @@ document.addEventListener('keydown', (e) => {
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
     return;
   }
-  if (e.key === '?' && !aboutDialog.open) {
+  // Skip when modifier keys are held or a dialog is open
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (aboutDialog.open || confirmDialog.open || alertDialog.open) return;
+
+  if (e.key === '?') {
     aboutDialog.showModal();
     e.preventDefault();
+    return;
+  }
+
+  switch (e.key.toLowerCase()) {
+    case 'f':
+      setFileMenuOpen(Boolean(fileMenu.hidden));
+      e.preventDefault();
+      break;
+    case 'a':
+      toggleSettingsMenuByName('artboard');
+      e.preventDefault();
+      break;
+    case 'c':
+      toggleSettingsMenuByName('camera');
+      e.preventDefault();
+      break;
+    case 'd':
+      toggleSettingsMenuByName('draw');
+      e.preventDefault();
+      break;
   }
 });
 
