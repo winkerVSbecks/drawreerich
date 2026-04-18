@@ -55,10 +55,9 @@ Drawreerich is a 3D grid drawing application. Users draw on a 2D grid; the app r
 
 Fullscreen canvas with a full-width top bar:
 
-- **Top bar** (`#top-bar`): spans the full viewport width. Left side has the brand wordmark, File menu, and About button. Right side (`.top-bar-right`) holds the four settings menus.
-- **Settings menus** are four native `<details class="settings-menu">` elements: `Canvas`, `Camera`, `Rotation`, `Draw`. Each hosts its own Tweakpane instance mounted in `#pane-{name}`. Only one menu is open at a time (coordinated via `toggle` events); the File menu closes them and vice versa. Click-outside and `Esc` close any open menu.
-  - `Canvas` — cols, rows, tileSize.
-  - `Camera` — camera type, Reset Camera.
-  - `Rotation` — Floor/Front/Side presets + X/Y/Z rotation sliders.
+- **Top bar** (`#top-bar`): spans the full viewport width. Left side has the brand wordmark and File menu. Right side (`.top-bar-right`) holds the three settings menus followed by the About info button.
+- **Settings menus** are three native `<details class="settings-menu">` elements: `Artboard`, `Camera`, `Draw`. Each hosts its own Tweakpane instance mounted in `#pane-{name}`. Only one menu is open at a time (coordinated via `toggle` events); the File menu closes them and vice versa. Click-outside and `Esc` close any open menu.
+  - `Artboard` — cols, rows, tileSize.
+  - `Camera` — camera type, Reset Camera, Floor/Front/Side rotation presets, X/Y/Z rotation sliders (all flat, no sub-folder).
   - `Draw` — grid-editor blade (2D drawing surface + path swatches), height, color, depth, stroke, New Path.
 - **Modals** use native `<dialog>`: `#about-dialog`, `#confirm-dialog`, `#alert-dialog`. `askConfirm()` and `showAlert()` in `main.ts` replace `window.confirm` / `window.alert`.

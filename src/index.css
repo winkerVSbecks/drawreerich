@@ -7,41 +7,51 @@
 }
 
 :root {
+  /* ── Warm palette (Warp-inspired) ──────────────────────── */
+  --color-parchment: #faf9f6;
+  --color-ash: #afaeac;
+  --color-stone: #868584;
+  --color-earth: #353534;
+  --color-charcoal: #454545;
+  --color-purple-gray: #666469;
+
+  --surface-0: #1a1816;
+  --surface-1: #221f1c;
+  --surface-veil: rgba(255, 255, 255, 0.04);
+  --border-mist: rgba(226, 226, 226, 0.2);
+  --border-mist-strong: rgba(226, 226, 226, 0.35);
+
+  --text: var(--color-parchment);
+  --text-muted: var(--color-ash);
+  --text-subdued: var(--color-stone);
+
   --panel-width: 300px;
-  --panel-bg: hsla(0, 0%, 10%, 0.8);
-  --panel-border: #2a2a4a;
-  --bg: #1a1a2e;
-  --text: #e0e0e0;
-  --text-muted: #6b6b8a;
-  --accent: hsla(0, 0%, 95%, 1);
-  --modal-backdrop: hsla(0, 0%, 0%, 0.55);
-  --modal-bg: hsla(240, 20%, 10%, 0.98);
-  --modal-border: hsla(0, 0%, 100%, 0.08);
-  --modal-radius: 12px;
+  --bg: var(--surface-0);
 
   color-scheme: dark;
 
-  --tp-base-background-color: hsla(0, 0%, 10%, 0.8);
-  --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
-  --tp-button-background-color: hsla(0, 0%, 80%, 1);
-  --tp-button-background-color-active: hsla(0, 0%, 100%, 1);
-  --tp-button-background-color-focus: hsla(0, 0%, 95%, 1);
-  --tp-button-background-color-hover: hsla(0, 0%, 85%, 1);
-  --tp-button-foreground-color: hsla(0, 0%, 0%, 0.8);
-  --tp-container-background-color: hsla(0, 0%, 0%, 0.3);
-  --tp-container-background-color-active: hsla(0, 0%, 0%, 0.6);
-  --tp-container-background-color-focus: hsla(0, 0%, 0%, 0.5);
-  --tp-container-background-color-hover: hsla(0, 0%, 0%, 0.4);
-  --tp-container-foreground-color: hsla(0, 0%, 100%, 0.5);
-  --tp-groove-foreground-color: hsla(0, 0%, 0%, 0.2);
-  --tp-input-background-color: hsla(0, 0%, 0%, 0.3);
-  --tp-input-background-color-active: hsla(0, 0%, 0%, 0.6);
-  --tp-input-background-color-focus: hsla(0, 0%, 0%, 0.5);
-  --tp-input-background-color-hover: hsla(0, 0%, 0%, 0.4);
-  --tp-input-foreground-color: hsla(0, 0%, 100%, 0.5);
-  --tp-label-foreground-color: hsla(0, 0%, 100%, 0.5);
-  --tp-monitor-background-color: hsla(0, 0%, 0%, 0.3);
-  --tp-monitor-foreground-color: hsla(0, 0%, 100%, 0.3);
+  /* ── Tweakpane theme ──────────────────────────────────── */
+  --tp-base-background-color: transparent;
+  --tp-base-shadow-color: rgba(0, 0, 0, 0.2);
+  --tp-button-background-color: var(--color-earth);
+  --tp-button-background-color-active: var(--color-charcoal);
+  --tp-button-background-color-focus: var(--color-charcoal);
+  --tp-button-background-color-hover: var(--color-charcoal);
+  --tp-button-foreground-color: var(--color-ash);
+  --tp-container-background-color: var(--surface-veil);
+  --tp-container-background-color-active: rgba(255, 255, 255, 0.1);
+  --tp-container-background-color-focus: rgba(255, 255, 255, 0.08);
+  --tp-container-background-color-hover: rgba(255, 255, 255, 0.06);
+  --tp-container-foreground-color: var(--color-ash);
+  --tp-groove-foreground-color: rgba(255, 255, 255, 0.08);
+  --tp-input-background-color: rgba(255, 255, 255, 0.04);
+  --tp-input-background-color-active: rgba(255, 255, 255, 0.1);
+  --tp-input-background-color-focus: rgba(255, 255, 255, 0.08);
+  --tp-input-background-color-hover: rgba(255, 255, 255, 0.06);
+  --tp-input-foreground-color: var(--color-parchment);
+  --tp-label-foreground-color: var(--color-stone);
+  --tp-monitor-background-color: rgba(255, 255, 255, 0.04);
+  --tp-monitor-foreground-color: var(--color-ash);
 }
 
 html,
@@ -49,9 +59,13 @@ body {
   height: 100%;
   overflow: hidden;
   font-family:
+    'Inter',
     system-ui,
     -apple-system,
     sans-serif;
+  font-weight: 400;
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.01em;
   background: var(--bg);
   color: var(--text);
 }
@@ -90,34 +104,32 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 14px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--panel-border);
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--surface-0);
+  border-bottom: 1px solid var(--border-mist);
 }
 
 .top-bar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   min-width: 0;
 }
 
 .brand {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   color: var(--text);
   margin: 0;
-  padding: 0 4px;
+  text-transform: uppercase;
 }
 
 .top-bar-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
 }
 
 .top-bar-button {
@@ -126,45 +138,79 @@ body {
   gap: 6px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--text);
-  padding: 5px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 400;
   font-family: inherit;
+  letter-spacing: -0.01em;
+  cursor: pointer;
   user-select: none;
   transition:
-    background 0.15s,
-    border-color 0.15s;
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .top-bar-button:hover,
 .top-bar-button[aria-expanded='true'] {
-  background: hsla(0, 0%, 100%, 0.08);
-  border-color: hsla(0, 0%, 100%, 0.12);
+  background: var(--surface-veil);
+  color: var(--text);
 }
 
 .top-bar-button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 1px solid var(--border-mist-strong);
   outline-offset: 2px;
 }
 
 .top-bar-button.icon-only {
-  padding: 5px 9px;
-  min-width: 28px;
+  padding: 6px 8px;
+  min-width: 30px;
   justify-content: center;
 }
 
-.caret {
-  font-size: 9px;
-  line-height: 1;
-  opacity: 0.7;
+.about-button {
+  margin-left: 6px;
 }
 
-/* ── Dropdown menu ───────────────────────────────────────── */
+/* ── Icons (currentColor via mask) ───────────────────────── */
+
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.icon-chevron {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+  mask-image: url('/chevron-down.svg');
+  -webkit-mask-image: url('/chevron-down.svg');
+  transition: transform 0.15s ease;
+}
+
+.settings-menu[open] .icon-chevron,
+[aria-expanded='true'] .icon-chevron {
+  mask-image: url('/chevron-up.svg');
+  -webkit-mask-image: url('/chevron-up.svg');
+}
+
+.icon-info {
+  width: 16px;
+  height: 16px;
+  mask-image: url('/info.svg');
+  -webkit-mask-image: url('/info.svg');
+}
+
+/* ── Dropdown menu (File menu) ───────────────────────────── */
 
 .menu-wrapper {
   position: relative;
@@ -174,17 +220,15 @@ body {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  min-width: 180px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  padding: 4px;
+  min-width: 200px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-mist);
+  border-radius: 5px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  box-shadow: 0 8px 24px hsla(0, 0%, 0%, 0.35);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .dropdown-menu[hidden] {
@@ -193,34 +237,40 @@ body {
 
 .dropdown-menu hr {
   border: none;
-  border-top: 1px solid var(--panel-border);
-  margin: 4px 2px;
+  border-top: 1px solid var(--border-mist);
+  margin: 4px 4px;
 }
 
 .dropdown-menu button[role='menuitem'] {
   background: transparent;
   border: none;
-  color: var(--text);
+  color: var(--text-muted);
   text-align: left;
-  padding: 7px 10px;
-  font-size: 12px;
-  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  border-radius: 3px;
   cursor: pointer;
   font-family: inherit;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .dropdown-menu button[role='menuitem']:hover,
 .dropdown-menu button[role='menuitem']:focus-visible {
-  background: hsla(0, 0%, 100%, 0.08);
+  background: var(--surface-veil);
+  color: var(--text);
   outline: none;
 }
 
-/* ── Settings menus (nested in top bar, right-aligned) ──── */
+/* ── Settings menus (in top bar, right-aligned) ──────────── */
 
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .settings-menu {
@@ -235,27 +285,18 @@ body {
   display: none;
 }
 
-.settings-toggle-icon::before {
-  content: '▾';
-}
-
-.settings-menu[open] .settings-toggle-icon::before {
-  content: '▴';
-}
-
 .settings-menu[open] > .settings-toggle {
-  background: hsla(0, 0%, 100%, 0.08);
-  border-color: hsla(0, 0%, 100%, 0.12);
+  background: var(--surface-veil);
+  color: var(--text);
 }
 
 .settings-menu:not([open]) .settings-body {
   display: none;
 }
 
-/* Body: drops down from the top bar, right-aligned, scrollable */
 .settings-body {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   right: 0;
   z-index: 110;
   width: max-content;
@@ -263,27 +304,24 @@ body {
   max-width: calc(100vw - 2rem);
   max-height: calc(100dvh - 5rem);
   overflow-y: auto;
-  background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px hsla(0, 0%, 0%, 0.35);
-  /* Custom scrollbar */
+  background: var(--surface-1);
+  border: 1px solid var(--border-mist);
+  border-radius: 5px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   scrollbar-width: thin;
-  scrollbar-color: var(--panel-border) transparent;
+  scrollbar-color: var(--border-mist) transparent;
 }
 
 .settings-body::-webkit-scrollbar {
   width: 4px;
 }
 .settings-body::-webkit-scrollbar-thumb {
-  background: var(--panel-border);
+  background: var(--border-mist);
   border-radius: 2px;
 }
 
 .pane-container {
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 
 /* ── Path swatches + grid editor (inside Tweakpane) ──────── */
@@ -292,56 +330,57 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 8px 2px 2px;
+  padding: 10px 2px 4px;
 }
 
 .path-swatch {
   width: 24px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s ease;
 }
 
 .path-swatch:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border-mist-strong);
 }
 
 .path-swatch.active {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+  border-color: var(--text);
+  box-shadow: 0 0 0 1px var(--border-mist);
 }
 
 .tp-grdv {
-  padding: 4px;
+  padding: 4px 0;
 }
 
 .tp-grdv canvas {
   display: block;
+  border-radius: 3px;
 }
 
 /* ── Modals (native <dialog>) ────────────────────────────── */
 
 .modal {
-  border: 1px solid var(--modal-border);
-  border-radius: var(--modal-radius);
-  background: var(--modal-bg);
+  margin: auto;
+  border: 1px solid var(--border-mist-strong);
+  border-radius: 8px;
+  background: var(--surface-0);
   color: var(--text);
-  padding: 24px 28px 26px;
-  max-width: 460px;
+  padding: 28px 32px 30px;
+  max-width: 480px;
   width: calc(100vw - 32px);
-  box-shadow: 0 24px 60px hsla(0, 0%, 0%, 0.5);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   font-family: inherit;
   line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 .modal::backdrop {
-  background: var(--modal-backdrop);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(10, 8, 6, 0.6);
 }
 
 .modal:focus-visible {
@@ -349,41 +388,48 @@ body {
 }
 
 .modal h2 {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  margin-bottom: 6px;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 4px;
+  color: var(--text);
 }
 
 .modal h3 {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+  color: var(--text-subdued);
+  margin-bottom: 10px;
 }
 
 .modal section {
-  margin-top: 18px;
+  margin-top: 24px;
 }
 
 .modal p,
 .modal li {
-  font-size: 13px;
-  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
 }
 
 .modal-lede {
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .modal a {
   color: var(--text);
   text-decoration: underline;
-  text-decoration-color: hsla(0, 0%, 100%, 0.3);
-  text-underline-offset: 2px;
+  text-decoration-color: var(--color-purple-gray);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
 }
 
 .modal a:hover {
@@ -394,33 +440,36 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.modal-list li {
-  padding-left: 0;
+  gap: 6px;
 }
 
 .shortcuts {
   display: grid;
   grid-template-columns: max-content 1fr;
-  column-gap: 16px;
-  row-gap: 4px;
-  font-size: 13px;
+  column-gap: 20px;
+  row-gap: 8px;
+  font-size: 14px;
 }
 
 .shortcuts dt {
+  color: var(--text-subdued);
+}
+
+.shortcuts dd {
   color: var(--text-muted);
 }
 
 .shortcuts kbd {
   display: inline-block;
-  background: hsla(0, 0%, 100%, 0.08);
-  border: 1px solid var(--modal-border);
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  background: var(--surface-veil);
+  border: 1px solid var(--border-mist);
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0;
 }
 
 .modal-close-form {
@@ -429,80 +478,90 @@ body {
 
 .modal-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 28px;
-  height: 28px;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-subdued);
   font-size: 22px;
   line-height: 1;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
 .modal-close:hover {
-  background: hsla(0, 0%, 100%, 0.08);
+  background: var(--surface-veil);
   color: var(--text);
 }
 
 .modal-compact {
-  padding: 22px 24px;
+  padding: 24px 28px;
 }
 
 .confirm-title {
-  font-size: 15px;
-  margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  margin-bottom: 8px;
 }
 
 .confirm-body,
 .alert-body {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn {
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  border-radius: 6px;
-  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-radius: 50px;
+  padding: 10px 20px;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 1px solid var(--border-mist-strong);
   outline-offset: 2px;
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: hsla(0, 0%, 0%, 0.85);
+  background: var(--color-earth);
+  color: var(--text-muted);
 }
 
 .btn-primary:hover {
-  background: hsla(0, 0%, 100%, 1);
+  background: var(--color-charcoal);
+  color: var(--text);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text);
-  border-color: var(--panel-border);
+  color: var(--text-muted);
+  border-color: var(--border-mist);
 }
 
 .btn-ghost:hover {
-  background: hsla(0, 0%, 100%, 0.06);
-  border-color: hsla(0, 0%, 100%, 0.2);
+  background: var(--surface-veil);
+  color: var(--text);
+  border-color: var(--border-mist-strong);
 }

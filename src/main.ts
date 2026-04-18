@@ -1,7 +1,6 @@
 import { ssam } from 'ssam';
 import type { Sketch, SketchSettings } from 'ssam';
 import { Pane } from 'tweakpane';
-import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
 import { renderScene, markDirty, setShowPlane } from './renderer.ts';
 import {
   getState,
@@ -123,22 +122,22 @@ const PATH_PARAMS = {
   color: activePath?.color ?? '#4477bb',
 };
 
-// --- Canvas ---
-const canvasPane = new Pane({ container: document.getElementById('pane-canvas')! });
+// --- Artboard ---
+const artboardPane = new Pane({ container: document.getElementById('pane-artboard')! });
 
-canvasPane
+artboardPane
   .addBinding(PARAMS, 'cols', { label: 'cols', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridCols(ev.value);
   });
 
-canvasPane
+artboardPane
   .addBinding(PARAMS, 'rows', { label: 'rows', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridRows(ev.value);
   });
 
-canvasPane
+artboardPane
   .addBinding(PARAMS, 'tileSize', { min: 8, max: 64, step: 1 })
   .on('change', (ev) => {
     setTileSize(ev.value);
@@ -164,39 +163,35 @@ cameraPane.addButton({ title: 'Reset Camera' }).on('click', () => {
   resetCameraAngle();
 });
 
-// --- Rotation ---
-const rotationPane = new Pane({ container: document.getElementById('pane-rotation')! });
-rotationPane.registerPlugin(EssentialsPlugin);
-
-rotationPane.addButton({ title: 'Floor (XZ)' }).on('click', () => {
+cameraPane.addButton({ title: 'Floor (XZ)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.xz);
   setCameraAngleDelta(0);
   syncParamsFromState();
 });
-rotationPane.addButton({ title: 'Front (XY)' }).on('click', () => {
+cameraPane.addButton({ title: 'Front (XY)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.xy);
   setCameraAngleDelta(-15);
   syncParamsFromState();
 });
-rotationPane.addButton({ title: 'Side (YZ)' }).on('click', () => {
+cameraPane.addButton({ title: 'Side (YZ)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.yz);
   setCameraAngleDelta(15);
   syncParamsFromState();
 });
 
-rotationPane
+cameraPane
   .addBinding(ROT_PARAMS, 'rotX', { label: 'X', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, x: ev.value });
   });
-rotationPane
+cameraPane
   .addBinding(ROT_PARAMS, 'rotY', { label: 'Y', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, y: ev.value });
   });
-rotationPane
+cameraPane
   .addBinding(ROT_PARAMS, 'rotZ', { label: 'Z', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
@@ -247,7 +242,7 @@ drawPane.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
 });
 
-const settingsPanes = [canvasPane, cameraPane, rotationPane, drawPane];
+const settingsPanes = [artboardPane, cameraPane, drawPane];
 
 // --- Sync Tweakpane PARAMS from state (after restore or import) ---
 function syncParamsFromState() {
