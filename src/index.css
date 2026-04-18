@@ -210,6 +210,13 @@ body {
   -webkit-mask-image: url('/info.svg');
 }
 
+.icon-x {
+  width: 16px;
+  height: 16px;
+  mask-image: url('/x.svg');
+  -webkit-mask-image: url('/x.svg');
+}
+
 /* ── Dropdown menu (File menu) ───────────────────────────── */
 
 .menu-wrapper {
@@ -482,11 +489,12 @@ body {
   right: 14px;
   width: 30px;
   height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   color: var(--text-subdued);
-  font-size: 22px;
-  line-height: 1;
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
