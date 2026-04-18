@@ -98,6 +98,9 @@ function applyPalette() {
     const color = currentPalette.pathColors[i % currentPalette.pathColors.length];
     setPathColor(paths[i].id, color);
   }
+
+  // Plane stroke contrast depends on --bg; force a rebuild even when no paths changed.
+  markDirty();
 }
 
 // Tweakpane setup — one pane per top-bar menu
