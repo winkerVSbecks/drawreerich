@@ -159,8 +159,14 @@ cameraPane
     setCameraType(ev.value as CameraType);
   });
 
-cameraPane.addButton({ title: 'Reset Camera' }).on('click', () => {
+function resetCamera() {
+  setRotation(ROTATION_PRESETS.xz);
   resetCameraAngle();
+  syncParamsFromState();
+}
+
+cameraPane.addButton({ title: 'Reset Camera' }).on('click', () => {
+  resetCamera();
 });
 
 cameraPane.addButton({ title: 'Floor (XZ)' }).on('click', () => {
@@ -496,6 +502,10 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'd':
       toggleSettingsMenuByName('draw');
+      e.preventDefault();
+      break;
+    case 'r':
+      resetCamera();
       e.preventDefault();
       break;
   }
