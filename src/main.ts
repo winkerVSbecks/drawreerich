@@ -101,12 +101,7 @@ function applyPalette() {
   }
 }
 
-// Tweakpane setup
-const paneContainer = document.getElementById('tweakpane-container')!;
-const pane = new Pane({ container: paneContainer, title: 'drawreerich' });
-pane.registerPlugin(EssentialsPlugin);
-pane.registerPlugin(GridEditorBladePlugin);
-
+// Tweakpane setup — one pane per top-bar menu
 const PARAMS = {
   cols: getState().grid.cols,
   rows: getState().grid.rows,
@@ -122,28 +117,37 @@ const ROT_PARAMS = {
   rotZ: getState().rotation.z,
 };
 
-// --- Canvas controls ---
-const canvasFolder = pane.addFolder({ title: 'Canvas' });
+const activePath = getActivePath();
+const PATH_PARAMS = {
+  height: activePath?.height ?? 2,
+  color: activePath?.color ?? '#4477bb',
+};
 
-canvasFolder
+// --- Canvas ---
+const canvasPane = new Pane({ container: document.getElementById('pane-canvas')! });
+
+canvasPane
   .addBinding(PARAMS, 'cols', { label: 'cols', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridCols(ev.value);
   });
 
-canvasFolder
+canvasPane
   .addBinding(PARAMS, 'rows', { label: 'rows', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridRows(ev.value);
   });
 
-canvasFolder
+canvasPane
   .addBinding(PARAMS, 'tileSize', { min: 8, max: 64, step: 1 })
   .on('change', (ev) => {
     setTileSize(ev.value);
   });
 
-canvasFolder
+// --- Camera ---
+const cameraPane = new Pane({ container: document.getElementById('pane-camera')! });
+
+cameraPane
   .addBinding(PARAMS, 'cameraType', {
     label: 'camera',
     options: {
@@ -156,74 +160,56 @@ canvasFolder
     setCameraType(ev.value as CameraType);
   });
 
-canvasFolder.addButton({ title: 'Reset Camera' }).on('click', () => {
+cameraPane.addButton({ title: 'Reset Camera' }).on('click', () => {
   resetCameraAngle();
 });
 
-canvasFolder
-  .addBinding(PARAMS, 'activePlaneDepth', {
-    label: 'depth (Y)',
-    min: 0,
-    max: 20,
-    step: 1,
-  })
-  .on('change', (ev) => {
-    setActivePlaneDepth(ev.value);
-  });
+// --- Rotation ---
+const rotationPane = new Pane({ container: document.getElementById('pane-rotation')! });
+rotationPane.registerPlugin(EssentialsPlugin);
 
-canvasFolder.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
-  setStroke(ev.value);
-});
-
-// --- Rotation controls ---
-const rotFolder = pane.addFolder({ title: 'Rotation' });
-
-// View preset buttons
-rotFolder.addButton({ title: 'Floor (XZ)' }).on('click', () => {
+rotationPane.addButton({ title: 'Floor (XZ)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.xz);
   setCameraAngleDelta(0);
   syncParamsFromState();
 });
-rotFolder.addButton({ title: 'Front (XY)' }).on('click', () => {
+rotationPane.addButton({ title: 'Front (XY)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.xy);
   setCameraAngleDelta(-15);
   syncParamsFromState();
 });
-rotFolder.addButton({ title: 'Side (YZ)' }).on('click', () => {
+rotationPane.addButton({ title: 'Side (YZ)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.yz);
   setCameraAngleDelta(15);
   syncParamsFromState();
 });
 
-rotFolder
+rotationPane
   .addBinding(ROT_PARAMS, 'rotX', { label: 'X', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, x: ev.value });
   });
-rotFolder
+rotationPane
   .addBinding(ROT_PARAMS, 'rotY', { label: 'Y', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, y: ev.value });
   });
-rotFolder
+rotationPane
   .addBinding(ROT_PARAMS, 'rotZ', { label: 'Z', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, z: ev.value });
   });
 
-// --- Active Path controls ---
-const activePath = getActivePath();
-const PATH_PARAMS = {
-  height: activePath?.height ?? 2,
-  color: activePath?.color ?? '#4477bb',
-};
+// --- Draw ---
+const drawPane = new Pane({ container: document.getElementById('pane-draw')! });
+drawPane.registerPlugin(GridEditorBladePlugin);
 
-const pathFolder = pane.addFolder({ title: 'Active Path' });
+drawPane.addBlade({ view: 'grid-editor' });
 
-const heightBinding = pathFolder
+const heightBinding = drawPane
   .addBinding(PATH_PARAMS, 'height', {
     label: 'height',
     min: 1,
@@ -235,23 +221,33 @@ const heightBinding = pathFolder
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
-pathFolder
+drawPane
   .addBinding(PATH_PARAMS, 'color', { label: 'color' })
   .on('change', (ev) => {
     const ap = getActivePath();
     if (ap) setPathColor(ap.id, ev.value);
   });
 
-// "New Path" button
-pathFolder.addButton({ title: 'New Path' }).on('click', () => {
+drawPane
+  .addBinding(PARAMS, 'activePlaneDepth', {
+    label: 'depth (Y)',
+    min: 0,
+    max: 20,
+    step: 1,
+  })
+  .on('change', (ev) => {
+    setActivePlaneDepth(ev.value);
+  });
+
+drawPane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
+  setStroke(ev.value);
+});
+
+drawPane.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
 });
 
-// --- Grid editor in its own floating pane ---
-const gridEditorContainer = document.getElementById('grid-editor-panel')!;
-const gridEditorPane = new Pane({ container: gridEditorContainer });
-gridEditorPane.registerPlugin(GridEditorBladePlugin);
-gridEditorPane.addBlade({ view: 'grid-editor' });
+const settingsPanes = [canvasPane, cameraPane, rotationPane, drawPane];
 
 // --- Sync Tweakpane PARAMS from state (after restore or import) ---
 function syncParamsFromState() {
@@ -265,7 +261,7 @@ function syncParamsFromState() {
   ROT_PARAMS.rotX = s.rotation.x;
   ROT_PARAMS.rotY = s.rotation.y;
   ROT_PARAMS.rotZ = s.rotation.z;
-  pane.refresh();
+  for (const p of settingsPanes) p.refresh();
 
   const ap = getActivePath();
   if (ap) {
@@ -347,6 +343,25 @@ function showAlert(title: string, message: string): Promise<void> {
   });
 }
 
+// Settings menus — only one <details> open at a time
+const settingsMenus = Array.from(
+  document.querySelectorAll<HTMLDetailsElement>('.settings-menu'),
+);
+
+function closeAllSettingsMenus() {
+  for (const m of settingsMenus) m.open = false;
+}
+
+for (const menu of settingsMenus) {
+  menu.addEventListener('toggle', () => {
+    if (!menu.open) return;
+    for (const other of settingsMenus) {
+      if (other !== menu) other.open = false;
+    }
+    setFileMenuOpen(false);
+  });
+}
+
 // File menu
 const fileMenuButton = document.getElementById('file-menu-button') as HTMLButtonElement;
 const fileMenu = document.getElementById('file-menu') as HTMLElement;
@@ -354,6 +369,7 @@ const fileMenu = document.getElementById('file-menu') as HTMLElement;
 function setFileMenuOpen(open: boolean) {
   fileMenu.hidden = !open;
   fileMenuButton.setAttribute('aria-expanded', String(open));
+  if (open) closeAllSettingsMenus();
 }
 
 fileMenuButton.addEventListener('click', (e) => {
@@ -362,10 +378,12 @@ fileMenuButton.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-  if (fileMenu.hidden) return;
   const target = e.target as Node;
-  if (!fileMenu.contains(target) && target !== fileMenuButton) {
+  if (!fileMenu.hidden && !fileMenu.contains(target) && target !== fileMenuButton) {
     setFileMenuOpen(false);
+  }
+  for (const menu of settingsMenus) {
+    if (menu.open && !menu.contains(target)) menu.open = false;
   }
 });
 
@@ -435,10 +453,16 @@ fileMenu.addEventListener('click', (e) => {
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    let handled = false;
     if (!fileMenu.hidden) {
       setFileMenuOpen(false);
-      e.stopPropagation();
+      handled = true;
     }
+    if (settingsMenus.some((m) => m.open)) {
+      closeAllSettingsMenus();
+      handled = true;
+    }
+    if (handled) e.stopPropagation();
     return;
   }
   // Skip shortcuts while typing in an input

@@ -11,53 +11,81 @@
       <div id="canvas-container"></div>
 
       <header id="top-bar">
-        <h1 class="brand">drawreerich</h1>
-        <div class="top-bar-actions">
-          <div class="menu-wrapper">
+        <div class="top-bar-left">
+          <h1 class="brand">drawreerich</h1>
+          <nav class="top-bar-actions">
+            <div class="menu-wrapper">
+              <button
+                type="button"
+                class="top-bar-button"
+                id="file-menu-button"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-controls="file-menu"
+              >
+                File
+                <span class="caret" aria-hidden="true">▾</span>
+              </button>
+              <div role="menu" id="file-menu" class="dropdown-menu" hidden>
+                <button role="menuitem" type="button" data-action="load-demo">Load demo</button>
+                <button role="menuitem" type="button" data-action="regenerate-palette">Regenerate palette</button>
+                <button role="menuitem" type="button" data-action="clear-all">Clear all</button>
+                <hr />
+                <button role="menuitem" type="button" data-action="import-json">Import JSON</button>
+                <button role="menuitem" type="button" data-action="export-json">Export JSON</button>
+                <button role="menuitem" type="button" data-action="export-image">Export PNG</button>
+              </div>
+            </div>
             <button
               type="button"
-              class="top-bar-button"
-              id="file-menu-button"
-              aria-haspopup="menu"
-              aria-expanded="false"
-              aria-controls="file-menu"
+              class="top-bar-button icon-only"
+              id="about-button"
+              aria-label="About drawreerich"
+              aria-haspopup="dialog"
             >
-              File
-              <span class="caret" aria-hidden="true">▾</span>
+              <span aria-hidden="true">?</span>
             </button>
-            <div role="menu" id="file-menu" class="dropdown-menu" hidden>
-              <button role="menuitem" type="button" data-action="load-demo">Load demo</button>
-              <button role="menuitem" type="button" data-action="regenerate-palette">Regenerate palette</button>
-              <button role="menuitem" type="button" data-action="clear-all">Clear all</button>
-              <hr />
-              <button role="menuitem" type="button" data-action="import-json">Import JSON</button>
-              <button role="menuitem" type="button" data-action="export-json">Export JSON</button>
-              <button role="menuitem" type="button" data-action="export-image">Export PNG</button>
+          </nav>
+        </div>
+        <nav class="top-bar-right">
+          <details class="settings-menu" data-menu="canvas">
+            <summary class="settings-toggle top-bar-button">
+              <span>Canvas</span>
+              <span class="caret settings-toggle-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="settings-body">
+              <div class="pane-container" id="pane-canvas"></div>
             </div>
-          </div>
-          <button
-            type="button"
-            class="top-bar-button icon-only"
-            id="about-button"
-            aria-label="About drawreerich"
-            aria-haspopup="dialog"
-          >
-            <span aria-hidden="true">?</span>
-          </button>
-        </div>
+          </details>
+          <details class="settings-menu" data-menu="camera">
+            <summary class="settings-toggle top-bar-button">
+              <span>Camera</span>
+              <span class="caret settings-toggle-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="settings-body">
+              <div class="pane-container" id="pane-camera"></div>
+            </div>
+          </details>
+          <details class="settings-menu" data-menu="rotation">
+            <summary class="settings-toggle top-bar-button">
+              <span>Rotation</span>
+              <span class="caret settings-toggle-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="settings-body">
+              <div class="pane-container" id="pane-rotation"></div>
+            </div>
+          </details>
+          <details class="settings-menu" data-menu="draw">
+            <summary class="settings-toggle top-bar-button">
+              <span>Draw</span>
+              <span class="caret settings-toggle-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="settings-body">
+              <div class="pane-container" id="pane-draw"></div>
+            </div>
+          </details>
+        </nav>
       </header>
-
-      <details id="settings-panel" open>
-        <summary class="settings-toggle">
-          <span>Settings</span>
-          <span class="settings-toggle-icon" aria-hidden="true"></span>
-        </summary>
-        <div id="settings-body">
-          <div id="tweakpane-container"></div>
-        </div>
-      </details>
-
-      <div id="grid-editor-panel" aria-label="Grid editor"></div>
     </div>
 
     <dialog id="about-dialog" class="modal" aria-labelledby="about-title">

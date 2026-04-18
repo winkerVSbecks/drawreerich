@@ -53,9 +53,12 @@ Drawreerich is a 3D grid drawing application. Users draw on a 2D grid; the app r
 
 ## Layout
 
-Fullscreen canvas with floating chrome:
+Fullscreen canvas with a full-width top bar:
 
-- **Top bar** (top-left, `#top-bar`): brand wordmark, file-menu dropdown (demo/palette/clear/import/export), about button that opens `#about-dialog`.
-- **Settings panel** (top-right, `#settings-panel`): native `<details>`, always visible, collapsible. Hosts Tweakpane with `Canvas` and `Active Path` folders.
-- **Grid editor card** (bottom-center, `#grid-editor-panel`): the 2D drawing surface, mounted in its own Tweakpane instance so it is always visible rather than nested in the settings panel.
+- **Top bar** (`#top-bar`): spans the full viewport width. Left side has the brand wordmark, File menu, and About button. Right side (`.top-bar-right`) holds the four settings menus.
+- **Settings menus** are four native `<details class="settings-menu">` elements: `Canvas`, `Camera`, `Rotation`, `Draw`. Each hosts its own Tweakpane instance mounted in `#pane-{name}`. Only one menu is open at a time (coordinated via `toggle` events); the File menu closes them and vice versa. Click-outside and `Esc` close any open menu.
+  - `Canvas` — cols, rows, tileSize.
+  - `Camera` — camera type, Reset Camera.
+  - `Rotation` — Floor/Front/Side presets + X/Y/Z rotation sliders.
+  - `Draw` — grid-editor blade (2D drawing surface + path swatches), height, color, depth, stroke, New Path.
 - **Modals** use native `<dialog>`: `#about-dialog`, `#confirm-dialog`, `#alert-dialog`. `askConfirm()` and `showAlert()` in `main.ts` replace `window.confirm` / `window.alert`.

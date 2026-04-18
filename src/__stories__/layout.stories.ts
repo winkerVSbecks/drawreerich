@@ -7,15 +7,22 @@ function renderLayout(open = true): HTMLDivElement {
   wrapper.innerHTML = `
     <div id="app" style="width:100vw;height:100vh;position:relative;overflow:hidden;">
       <div id="canvas-container"></div>
-      <details id="settings-panel"${open ? ' open' : ''}>
-        <summary class="settings-toggle">
-          <span>Settings</span>
-          <span class="settings-toggle-icon" aria-hidden="true"></span>
-        </summary>
-        <div id="settings-body">
-          <div id="tweakpane-container"></div>
+      <header id="top-bar">
+        <div class="top-bar-left">
+          <h1 class="brand">drawreerich</h1>
         </div>
-      </details>
+        <nav class="top-bar-right">
+          <details class="settings-menu" data-menu="canvas"${open ? ' open' : ''}>
+            <summary class="settings-toggle top-bar-button">
+              <span>Canvas</span>
+              <span class="caret settings-toggle-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="settings-body">
+              <div class="pane-container"></div>
+            </div>
+          </details>
+        </nav>
+      </header>
     </div>
   `;
   return wrapper;
@@ -29,62 +36,57 @@ export default meta;
 
 type Story = StoryObj;
 
-// ─── Settings panel open ────────────────────────────────────────────────────
+// ─── Settings menu open ─────────────────────────────────────────────────────
 
 export const SettingsMenuOpen: Story = {
   render: () => renderLayout(true),
   play: async ({ canvasElement }) => {
-    const panel =
-      canvasElement.querySelector<HTMLDetailsElement>('#settings-panel')!;
-    const body = canvasElement.querySelector<HTMLElement>('#settings-body')!;
+    const menu = canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
+    const body = canvasElement.querySelector<HTMLElement>('.settings-body')!;
 
-    // Panel should be open and content visible
-    await expect(panel.open).toBe(true);
+    // Menu should be open and content visible
+    await expect(menu.open).toBe(true);
     await expect(window.getComputedStyle(body).display).not.toBe('none');
   },
 };
 
-// ─── Settings panel closed ──────────────────────────────────────────────────
+// ─── Settings menu closed ───────────────────────────────────────────────────
 
 export const SettingsMenuClosed: Story = {
   render: () => renderLayout(false),
   play: async ({ canvasElement }) => {
-    const panel =
-      canvasElement.querySelector<HTMLDetailsElement>('#settings-panel')!;
-    const body = canvasElement.querySelector<HTMLElement>('#settings-body')!;
-    const summary =
-      canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
+    const menu = canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
+    const body = canvasElement.querySelector<HTMLElement>('.settings-body')!;
+    const summary = canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
 
-    // Panel should be closed and content hidden
-    await expect(panel.open).toBe(false);
+    // Menu should be closed and content hidden
+    await expect(menu.open).toBe(false);
     await expect(window.getComputedStyle(body).display).toBe('none');
 
-    // Panel height should match summary height — it doesn't cover the full viewport
-    const panelRect = panel.getBoundingClientRect();
+    // Menu height should match summary height — it doesn't cover the full viewport
+    const menuRect = menu.getBoundingClientRect();
     const summaryRect = summary.getBoundingClientRect();
-    await expect(panelRect.height).toBeCloseTo(summaryRect.height, -1);
+    await expect(menuRect.height).toBeCloseTo(summaryRect.height, -1);
   },
 };
 
-// ─── Summary toggles the panel open and closed ──────────────────────────────
+// ─── Summary toggles the menu open and closed ──────────────────────────────
 
 export const SettingsMenuToggle: Story = {
   render: () => renderLayout(true),
   play: async ({ canvasElement }) => {
-    const panel =
-      canvasElement.querySelector<HTMLDetailsElement>('#settings-panel')!;
-    const summary =
-      canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
+    const menu = canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
+    const summary = canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
 
     // Starts open
-    await expect(panel.open).toBe(true);
+    await expect(menu.open).toBe(true);
 
     // Click summary to close
     await userEvent.click(summary);
-    await expect(panel.open).toBe(false);
+    await expect(menu.open).toBe(false);
 
     // Click summary to reopen
     await userEvent.click(summary);
-    await expect(panel.open).toBe(true);
+    await expect(menu.open).toBe(true);
   },
 };
