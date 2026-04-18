@@ -53,4 +53,9 @@ Drawreerich is a 3D grid drawing application. Users draw on a 2D grid; the app r
 
 ## Layout
 
-The app uses a fullscreen canvas with a hamburger-triggered slide-in overlay panel at all viewport sizes. The settings panel is hidden by default and slides in from the right.
+Fullscreen canvas with floating chrome:
+
+- **Top bar** (top-left, `#top-bar`): brand wordmark, file-menu dropdown (demo/palette/clear/import/export), about button that opens `#about-dialog`.
+- **Settings panel** (top-right, `#settings-panel`): native `<details>`, always visible, collapsible. Hosts Tweakpane with `Canvas` and `Active Path` folders.
+- **Grid editor card** (bottom-center, `#grid-editor-panel`): the 2D drawing surface, mounted in its own Tweakpane instance so it is always visible rather than nested in the settings panel.
+- **Modals** use native `<dialog>`: `#about-dialog`, `#confirm-dialog`, `#alert-dialog`. `askConfirm()` and `showAlert()` in `main.ts` replace `window.confirm` / `window.alert`.

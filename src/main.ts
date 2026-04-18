@@ -122,25 +122,28 @@ const ROT_PARAMS = {
   rotZ: getState().rotation.z,
 };
 
-pane
+// --- Canvas controls ---
+const canvasFolder = pane.addFolder({ title: 'Canvas' });
+
+canvasFolder
   .addBinding(PARAMS, 'cols', { label: 'cols', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridCols(ev.value);
   });
 
-pane
+canvasFolder
   .addBinding(PARAMS, 'rows', { label: 'rows', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridRows(ev.value);
   });
 
-pane
+canvasFolder
   .addBinding(PARAMS, 'tileSize', { min: 8, max: 64, step: 1 })
   .on('change', (ev) => {
     setTileSize(ev.value);
   });
 
-pane
+canvasFolder
   .addBinding(PARAMS, 'cameraType', {
     label: 'camera',
     options: {
@@ -153,11 +156,11 @@ pane
     setCameraType(ev.value as CameraType);
   });
 
-pane.addButton({ title: 'Reset Camera' }).on('click', () => {
+canvasFolder.addButton({ title: 'Reset Camera' }).on('click', () => {
   resetCameraAngle();
 });
 
-pane
+canvasFolder
   .addBinding(PARAMS, 'activePlaneDepth', {
     label: 'depth (Y)',
     min: 0,
@@ -167,6 +170,10 @@ pane
   .on('change', (ev) => {
     setActivePlaneDepth(ev.value);
   });
+
+canvasFolder.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
+  setStroke(ev.value);
+});
 
 // --- Rotation controls ---
 const rotFolder = pane.addFolder({ title: 'Rotation' });
@@ -207,10 +214,6 @@ rotFolder
     setRotation({ ...r, z: ev.value });
   });
 
-pane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
-  setStroke(ev.value);
-});
-
 // --- Active Path controls ---
 const activePath = getActivePath();
 const PATH_PARAMS = {
@@ -244,61 +247,11 @@ pathFolder.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
 });
 
-pathFolder.addBlade({ view: 'grid-editor' });
-
-// --- Persistence controls ---
-const fileFolder = pane.addFolder({ title: 'File' });
-
-fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
-  applyPalette();
-});
-
-fileFolder.addButton({ title: 'Load Demo' }).on('click', () => {
-  loadDefaultComposition(currentPalette.pathColors);
-  syncParamsFromState();
-});
-
-fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
-  if (confirm('Clear all paths? This cannot be undone.')) {
-    clearAllPaths();
-    syncParamsFromState();
-  }
-});
-
-fileFolder.addButton({ title: 'Export Image' }).on('click', () => {
-  const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
-  if (!canvas || !lastLogicalWidth || !lastLogicalHeight) return;
-  const ctx2d = canvas.getContext('2d');
-  if (!ctx2d) return;
-  const pr = window.devicePixelRatio;
-  setShowPlane(false);
-  markDirty();
-  // Apply the same pixel-ratio scale ssam uses so rendering coordinates match
-  ctx2d.save();
-  ctx2d.setTransform(pr, 0, 0, pr, 0, 0);
-  renderScene(ctx2d, lastLogicalWidth, lastLogicalHeight);
-  ctx2d.restore();
-  setShowPlane(true);
-  markDirty();
-  const link = document.createElement('a');
-  link.download = 'drawreerich.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-});
-
-fileFolder.addButton({ title: 'Export JSON' }).on('click', () => {
-  exportJSON();
-});
-
-fileFolder.addButton({ title: 'Import JSON' }).on('click', () => {
-  importJSON()
-    .then(() => {
-      syncParamsFromState();
-    })
-    .catch((err: Error) => {
-      alert(err.message);
-    });
-});
+// --- Grid editor in its own floating pane ---
+const gridEditorContainer = document.getElementById('grid-editor-panel')!;
+const gridEditorPane = new Pane({ container: gridEditorContainer });
+gridEditorPane.registerPlugin(GridEditorBladePlugin);
+gridEditorPane.addBlade({ view: 'grid-editor' });
 
 // --- Sync Tweakpane PARAMS from state (after restore or import) ---
 function syncParamsFromState() {
@@ -336,6 +289,168 @@ subscribe(() => {
 
 // Mark 3D renderer dirty when state changes
 subscribe(() => markDirty());
+
+// --- Top-bar wiring: About dialog, File menu, modal helpers ---
+
+const aboutDialog = document.getElementById('about-dialog') as HTMLDialogElement;
+const aboutButton = document.getElementById('about-button')!;
+aboutButton.addEventListener('click', () => {
+  aboutDialog.showModal();
+});
+
+const confirmDialog = document.getElementById('confirm-dialog') as HTMLDialogElement;
+const confirmTitle = confirmDialog.querySelector('.confirm-title') as HTMLElement;
+const confirmBody = confirmDialog.querySelector('.confirm-body') as HTMLElement;
+const confirmButton = confirmDialog.querySelector<HTMLButtonElement>('[data-confirm-action="confirm"]')!;
+const confirmCancel = confirmDialog.querySelector<HTMLButtonElement>('[data-confirm-action="cancel"]')!;
+
+function askConfirm(title: string, message: string, confirmLabel = 'Confirm'): Promise<boolean> {
+  confirmTitle.textContent = title;
+  confirmBody.textContent = message;
+  confirmButton.textContent = confirmLabel;
+  confirmDialog.showModal();
+  return new Promise<boolean>((resolve) => {
+    const done = (result: boolean) => {
+      confirmButton.removeEventListener('click', onConfirm);
+      confirmCancel.removeEventListener('click', onCancel);
+      confirmDialog.removeEventListener('cancel', onCancel);
+      if (confirmDialog.open) confirmDialog.close();
+      resolve(result);
+    };
+    const onConfirm = () => done(true);
+    const onCancel = (e: Event) => {
+      e.preventDefault();
+      done(false);
+    };
+    confirmButton.addEventListener('click', onConfirm);
+    confirmCancel.addEventListener('click', onCancel);
+    confirmDialog.addEventListener('cancel', onCancel);
+  });
+}
+
+const alertDialog = document.getElementById('alert-dialog') as HTMLDialogElement;
+const alertTitle = alertDialog.querySelector('.confirm-title') as HTMLElement;
+const alertBody = alertDialog.querySelector('.alert-body') as HTMLElement;
+const alertOk = alertDialog.querySelector<HTMLButtonElement>('[data-alert-action="ok"]')!;
+
+function showAlert(title: string, message: string): Promise<void> {
+  alertTitle.textContent = title;
+  alertBody.textContent = message;
+  alertDialog.showModal();
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      alertOk.removeEventListener('click', done);
+      if (alertDialog.open) alertDialog.close();
+      resolve();
+    };
+    alertOk.addEventListener('click', done);
+  });
+}
+
+// File menu
+const fileMenuButton = document.getElementById('file-menu-button') as HTMLButtonElement;
+const fileMenu = document.getElementById('file-menu') as HTMLElement;
+
+function setFileMenuOpen(open: boolean) {
+  fileMenu.hidden = !open;
+  fileMenuButton.setAttribute('aria-expanded', String(open));
+}
+
+fileMenuButton.addEventListener('click', (e) => {
+  e.stopPropagation();
+  setFileMenuOpen(Boolean(fileMenu.hidden));
+});
+
+document.addEventListener('click', (e) => {
+  if (fileMenu.hidden) return;
+  const target = e.target as Node;
+  if (!fileMenu.contains(target) && target !== fileMenuButton) {
+    setFileMenuOpen(false);
+  }
+});
+
+async function runFileAction(action: string) {
+  setFileMenuOpen(false);
+  switch (action) {
+    case 'load-demo':
+      loadDefaultComposition(currentPalette.pathColors);
+      syncParamsFromState();
+      break;
+    case 'regenerate-palette':
+      applyPalette();
+      break;
+    case 'clear-all': {
+      const ok = await askConfirm(
+        'Clear all paths?',
+        'This will remove every path on the canvas. This cannot be undone.',
+        'Clear all',
+      );
+      if (ok) {
+        clearAllPaths();
+        syncParamsFromState();
+      }
+      break;
+    }
+    case 'import-json':
+      try {
+        await importJSON();
+        syncParamsFromState();
+      } catch (err) {
+        await showAlert('Import failed', (err as Error).message);
+      }
+      break;
+    case 'export-json':
+      exportJSON();
+      break;
+    case 'export-image': {
+      const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
+      if (!canvas || !lastLogicalWidth || !lastLogicalHeight) return;
+      const ctx2d = canvas.getContext('2d');
+      if (!ctx2d) return;
+      const pr = window.devicePixelRatio;
+      setShowPlane(false);
+      markDirty();
+      ctx2d.save();
+      ctx2d.setTransform(pr, 0, 0, pr, 0, 0);
+      renderScene(ctx2d, lastLogicalWidth, lastLogicalHeight);
+      ctx2d.restore();
+      setShowPlane(true);
+      markDirty();
+      const link = document.createElement('a');
+      link.download = 'drawreerich.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      break;
+    }
+  }
+}
+
+fileMenu.addEventListener('click', (e) => {
+  const target = (e.target as HTMLElement).closest<HTMLButtonElement>('button[role="menuitem"]');
+  if (!target) return;
+  const action = target.dataset.action;
+  if (action) void runFileAction(action);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (!fileMenu.hidden) {
+      setFileMenuOpen(false);
+      e.stopPropagation();
+    }
+    return;
+  }
+  // Skip shortcuts while typing in an input
+  const target = e.target as HTMLElement | null;
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+    return;
+  }
+  if (e.key === '?' && !aboutDialog.open) {
+    aboutDialog.showModal();
+    e.preventDefault();
+  }
+});
 
 // Ssam sketch
 // Track logical dimensions for export (canvas.width/height are physical pixels × pixelRatio)
