@@ -2,8 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="drawreerich" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="A voxel drawing app where you sketch paths on a 2D grid and extrude them into 3D."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="drawreerich" />
+    <meta
+      property="og:description"
+      content="A voxel drawing app where you sketch paths on a 2D grid and extrude them into 3D."
+    />
+    <meta property="og:image" content="/og-drawreerich.png" />
+    <meta property="og:image:width" content="2400" />
+    <meta property="og:image:height" content="1260" />
+    <meta
+      property="og:image:alt"
+      content="drawreerich — a voxel drawing app where you sketch paths on a 2D grid and extrude them into 3D."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="drawreerich" />
+    <meta
+      name="twitter:description"
+      content="A voxel drawing app where you sketch paths on a 2D grid and extrude them into 3D."
+    />
+    <meta name="twitter:image" content="/og-drawreerich.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -33,13 +64,33 @@
                 <span class="icon icon-chevron" aria-hidden="true"></span>
               </button>
               <div role="menu" id="file-menu" class="dropdown-menu" hidden>
-                <button role="menuitem" type="button" data-action="load-demo">Load demo</button>
-                <button role="menuitem" type="button" data-action="regenerate-palette">Regenerate palette</button>
-                <button role="menuitem" type="button" data-action="clear-all">Clear all</button>
+                <button role="menuitem" type="button" data-action="load-demo">
+                  Load demo
+                </button>
+                <button
+                  role="menuitem"
+                  type="button"
+                  data-action="regenerate-palette"
+                >
+                  Regenerate palette
+                </button>
+                <button role="menuitem" type="button" data-action="clear-all">
+                  Clear all
+                </button>
                 <hr />
-                <button role="menuitem" type="button" data-action="import-json">Import JSON</button>
-                <button role="menuitem" type="button" data-action="export-json">Export JSON</button>
-                <button role="menuitem" type="button" data-action="export-image">Export PNG</button>
+                <button role="menuitem" type="button" data-action="import-json">
+                  Import JSON
+                </button>
+                <button role="menuitem" type="button" data-action="export-json">
+                  Export JSON
+                </button>
+                <button
+                  role="menuitem"
+                  type="button"
+                  data-action="export-image"
+                >
+                  Export PNG
+                </button>
               </div>
             </div>
           </nav>
@@ -93,62 +144,139 @@
       </form>
       <h2 id="about-title">drawreerich</h2>
       <p class="modal-lede">
-        Draw on a 2D grid. Watch it come alive as an isometric, oblique, or orthographic voxel scene.
+        Draw on a 2D grid. Watch it come alive as an isometric, oblique, or
+        orthographic voxel scene.
       </p>
 
       <section>
         <h3>Created by</h3>
         <p>
-          <a href="https://github.com/winkerVSbecks" target="_blank" rel="noopener noreferrer">Varun Vachhar</a>
+          <a href="https://varun.ca/" target="_blank" rel="noopener noreferrer"
+            >Varun Vachhar</a
+          >
         </p>
       </section>
 
       <section>
         <h3>Built with</h3>
         <ul class="modal-list">
-          <li><a href="https://github.com/winkerVSbecks/heerich" target="_blank" rel="noopener noreferrer">heerich</a> — 3D voxel scene rendering</li>
-          <li><a href="https://github.com/cdaein/ssam" target="_blank" rel="noopener noreferrer">ssam</a> — sketch lifecycle</li>
-          <li><a href="https://tweakpane.github.io/docs/" target="_blank" rel="noopener noreferrer">Tweakpane</a> — UI controls</li>
-          <li><a href="https://github.com/meodai/rampensau" target="_blank" rel="noopener noreferrer">rampensau</a> — palette generation</li>
-          <li><a href="https://culorijs.org/" target="_blank" rel="noopener noreferrer">culori</a> — colour handling</li>
+          <li>
+            <a
+              href="https://github.com/meodai/heerich"
+              target="_blank"
+              rel="noopener noreferrer"
+              >heerich</a
+            >
+            — 3D voxel scene rendering
+          </li>
+          <li>
+            <a
+              href="https://github.com/cdaein/ssam"
+              target="_blank"
+              rel="noopener noreferrer"
+              >ssam</a
+            >
+            — sketch lifecycle
+          </li>
+          <li>
+            <a
+              href="https://tweakpane.github.io/docs/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Tweakpane</a
+            >
+            — UI controls
+          </li>
+          <li>
+            <a
+              href="https://github.com/meodai/rampensau"
+              target="_blank"
+              rel="noopener noreferrer"
+              >rampensau</a
+            >
+            — palette generation
+          </li>
+          <li>
+            <a
+              href="https://culorijs.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >culori</a
+            >
+            — colour handling
+          </li>
         </ul>
       </section>
 
       <section>
         <h3>Source</h3>
         <p>
-          <a href="https://github.com/winkerVSbecks/drawreerich" target="_blank" rel="noopener noreferrer">github.com/winkerVSbecks/drawreerich</a>
+          <a
+            href="https://github.com/winkerVSbecks/drawreerich"
+            target="_blank"
+            rel="noopener noreferrer"
+            >github.com/winkerVSbecks/drawreerich</a
+          >
         </p>
       </section>
 
       <section>
         <h3>Keyboard shortcuts</h3>
         <dl class="shortcuts">
-          <dt>Drag canvas</dt><dd>Rotate camera</dd>
-          <dt><kbd>F</kbd></dt><dd>Toggle File menu</dd>
-          <dt><kbd>A</kbd></dt><dd>Toggle Artboard menu</dd>
-          <dt><kbd>C</kbd></dt><dd>Toggle Camera menu</dd>
-          <dt><kbd>D</kbd></dt><dd>Toggle Draw menu</dd>
-          <dt><kbd>?</kbd></dt><dd>Open this dialog</dd>
-          <dt><kbd>Esc</kbd></dt><dd>Close dialogs and menus</dd>
+          <dt>Drag canvas</dt>
+          <dd>Rotate camera</dd>
+          <dt><kbd>F</kbd></dt>
+          <dd>Toggle File menu</dd>
+          <dt><kbd>A</kbd></dt>
+          <dd>Toggle Artboard menu</dd>
+          <dt><kbd>C</kbd></dt>
+          <dd>Toggle Camera menu</dd>
+          <dt><kbd>D</kbd></dt>
+          <dd>Toggle Draw menu</dd>
+          <dt><kbd>?</kbd></dt>
+          <dd>Open this dialog</dd>
+          <dt><kbd>Esc</kbd></dt>
+          <dd>Close dialogs and menus</dd>
         </dl>
       </section>
     </dialog>
 
-    <dialog id="confirm-dialog" class="modal modal-compact" aria-labelledby="confirm-title">
+    <dialog
+      id="confirm-dialog"
+      class="modal modal-compact"
+      aria-labelledby="confirm-title"
+    >
       <h2 id="confirm-title" class="confirm-title"></h2>
       <p class="confirm-body"></p>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" data-confirm-action="cancel">Cancel</button>
-        <button type="button" class="btn btn-primary" data-confirm-action="confirm">Confirm</button>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          data-confirm-action="cancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-confirm-action="confirm"
+        >
+          Confirm
+        </button>
       </div>
     </dialog>
 
-    <dialog id="alert-dialog" class="modal modal-compact" aria-labelledby="alert-title">
+    <dialog
+      id="alert-dialog"
+      class="modal modal-compact"
+      aria-labelledby="alert-title"
+    >
       <h2 id="alert-title" class="confirm-title"></h2>
       <p class="alert-body"></p>
       <div class="modal-actions">
-        <button type="button" class="btn btn-primary" data-alert-action="ok">OK</button>
+        <button type="button" class="btn btn-primary" data-alert-action="ok">
+          OK
+        </button>
       </div>
     </dialog>
 
