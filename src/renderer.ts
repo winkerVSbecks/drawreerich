@@ -1,7 +1,26 @@
 import { Heerich } from 'heerich';
 import type { Face } from 'heerich';
+import { converter } from 'culori';
 import { getState } from './state.ts';
 import type { CameraType, Rotation } from './state.ts';
+
+const toOklch = converter('oklch') as unknown as (
+  input: string,
+) => { l: number } | undefined;
+
+function readBackground(): string {
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--bg')
+      .trim() || '#1a1a2e'
+  );
+}
+
+/** Pick black or white for contrast against the current background. */
+function contrastingInk(bg: string): '0,0,0' | '255,255,255' {
+  const parsed = toOklch(bg);
+  return (parsed?.l ?? 0) > 0.5 ? '0,0,0' : '255,255,255';
+}
 
 /**
  * Derive three face-shade levels from a base oklch color string.
@@ -67,7 +86,11 @@ function computeStableOffset(
   });
 
   const plane = planePosition(0, grid.cols, grid.rows);
-  const rotatedPlane = rotatePlaneScale(plane.scale, plane.scaleOrigin, rotation);
+  const rotatedPlane = rotatePlaneScale(
+    plane.scale,
+    plane.scaleOrigin,
+    rotation,
+  );
   refScene.addGeometry({
     type: 'box',
     position: plane.position,
@@ -99,10 +122,7 @@ export function markDirty() {
   dirty = true;
 }
 
-export function cameraConfig(
-  type: CameraType,
-  delta: number = 0,
-) {
+export function cameraConfig(type: CameraType, delta: number = 0) {
   const angle = cameraAngle(delta);
   return { type, angle };
 }
@@ -183,37 +203,17 @@ function rebuildScene() {
     camera: cameraConfig(cameraType, cameraAngleDelta),
   });
 
+  const ink = contrastingInk(readBackground());
+  const planeFill = `rgba(${ink},0.12)`;
+  const planeFillSide = `rgba(${ink},0.08)`;
+  const planeStroke = `rgba(${ink},0.1)`;
   const planeStyle = {
-    top: {
-      fill: 'rgba(255,255,255,0.12)',
-      stroke: 'rgba(255,255,255,0.12)',
-      strokeWidth: 1,
-    },
-    left: {
-      fill: 'rgba(255,255,255,0.08)',
-      stroke: 'rgba(255,255,255,0.08)',
-      strokeWidth: 1,
-    },
-    right: {
-      fill: 'rgba(255,255,255,0.08)',
-      stroke: 'rgba(255,255,255,0.08)',
-      strokeWidth: 1,
-    },
-    front: {
-      fill: 'rgba(255,255,255,0.08)',
-      stroke: 'rgba(255,255,255,0.08)',
-      strokeWidth: 1,
-    },
-    back: {
-      fill: 'rgba(255,255,255,0.08)',
-      stroke: 'rgba(255,255,255,0.08)',
-      strokeWidth: 1,
-    },
-    bottom: {
-      fill: 'rgba(255,255,255,0.08)',
-      stroke: 'rgba(255,255,255,0.08)',
-      strokeWidth: 1,
-    },
+    top: { fill: planeFill, stroke: planeStroke, strokeWidth: 1 },
+    left: { fill: planeFillSide, stroke: planeStroke, strokeWidth: 1 },
+    right: { fill: planeFillSide, stroke: planeStroke, strokeWidth: 1 },
+    front: { fill: planeFillSide, stroke: planeStroke, strokeWidth: 1 },
+    back: { fill: planeFillSide, stroke: planeStroke, strokeWidth: 1 },
+    bottom: { fill: planeFillSide, stroke: planeStroke, strokeWidth: 1 },
   };
 
   const strokeStyle = stroke
@@ -224,7 +224,11 @@ function rebuildScene() {
     // Add the semi-transparent active plane (skipped during export)
     if (showPlane) {
       const plane = planePosition(activePlaneDepth, grid.cols, grid.rows);
-      const rotatedPlane = rotatePlaneScale(plane.scale, plane.scaleOrigin, rotation);
+      const rotatedPlane = rotatePlaneScale(
+        plane.scale,
+        plane.scaleOrigin,
+        rotation,
+      );
       scene.addGeometry({
         type: 'box',
         position: plane.position,
@@ -278,8 +282,7 @@ export function renderScene(
 
   ctx.clearRect(0, 0, width, height);
 
-  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#1a1a2e';
-  ctx.fillStyle = bg;
+  ctx.fillStyle = readBackground();
   ctx.fillRect(0, 0, width, height);
 
   const faces = scene.getFaces();

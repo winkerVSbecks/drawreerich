@@ -1,7 +1,6 @@
 import { ssam } from 'ssam';
 import type { Sketch, SketchSettings } from 'ssam';
 import { Pane } from 'tweakpane';
-import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
 import { renderScene, markDirty, setShowPlane } from './renderer.ts';
 import {
   getState,
@@ -99,14 +98,12 @@ function applyPalette() {
     const color = currentPalette.pathColors[i % currentPalette.pathColors.length];
     setPathColor(paths[i].id, color);
   }
+
+  // Plane stroke contrast depends on --bg; force a rebuild even when no paths changed.
+  markDirty();
 }
 
-// Tweakpane setup
-const paneContainer = document.getElementById('tweakpane-container')!;
-const pane = new Pane({ container: paneContainer, title: 'drawreerich' });
-pane.registerPlugin(EssentialsPlugin);
-pane.registerPlugin(GridEditorBladePlugin);
-
+// Tweakpane setup — one pane per top-bar menu
 const PARAMS = {
   cols: getState().grid.cols,
   rows: getState().grid.rows,
@@ -122,25 +119,37 @@ const ROT_PARAMS = {
   rotZ: getState().rotation.z,
 };
 
-pane
+const activePath = getActivePath();
+const PATH_PARAMS = {
+  height: activePath?.height ?? 2,
+  color: activePath?.color ?? '#4477bb',
+};
+
+// --- Artboard ---
+const artboardPane = new Pane({ container: document.getElementById('pane-artboard')! });
+
+artboardPane
   .addBinding(PARAMS, 'cols', { label: 'cols', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridCols(ev.value);
   });
 
-pane
+artboardPane
   .addBinding(PARAMS, 'rows', { label: 'rows', min: 4, max: 32, step: 1 })
   .on('change', (ev) => {
     setGridRows(ev.value);
   });
 
-pane
+artboardPane
   .addBinding(PARAMS, 'tileSize', { min: 8, max: 64, step: 1 })
   .on('change', (ev) => {
     setTileSize(ev.value);
   });
 
-pane
+// --- Camera ---
+const cameraPane = new Pane({ container: document.getElementById('pane-camera')! });
+
+cameraPane
   .addBinding(PARAMS, 'cameraType', {
     label: 'camera',
     options: {
@@ -153,74 +162,58 @@ pane
     setCameraType(ev.value as CameraType);
   });
 
-pane.addButton({ title: 'Reset Camera' }).on('click', () => {
+function resetCamera() {
+  setRotation(ROTATION_PRESETS.xz);
   resetCameraAngle();
+  syncParamsFromState();
+}
+
+cameraPane.addButton({ title: 'Reset Camera' }).on('click', () => {
+  resetCamera();
 });
 
-pane
-  .addBinding(PARAMS, 'activePlaneDepth', {
-    label: 'depth (Y)',
-    min: 0,
-    max: 20,
-    step: 1,
-  })
-  .on('change', (ev) => {
-    setActivePlaneDepth(ev.value);
-  });
-
-// --- Rotation controls ---
-const rotFolder = pane.addFolder({ title: 'Rotation' });
-
-// View preset buttons
-rotFolder.addButton({ title: 'Floor (XZ)' }).on('click', () => {
+cameraPane.addButton({ title: 'Floor (XZ)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.xz);
   setCameraAngleDelta(0);
   syncParamsFromState();
 });
-rotFolder.addButton({ title: 'Front (XY)' }).on('click', () => {
+cameraPane.addButton({ title: 'Front (XY)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.xy);
   setCameraAngleDelta(-15);
   syncParamsFromState();
 });
-rotFolder.addButton({ title: 'Side (YZ)' }).on('click', () => {
+cameraPane.addButton({ title: 'Side (YZ)' }).on('click', () => {
   setRotation(ROTATION_PRESETS.yz);
   setCameraAngleDelta(15);
   syncParamsFromState();
 });
 
-rotFolder
+cameraPane
   .addBinding(ROT_PARAMS, 'rotX', { label: 'X', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, x: ev.value });
   });
-rotFolder
+cameraPane
   .addBinding(ROT_PARAMS, 'rotY', { label: 'Y', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, y: ev.value });
   });
-rotFolder
+cameraPane
   .addBinding(ROT_PARAMS, 'rotZ', { label: 'Z', min: 0, max: 3, step: 1 })
   .on('change', (ev) => {
     const r = getState().rotation;
     setRotation({ ...r, z: ev.value });
   });
 
-pane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
-  setStroke(ev.value);
-});
+// --- Draw ---
+const drawPane = new Pane({ container: document.getElementById('pane-draw')! });
+drawPane.registerPlugin(GridEditorBladePlugin);
 
-// --- Active Path controls ---
-const activePath = getActivePath();
-const PATH_PARAMS = {
-  height: activePath?.height ?? 2,
-  color: activePath?.color ?? '#4477bb',
-};
+drawPane.addBlade({ view: 'grid-editor' });
 
-const pathFolder = pane.addFolder({ title: 'Active Path' });
-
-const heightBinding = pathFolder
+const heightBinding = drawPane
   .addBinding(PATH_PARAMS, 'height', {
     label: 'height',
     min: 1,
@@ -232,73 +225,33 @@ const heightBinding = pathFolder
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
-pathFolder
+drawPane
   .addBinding(PATH_PARAMS, 'color', { label: 'color' })
   .on('change', (ev) => {
     const ap = getActivePath();
     if (ap) setPathColor(ap.id, ev.value);
   });
 
-// "New Path" button
-pathFolder.addButton({ title: 'New Path' }).on('click', () => {
+drawPane
+  .addBinding(PARAMS, 'activePlaneDepth', {
+    label: 'depth (Y)',
+    min: 0,
+    max: 20,
+    step: 1,
+  })
+  .on('change', (ev) => {
+    setActivePlaneDepth(ev.value);
+  });
+
+drawPane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
+  setStroke(ev.value);
+});
+
+drawPane.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
 });
 
-pathFolder.addBlade({ view: 'grid-editor' });
-
-// --- Persistence controls ---
-const fileFolder = pane.addFolder({ title: 'File' });
-
-fileFolder.addButton({ title: "Regenerate Palette" }).on("click", () => {
-  applyPalette();
-});
-
-fileFolder.addButton({ title: 'Load Demo' }).on('click', () => {
-  loadDefaultComposition(currentPalette.pathColors);
-  syncParamsFromState();
-});
-
-fileFolder.addButton({ title: 'Clear All' }).on('click', () => {
-  if (confirm('Clear all paths? This cannot be undone.')) {
-    clearAllPaths();
-    syncParamsFromState();
-  }
-});
-
-fileFolder.addButton({ title: 'Export Image' }).on('click', () => {
-  const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
-  if (!canvas || !lastLogicalWidth || !lastLogicalHeight) return;
-  const ctx2d = canvas.getContext('2d');
-  if (!ctx2d) return;
-  const pr = window.devicePixelRatio;
-  setShowPlane(false);
-  markDirty();
-  // Apply the same pixel-ratio scale ssam uses so rendering coordinates match
-  ctx2d.save();
-  ctx2d.setTransform(pr, 0, 0, pr, 0, 0);
-  renderScene(ctx2d, lastLogicalWidth, lastLogicalHeight);
-  ctx2d.restore();
-  setShowPlane(true);
-  markDirty();
-  const link = document.createElement('a');
-  link.download = 'drawreerich.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-});
-
-fileFolder.addButton({ title: 'Export JSON' }).on('click', () => {
-  exportJSON();
-});
-
-fileFolder.addButton({ title: 'Import JSON' }).on('click', () => {
-  importJSON()
-    .then(() => {
-      syncParamsFromState();
-    })
-    .catch((err: Error) => {
-      alert(err.message);
-    });
-});
+const settingsPanes = [artboardPane, cameraPane, drawPane];
 
 // --- Sync Tweakpane PARAMS from state (after restore or import) ---
 function syncParamsFromState() {
@@ -312,7 +265,7 @@ function syncParamsFromState() {
   ROT_PARAMS.rotX = s.rotation.x;
   ROT_PARAMS.rotY = s.rotation.y;
   ROT_PARAMS.rotZ = s.rotation.z;
-  pane.refresh();
+  for (const p of settingsPanes) p.refresh();
 
   const ap = getActivePath();
   if (ap) {
@@ -336,6 +289,230 @@ subscribe(() => {
 
 // Mark 3D renderer dirty when state changes
 subscribe(() => markDirty());
+
+// --- Top-bar wiring: About dialog, File menu, modal helpers ---
+
+const aboutDialog = document.getElementById('about-dialog') as HTMLDialogElement;
+const aboutButton = document.getElementById('about-button')!;
+aboutButton.addEventListener('click', () => {
+  aboutDialog.showModal();
+});
+
+const confirmDialog = document.getElementById('confirm-dialog') as HTMLDialogElement;
+const confirmTitle = confirmDialog.querySelector('.confirm-title') as HTMLElement;
+const confirmBody = confirmDialog.querySelector('.confirm-body') as HTMLElement;
+const confirmButton = confirmDialog.querySelector<HTMLButtonElement>('[data-confirm-action="confirm"]')!;
+const confirmCancel = confirmDialog.querySelector<HTMLButtonElement>('[data-confirm-action="cancel"]')!;
+
+function askConfirm(title: string, message: string, confirmLabel = 'Confirm'): Promise<boolean> {
+  confirmTitle.textContent = title;
+  confirmBody.textContent = message;
+  confirmButton.textContent = confirmLabel;
+  confirmDialog.showModal();
+  return new Promise<boolean>((resolve) => {
+    const done = (result: boolean) => {
+      confirmButton.removeEventListener('click', onConfirm);
+      confirmCancel.removeEventListener('click', onCancel);
+      confirmDialog.removeEventListener('cancel', onCancel);
+      if (confirmDialog.open) confirmDialog.close();
+      resolve(result);
+    };
+    const onConfirm = () => done(true);
+    const onCancel = (e: Event) => {
+      e.preventDefault();
+      done(false);
+    };
+    confirmButton.addEventListener('click', onConfirm);
+    confirmCancel.addEventListener('click', onCancel);
+    confirmDialog.addEventListener('cancel', onCancel);
+  });
+}
+
+const alertDialog = document.getElementById('alert-dialog') as HTMLDialogElement;
+const alertTitle = alertDialog.querySelector('.confirm-title') as HTMLElement;
+const alertBody = alertDialog.querySelector('.alert-body') as HTMLElement;
+const alertOk = alertDialog.querySelector<HTMLButtonElement>('[data-alert-action="ok"]')!;
+
+function showAlert(title: string, message: string): Promise<void> {
+  alertTitle.textContent = title;
+  alertBody.textContent = message;
+  alertDialog.showModal();
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      alertOk.removeEventListener('click', done);
+      if (alertDialog.open) alertDialog.close();
+      resolve();
+    };
+    alertOk.addEventListener('click', done);
+  });
+}
+
+// Settings menus — only one <details> open at a time
+const settingsMenus = Array.from(
+  document.querySelectorAll<HTMLDetailsElement>('.settings-menu'),
+);
+
+function closeAllSettingsMenus() {
+  for (const m of settingsMenus) m.open = false;
+}
+
+for (const menu of settingsMenus) {
+  menu.addEventListener('toggle', () => {
+    if (!menu.open) return;
+    for (const other of settingsMenus) {
+      if (other !== menu) other.open = false;
+    }
+    setFileMenuOpen(false);
+  });
+}
+
+// File menu
+const fileMenuButton = document.getElementById('file-menu-button') as HTMLButtonElement;
+const fileMenu = document.getElementById('file-menu') as HTMLElement;
+
+function setFileMenuOpen(open: boolean) {
+  fileMenu.hidden = !open;
+  fileMenuButton.setAttribute('aria-expanded', String(open));
+  if (open) closeAllSettingsMenus();
+}
+
+fileMenuButton.addEventListener('click', (e) => {
+  e.stopPropagation();
+  setFileMenuOpen(Boolean(fileMenu.hidden));
+});
+
+document.addEventListener('click', (e) => {
+  const target = e.target as Node;
+  if (!fileMenu.hidden && !fileMenu.contains(target) && target !== fileMenuButton) {
+    setFileMenuOpen(false);
+  }
+  for (const menu of settingsMenus) {
+    if (menu.open && !menu.contains(target)) menu.open = false;
+  }
+});
+
+async function runFileAction(action: string) {
+  setFileMenuOpen(false);
+  switch (action) {
+    case 'load-demo':
+      loadDefaultComposition(currentPalette.pathColors);
+      syncParamsFromState();
+      break;
+    case 'regenerate-palette':
+      applyPalette();
+      break;
+    case 'clear-all': {
+      const ok = await askConfirm(
+        'Clear all paths?',
+        'This will remove every path on the canvas. This cannot be undone.',
+        'Clear all',
+      );
+      if (ok) {
+        clearAllPaths();
+        syncParamsFromState();
+      }
+      break;
+    }
+    case 'import-json':
+      try {
+        await importJSON();
+        syncParamsFromState();
+      } catch (err) {
+        await showAlert('Import failed', (err as Error).message);
+      }
+      break;
+    case 'export-json':
+      exportJSON();
+      break;
+    case 'export-image': {
+      const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
+      if (!canvas || !lastLogicalWidth || !lastLogicalHeight) return;
+      const ctx2d = canvas.getContext('2d');
+      if (!ctx2d) return;
+      const pr = window.devicePixelRatio;
+      setShowPlane(false);
+      markDirty();
+      ctx2d.save();
+      ctx2d.setTransform(pr, 0, 0, pr, 0, 0);
+      renderScene(ctx2d, lastLogicalWidth, lastLogicalHeight);
+      ctx2d.restore();
+      setShowPlane(true);
+      markDirty();
+      const link = document.createElement('a');
+      link.download = 'drawreerich.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      break;
+    }
+  }
+}
+
+fileMenu.addEventListener('click', (e) => {
+  const target = (e.target as HTMLElement).closest<HTMLButtonElement>('button[role="menuitem"]');
+  if (!target) return;
+  const action = target.dataset.action;
+  if (action) void runFileAction(action);
+});
+
+// Keyboard shortcuts
+function toggleSettingsMenuByName(name: string) {
+  const menu = settingsMenus.find((m) => m.dataset.menu === name);
+  if (!menu) return;
+  menu.open = !menu.open;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    let handled = false;
+    if (!fileMenu.hidden) {
+      setFileMenuOpen(false);
+      handled = true;
+    }
+    if (settingsMenus.some((m) => m.open)) {
+      closeAllSettingsMenus();
+      handled = true;
+    }
+    if (handled) e.stopPropagation();
+    return;
+  }
+  // Skip shortcuts while typing in an input
+  const target = e.target as HTMLElement | null;
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+    return;
+  }
+  // Skip when modifier keys are held or a dialog is open
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (aboutDialog.open || confirmDialog.open || alertDialog.open) return;
+
+  if (e.key === '?') {
+    aboutDialog.showModal();
+    e.preventDefault();
+    return;
+  }
+
+  switch (e.key.toLowerCase()) {
+    case 'f':
+      setFileMenuOpen(Boolean(fileMenu.hidden));
+      e.preventDefault();
+      break;
+    case 'a':
+      toggleSettingsMenuByName('artboard');
+      e.preventDefault();
+      break;
+    case 'c':
+      toggleSettingsMenuByName('camera');
+      e.preventDefault();
+      break;
+    case 'd':
+      toggleSettingsMenuByName('draw');
+      e.preventDefault();
+      break;
+    case 'r':
+      resetCamera();
+      e.preventDefault();
+      break;
+  }
+});
 
 // Ssam sketch
 // Track logical dimensions for export (canvas.width/height are physical pixels × pixelRatio)
