@@ -1,17 +1,13 @@
-import type { Meta, StoryObj } from "@storybook/web-components-vite";
-import { expect } from "storybook/test";
-import {
-  getState,
-  replaceState,
-  addCell,
-} from "../state.ts";
-import { tryRestore, startAutoSave, isValidSaveData } from "../storage.ts";
-import { resetState } from "./helpers.ts";
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { expect } from 'storybook/test';
+import { getState, replaceState, addCell } from '../state.ts';
+import { tryRestore, startAutoSave, isValidSaveData } from '../storage.ts';
+import { resetState } from './helpers.ts';
 
-const STORAGE_KEY = "drawreerich-state";
+const STORAGE_KEY = 'drawreerich-state';
 
 const meta: Meta = {
-  title: "Storage",
+  title: 'Storage',
 };
 
 export default meta;
@@ -27,20 +23,20 @@ export const RestoresValidState: Story = {
 
     const saved = {
       version: 1,
-      grid: { cols: 8, rows: 10, tileSize: 24, orientation: "xy" },
+      grid: { cols: 8, rows: 10, tileSize: 24, orientation: 'xy' },
       paths: [
         {
-          id: "path-42",
+          id: 'path-42',
           cells: [{ col: 1, row: 2 }],
-          color: "#ff0000",
+          color: '#ff0000',
           height: 3,
         },
       ],
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 
-    const div = document.createElement("div");
-    div.textContent = "tryRestore — valid state";
+    const div = document.createElement('div');
+    div.textContent = 'tryRestore — valid state';
     return div;
   },
   play: async () => {
@@ -54,7 +50,7 @@ export const RestoresValidState: Story = {
     // v1 orientation "xy" should be migrated to rotation {x:1, y:0, z:0}
     await expect(s.rotation).toEqual({ x: 1, y: 0, z: 0 });
     await expect(s.paths).toHaveLength(1);
-    await expect(s.paths[0].id).toBe("path-42");
+    await expect(s.paths[0].id).toBe('path-42');
     await expect(s.paths[0].cells).toEqual([{ col: 1, row: 2 }]);
   },
 };
@@ -63,8 +59,8 @@ export const ReturnsFalseWhenEmpty: Story = {
   render: () => {
     localStorage.clear();
     resetState();
-    const div = document.createElement("div");
-    div.textContent = "tryRestore — empty localStorage";
+    const div = document.createElement('div');
+    div.textContent = 'tryRestore — empty localStorage';
     return div;
   },
   play: async () => {
@@ -76,9 +72,9 @@ export const ReturnsFalseForInvalidJSON: Story = {
   render: () => {
     localStorage.clear();
     resetState();
-    localStorage.setItem(STORAGE_KEY, "not-json{{{");
-    const div = document.createElement("div");
-    div.textContent = "tryRestore — invalid JSON";
+    localStorage.setItem(STORAGE_KEY, 'not-json{{{');
+    const div = document.createElement('div');
+    div.textContent = 'tryRestore — invalid JSON';
     return div;
   },
   play: async () => {
@@ -91,8 +87,8 @@ export const ReturnsFalseForInvalidSaveData: Story = {
     localStorage.clear();
     resetState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 999 }));
-    const div = document.createElement("div");
-    div.textContent = "tryRestore — invalid save data";
+    const div = document.createElement('div');
+    div.textContent = 'tryRestore — invalid save data';
     return div;
   },
   play: async () => {
@@ -104,9 +100,9 @@ export const DoesNotModifyStateOnFailure: Story = {
   render: () => {
     localStorage.clear();
     resetState();
-    localStorage.setItem(STORAGE_KEY, "bad data");
-    const div = document.createElement("div");
-    div.textContent = "tryRestore — state unchanged on failure";
+    localStorage.setItem(STORAGE_KEY, 'bad data');
+    const div = document.createElement('div');
+    div.textContent = 'tryRestore — state unchanged on failure';
     return div;
   },
   play: async () => {
@@ -122,8 +118,8 @@ export const AutoSavesOnStateChange: Story = {
   render: () => {
     localStorage.clear();
     resetState();
-    const div = document.createElement("div");
-    div.textContent = "startAutoSave — saves on state change";
+    const div = document.createElement('div');
+    div.textContent = 'startAutoSave — saves on state change';
     return div;
   },
   play: async () => {
@@ -142,8 +138,8 @@ export const AutoSavesOnGridConfigChange: Story = {
   render: () => {
     localStorage.clear();
     resetState();
-    const div = document.createElement("div");
-    div.textContent = "startAutoSave — saves on grid config change";
+    const div = document.createElement('div');
+    div.textContent = 'startAutoSave — saves on grid config change';
     return div;
   },
   play: async () => {

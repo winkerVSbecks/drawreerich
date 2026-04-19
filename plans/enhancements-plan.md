@@ -113,6 +113,7 @@ This is the most structural phase — changes span state, renderer, storage, and
 ## Phase 5: Rampensau Colour Palette
 
 **User stories**:
+
 - As a user, I want the app to generate a harmonious colour palette on load so that my drawings always have a cohesive colour scheme
 - As a user, I want a "Regenerate Palette" button so that I can get a fresh palette at any time
 - As a user, I want the first palette colour to set both the app and canvas background so that the visual environment matches the palette

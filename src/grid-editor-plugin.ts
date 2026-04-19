@@ -1,21 +1,16 @@
-import {
-  BladeApi,
-  BladeController,
-  Semver,
-  ViewProps,
-} from "@tweakpane/core";
+import { BladeApi, BladeController, Semver, ViewProps } from '@tweakpane/core';
 import type {
   BaseBladeParams,
   Blade,
   BladePlugin,
   TpPluginBundle,
   View,
-} from "@tweakpane/core";
-import { GridEditor } from "./grid-editor.ts";
-import { getState, setActivePath, subscribe } from "./state.ts";
+} from '@tweakpane/core';
+import { GridEditor } from './grid-editor.ts';
+import { getState, setActivePath, subscribe } from './state.ts';
 
 interface GridEditorParams extends BaseBladeParams {
-  view: "grid-editor";
+  view: 'grid-editor';
 }
 
 class GridEditorView implements View {
@@ -25,13 +20,13 @@ class GridEditorView implements View {
   private unsubscribeSwatches: () => void;
 
   constructor(doc: Document) {
-    this.element = doc.createElement("div");
-    this.element.classList.add("tp-grdv");
+    this.element = doc.createElement('div');
+    this.element.classList.add('tp-grdv');
     this.editor = new GridEditor(doc);
     this.element.appendChild(this.editor.canvas);
 
-    this.swatchContainer = doc.createElement("div");
-    this.swatchContainer.classList.add("tp-grdv-swatches");
+    this.swatchContainer = doc.createElement('div');
+    this.swatchContainer.classList.add('tp-grdv-swatches');
     this.element.appendChild(this.swatchContainer);
 
     this.renderSwatches(doc);
@@ -40,14 +35,14 @@ class GridEditorView implements View {
 
   private renderSwatches(doc: Document): void {
     const { paths, activePathId } = getState();
-    this.swatchContainer.innerHTML = "";
+    this.swatchContainer.innerHTML = '';
     for (const path of paths) {
-      const swatch = doc.createElement("button");
-      swatch.className = "path-swatch";
-      if (path.id === activePathId) swatch.classList.add("active");
+      const swatch = doc.createElement('button');
+      swatch.className = 'path-swatch';
+      if (path.id === activePathId) swatch.classList.add('active');
       swatch.style.backgroundColor = path.color;
       swatch.title = path.id;
-      swatch.addEventListener("click", () => setActivePath(path.id));
+      swatch.addEventListener('click', () => setActivePath(path.id));
       this.swatchContainer.appendChild(swatch);
     }
   }
@@ -59,10 +54,7 @@ class GridEditorView implements View {
 }
 
 class GridEditorBladeController extends BladeController<GridEditorView> {
-  constructor(
-    doc: Document,
-    config: { blade: Blade; viewProps: ViewProps }
-  ) {
+  constructor(doc: Document, config: { blade: Blade; viewProps: ViewProps }) {
     const view = new GridEditorView(doc);
     super({ blade: config.blade, view, viewProps: config.viewProps });
     config.viewProps.handleDispose(() => view.dispose());
@@ -70,12 +62,12 @@ class GridEditorBladeController extends BladeController<GridEditorView> {
 }
 
 const gridEditorBladePlugin: BladePlugin<GridEditorParams> = {
-  id: "grid-editor",
-  type: "blade",
-  core: new Semver("2.0.0"),
+  id: 'grid-editor',
+  type: 'blade',
+  core: new Semver('2.0.0'),
   accept(params) {
-    if (params["view"] !== "grid-editor") return null;
-    return { params: { view: "grid-editor" } };
+    if (params['view'] !== 'grid-editor') return null;
+    return { params: { view: 'grid-editor' } };
   },
   controller(args) {
     return new GridEditorBladeController(args.document, {
@@ -90,6 +82,6 @@ const gridEditorBladePlugin: BladePlugin<GridEditorParams> = {
 };
 
 export const GridEditorBladePlugin: TpPluginBundle = {
-  id: "grid-editor",
+  id: 'grid-editor',
   plugin: gridEditorBladePlugin,
 };

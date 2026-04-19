@@ -1,7 +1,12 @@
-import { getState, replaceState, subscribe, ROTATION_PRESETS } from "./state.ts";
-import type { GridConfig, Path, Rotation } from "./state.ts";
+import {
+  getState,
+  replaceState,
+  subscribe,
+  ROTATION_PRESETS,
+} from './state.ts';
+import type { GridConfig, Path, Rotation } from './state.ts';
 
-const STORAGE_KEY = "drawreerich-state";
+const STORAGE_KEY = 'drawreerich-state';
 
 interface SaveData {
   version: 1 | 2;
@@ -17,31 +22,32 @@ function serialize(): string {
 }
 
 export function isValidSaveData(data: unknown): data is SaveData {
-  if (typeof data !== "object" || data === null) return false;
+  if (typeof data !== 'object' || data === null) return false;
   const d = data as Record<string, unknown>;
   if (d.version !== 1 && d.version !== 2) return false;
-  if (typeof d.grid !== "object" || d.grid === null) return false;
+  if (typeof d.grid !== 'object' || d.grid === null) return false;
   if (!Array.isArray(d.paths)) return false;
 
   const grid = d.grid as Record<string, unknown>;
-  if (typeof grid.cols !== "number") return false;
-  if (typeof grid.rows !== "number") return false;
-  if (typeof grid.tileSize !== "number") return false;
+  if (typeof grid.cols !== 'number') return false;
+  if (typeof grid.rows !== 'number') return false;
+  if (typeof grid.tileSize !== 'number') return false;
 
   // v1 had orientation in grid; v2 uses top-level rotation
   if (d.version === 1) {
-    if (!["xz", "xy", "yz"].includes(grid.orientation as string)) return false;
+    if (!['xz', 'xy', 'yz'].includes(grid.orientation as string)) return false;
   }
 
   for (const p of d.paths as unknown[]) {
-    if (typeof p !== "object" || p === null) return false;
+    if (typeof p !== 'object' || p === null) return false;
     const path = p as Record<string, unknown>;
-    if (typeof path.id !== "string") return false;
-    if (typeof path.color !== "string") return false;
-    if (typeof path.height !== "number") return false;
+    if (typeof path.id !== 'string') return false;
+    if (typeof path.color !== 'string') return false;
+    if (typeof path.height !== 'number') return false;
     if (!Array.isArray(path.cells)) return false;
     // depth is optional for backwards compatibility — defaults to 0 in replaceState
-    if (path.depth !== undefined && typeof path.depth !== "number") return false;
+    if (path.depth !== undefined && typeof path.depth !== 'number')
+      return false;
   }
 
   return true;
@@ -54,9 +60,9 @@ export function isValidSaveData(data: unknown): data is SaveData {
 /** Convert a legacy v1 orientation string to a Rotation. */
 function migrateOrientation(orientation: string): Rotation {
   switch (orientation) {
-    case "xy":
+    case 'xy':
       return ROTATION_PRESETS.xy;
-    case "yz":
+    case 'yz':
       return ROTATION_PRESETS.yz;
     default:
       return ROTATION_PRESETS.xz;
@@ -72,7 +78,7 @@ export function tryRestore(): boolean {
 
     const rotation =
       data.version === 1
-        ? migrateOrientation(data.grid.orientation ?? "xz")
+        ? migrateOrientation(data.grid.orientation ?? 'xz')
         : data.rotation;
 
     replaceState(data.grid, data.paths, rotation);
@@ -100,11 +106,11 @@ export function startAutoSave() {
  */
 export function exportJSON() {
   const json = serialize();
-  const blob = new Blob([json], { type: "application/json" });
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
-  a.download = "drawreerich.json";
+  a.download = 'drawreerich.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -115,11 +121,11 @@ export function exportJSON() {
  */
 export function importJSON(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json,application/json";
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
 
-    input.addEventListener("change", () => {
+    input.addEventListener('change', () => {
       const file = input.files?.[0];
       if (!file) {
         resolve();
@@ -131,21 +137,21 @@ export function importJSON(): Promise<void> {
         try {
           const data = JSON.parse(reader.result as string);
           if (!isValidSaveData(data)) {
-            reject(new Error("Invalid or malformed JSON file."));
+            reject(new Error('Invalid or malformed JSON file.'));
             return;
           }
           const rotation =
             data.version === 1
-              ? migrateOrientation(data.grid.orientation ?? "xz")
+              ? migrateOrientation(data.grid.orientation ?? 'xz')
               : data.rotation;
           replaceState(data.grid, data.paths, rotation);
           resolve();
         } catch {
-          reject(new Error("Failed to parse JSON file."));
+          reject(new Error('Failed to parse JSON file.'));
         }
       };
       reader.onerror = () => {
-        reject(new Error("Failed to read file."));
+        reject(new Error('Failed to read file.'));
       };
       reader.readAsText(file);
     });

@@ -33,11 +33,31 @@ const rgb = converter('rgb');
 
 const RYB_CUBE = [
   { mode: 'rgb' as const, r: 248 / 255, g: 237 / 255, b: 220 / 255 }, // white
-  { mode: 'rgb' as const, r: 0.8901960784313725, g: 0.1411764705882353, b: 0.12941176470588237 }, // red
+  {
+    mode: 'rgb' as const,
+    r: 0.8901960784313725,
+    g: 0.1411764705882353,
+    b: 0.12941176470588237,
+  }, // red
   { mode: 'rgb' as const, r: 0.9529411764705882, g: 0.9019607843137255, b: 0 }, // yellow
-  { mode: 'rgb' as const, r: 0.9411764705882353, g: 0.5568627450980392, b: 0.10980392156862745 }, // orange
-  { mode: 'rgb' as const, r: 0.08627450980392157, g: 0.6, b: 0.8549019607843137 }, // blue
-  { mode: 'rgb' as const, r: 0.47058823529411764, g: 0.13333333333333333, b: 0.6666666666666666 }, // violet
+  {
+    mode: 'rgb' as const,
+    r: 0.9411764705882353,
+    g: 0.5568627450980392,
+    b: 0.10980392156862745,
+  }, // orange
+  {
+    mode: 'rgb' as const,
+    r: 0.08627450980392157,
+    g: 0.6,
+    b: 0.8549019607843137,
+  }, // blue
+  {
+    mode: 'rgb' as const,
+    r: 0.47058823529411764,
+    g: 0.13333333333333333,
+    b: 0.6666666666666666,
+  }, // violet
   { mode: 'rgb' as const, r: 0, g: 0.5568627450980392, b: 0.3568627450980392 }, // green
   { mode: 'rgb' as const, r: 29 / 255, g: 28 / 255, b: 28 / 255 }, // black
 ];
@@ -48,9 +68,51 @@ function ryb2rgb(coords: number[]) {
   const b = easingSmoothstep(coords[2]);
   return {
     mode: 'rgb' as const,
-    r: trilerp(...RYB_CUBE.map((it) => it.r) as [number, number, number, number, number, number, number, number], r, y, b),
-    g: trilerp(...RYB_CUBE.map((it) => it.g) as [number, number, number, number, number, number, number, number], r, y, b),
-    b: trilerp(...RYB_CUBE.map((it) => it.b) as [number, number, number, number, number, number, number, number], r, y, b),
+    r: trilerp(
+      ...(RYB_CUBE.map((it) => it.r) as [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+      ]),
+      r,
+      y,
+      b,
+    ),
+    g: trilerp(
+      ...(RYB_CUBE.map((it) => it.g) as [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+      ]),
+      r,
+      y,
+      b,
+    ),
+    b: trilerp(
+      ...(RYB_CUBE.map((it) => it.b) as [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+      ]),
+      r,
+      y,
+      b,
+    ),
   };
 }
 
@@ -67,12 +129,14 @@ function hsl2farbrad(h: number, s: number, l: number) {
 export function generateColors(
   format: 'srgb' | 'hex' = 'srgb',
   hue: number,
-  seed?: string | number
+  seed?: string | number,
 ): string[] {
   if (seed !== undefined) Random.setSeed(seed);
   const options = newOptions(hue);
 
-  const colorHSL = generateColorRamp(options as Parameters<typeof generateColorRamp>[0]);
+  const colorHSL = generateColorRamp(
+    options as Parameters<typeof generateColorRamp>[0],
+  );
 
   const colors =
     format === 'srgb'

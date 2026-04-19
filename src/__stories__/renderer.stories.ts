@@ -1,11 +1,18 @@
-import type { Meta, StoryObj } from "@storybook/web-components-vite";
-import { expect } from "storybook/test";
-import { renderScene, markDirty } from "../renderer.ts";
-import { replaceState, addCell, setCameraAngleDelta, setActivePlaneDepth, setStroke, ROTATION_PRESETS } from "../state.ts";
-import { resetState, hasVisiblePixels } from "./helpers.ts";
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { expect } from 'storybook/test';
+import { renderScene, markDirty } from '../renderer.ts';
+import {
+  replaceState,
+  addCell,
+  setCameraAngleDelta,
+  setActivePlaneDepth,
+  setStroke,
+  ROTATION_PRESETS,
+} from '../state.ts';
+import { resetState, hasVisiblePixels } from './helpers.ts';
 
 function createCanvas(width: number, height: number) {
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   canvas.style.width = `${width}px`;
@@ -14,7 +21,7 @@ function createCanvas(width: number, height: number) {
 }
 
 const meta: Meta = {
-  title: "Renderer",
+  title: 'Renderer',
 };
 
 export default meta;
@@ -26,21 +33,26 @@ export const ClearsCanvasWhenNoCells: Story = {
     resetState();
     markDirty();
     const canvas = createCanvas(200, 200);
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext('2d')!;
     // Draw something first to verify it gets cleared
-    ctx.fillStyle = "red";
+    ctx.fillStyle = 'red';
     ctx.fillRect(0, 0, 200, 200);
     renderScene(ctx, 200, 200);
     return canvas;
   },
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasElement.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
     const data = ctx.getImageData(0, 0, 200, 200).data;
     // Verify the pre-drawn red content was cleared (no fully red pixels remain)
     let hasRedPixel = false;
     for (let i = 0; i < data.length; i += 4) {
-      if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0 && data[i + 3] === 255) {
+      if (
+        data[i] === 255 &&
+        data[i + 1] === 0 &&
+        data[i + 2] === 0 &&
+        data[i + 3] === 255
+      ) {
         hasRedPixel = true;
         break;
       }
@@ -55,31 +67,31 @@ export const RendersVisibleContentWithCells: Story = {
     addCell(4, 4);
     markDirty();
     const canvas = createCanvas(600, 600);
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext('2d')!;
     renderScene(ctx, 600, 600);
     return canvas;
   },
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasElement.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
     await expect(hasVisiblePixels(ctx, 600, 600)).toBe(true);
   },
 };
 
 export const DifferentRotations: Story = {
   render: () => {
-    const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.gap = "8px";
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.gap = '8px';
 
     for (const [name, rotation] of Object.entries(ROTATION_PRESETS)) {
       replaceState(
         { cols: 16, rows: 16, tileSize: 32 },
         [
           {
-            id: "path-1",
+            id: 'path-1',
             cells: [{ col: 2, row: 2 }],
-            color: "#4477bb",
+            color: '#4477bb',
             height: 2,
             depth: 0,
           },
@@ -89,7 +101,7 @@ export const DifferentRotations: Story = {
       markDirty();
       const canvas = createCanvas(400, 400);
       canvas.dataset.rotation = name;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext('2d')!;
       renderScene(ctx, 400, 400);
       container.appendChild(canvas);
     }
@@ -97,11 +109,11 @@ export const DifferentRotations: Story = {
     return container;
   },
   play: async ({ canvasElement }) => {
-    for (const name of ["xz", "xy", "yz"]) {
+    for (const name of ['xz', 'xy', 'yz']) {
       const canvas = canvasElement.querySelector(
         `canvas[data-rotation="${name}"]`,
       ) as HTMLCanvasElement;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext('2d')!;
       await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
     }
   },
@@ -115,26 +127,26 @@ export const CachedSceneStillRenders: Story = {
 
     // First render builds the scene
     const canvas1 = createCanvas(400, 400);
-    renderScene(canvas1.getContext("2d")!, 400, 400);
+    renderScene(canvas1.getContext('2d')!, 400, 400);
 
     // Second render without markDirty — uses cached scene
     const canvas2 = createCanvas(400, 400);
-    renderScene(canvas2.getContext("2d")!, 400, 400);
+    renderScene(canvas2.getContext('2d')!, 400, 400);
 
     return canvas2;
   },
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasElement.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
     await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
   },
 };
 
 export const CameraRotationDelta: Story = {
   render: () => {
-    const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.gap = "8px";
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.gap = '8px';
 
     // Render at delta 0
     resetState();
@@ -144,16 +156,16 @@ export const CameraRotationDelta: Story = {
     setCameraAngleDelta(0);
     markDirty();
     const canvas0 = createCanvas(400, 400);
-    canvas0.dataset.delta = "0";
-    renderScene(canvas0.getContext("2d")!, 400, 400);
+    canvas0.dataset.delta = '0';
+    renderScene(canvas0.getContext('2d')!, 400, 400);
     container.appendChild(canvas0);
 
     // Render at delta 20
     setCameraAngleDelta(20);
     markDirty();
     const canvas20 = createCanvas(400, 400);
-    canvas20.dataset.delta = "20";
-    renderScene(canvas20.getContext("2d")!, 400, 400);
+    canvas20.dataset.delta = '20';
+    renderScene(canvas20.getContext('2d')!, 400, 400);
     container.appendChild(canvas20);
 
     return container;
@@ -166,8 +178,8 @@ export const CameraRotationDelta: Story = {
       'canvas[data-delta="20"]',
     ) as HTMLCanvasElement;
 
-    const ctx0 = canvas0.getContext("2d")!;
-    const ctx20 = canvas20.getContext("2d")!;
+    const ctx0 = canvas0.getContext('2d')!;
+    const ctx20 = canvas20.getContext('2d')!;
 
     // Both should have visible content
     await expect(hasVisiblePixels(ctx0, 400, 400)).toBe(true);
@@ -194,21 +206,21 @@ export const CameraRotationDelta: Story = {
 
 export const PlaneAtEachRotation: Story = {
   render: () => {
-    const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.gap = "8px";
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.gap = '8px';
 
     for (const [name, rotation] of Object.entries(ROTATION_PRESETS)) {
       replaceState(
         { cols: 16, rows: 16, tileSize: 32 },
-        [{ id: "path-1", cells: [], color: "#4477bb", height: 2, depth: 0 }],
+        [{ id: 'path-1', cells: [], color: '#4477bb', height: 2, depth: 0 }],
         { ...rotation },
       );
       setActivePlaneDepth(5);
       markDirty();
       const canvas = createCanvas(400, 400);
       canvas.dataset.rotation = name;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext('2d')!;
       renderScene(ctx, 400, 400);
       container.appendChild(canvas);
     }
@@ -216,11 +228,11 @@ export const PlaneAtEachRotation: Story = {
     return container;
   },
   play: async ({ canvasElement }) => {
-    for (const name of ["xz", "xy", "yz"]) {
+    for (const name of ['xz', 'xy', 'yz']) {
       const canvas = canvasElement.querySelector(
         `canvas[data-rotation="${name}"]`,
       ) as HTMLCanvasElement;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext('2d')!;
       await expect(hasVisiblePixels(ctx, 400, 400)).toBe(true);
     }
   },
@@ -228,9 +240,9 @@ export const PlaneAtEachRotation: Story = {
 
 export const StrokeToggle: Story = {
   render: () => {
-    const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.gap = "8px";
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.gap = '8px';
 
     // Render with stroke enabled
     resetState();
@@ -240,16 +252,16 @@ export const StrokeToggle: Story = {
     setStroke(true);
     markDirty();
     const canvasOn = createCanvas(400, 400);
-    canvasOn.dataset.stroke = "on";
-    renderScene(canvasOn.getContext("2d")!, 400, 400);
+    canvasOn.dataset.stroke = 'on';
+    renderScene(canvasOn.getContext('2d')!, 400, 400);
     container.appendChild(canvasOn);
 
     // Render with stroke disabled
     setStroke(false);
     markDirty();
     const canvasOff = createCanvas(400, 400);
-    canvasOff.dataset.stroke = "off";
-    renderScene(canvasOff.getContext("2d")!, 400, 400);
+    canvasOff.dataset.stroke = 'off';
+    renderScene(canvasOff.getContext('2d')!, 400, 400);
     container.appendChild(canvasOff);
 
     return container;
@@ -262,8 +274,8 @@ export const StrokeToggle: Story = {
       'canvas[data-stroke="off"]',
     ) as HTMLCanvasElement;
 
-    const ctxOn = canvasOn.getContext("2d")!;
-    const ctxOff = canvasOff.getContext("2d")!;
+    const ctxOn = canvasOn.getContext('2d')!;
+    const ctxOff = canvasOff.getContext('2d')!;
 
     // Both renders should produce visible content
     await expect(hasVisiblePixels(ctxOn, 400, 400)).toBe(true);
@@ -291,43 +303,52 @@ export const StrokeToggle: Story = {
 export const PathsAtMultipleDepths: Story = {
   render: () => {
     resetState();
-    replaceState(
-      { cols: 16, rows: 16, tileSize: 32 },
-      [
-        {
-          id: "path-1",
-          cells: [{ col: 4, row: 4 }, { col: 5, row: 4 }, { col: 6, row: 4 }],
-          color: "#4477bb",
-          height: 2,
-          depth: 0,
-        },
-        {
-          id: "path-2",
-          cells: [{ col: 4, row: 8 }, { col: 5, row: 8 }, { col: 6, row: 8 }],
-          color: "#bb4444",
-          height: 2,
-          depth: 5,
-        },
-        {
-          id: "path-3",
-          cells: [{ col: 4, row: 12 }, { col: 5, row: 12 }, { col: 6, row: 12 }],
-          color: "#44bb44",
-          height: 2,
-          depth: 10,
-        },
-      ],
-    );
+    replaceState({ cols: 16, rows: 16, tileSize: 32 }, [
+      {
+        id: 'path-1',
+        cells: [
+          { col: 4, row: 4 },
+          { col: 5, row: 4 },
+          { col: 6, row: 4 },
+        ],
+        color: '#4477bb',
+        height: 2,
+        depth: 0,
+      },
+      {
+        id: 'path-2',
+        cells: [
+          { col: 4, row: 8 },
+          { col: 5, row: 8 },
+          { col: 6, row: 8 },
+        ],
+        color: '#bb4444',
+        height: 2,
+        depth: 5,
+      },
+      {
+        id: 'path-3',
+        cells: [
+          { col: 4, row: 12 },
+          { col: 5, row: 12 },
+          { col: 6, row: 12 },
+        ],
+        color: '#44bb44',
+        height: 2,
+        depth: 10,
+      },
+    ]);
     setActivePlaneDepth(5);
     markDirty();
 
     const canvas = createCanvas(600, 600);
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext('2d')!;
     renderScene(ctx, 600, 600);
     return canvas;
   },
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasElement.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
     await expect(hasVisiblePixels(ctx, 600, 600)).toBe(true);
   },
 };

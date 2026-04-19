@@ -1,16 +1,16 @@
-import type { Meta, StoryObj } from "@storybook/web-components-vite";
-import { expect } from "storybook/test";
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { expect } from 'storybook/test';
 import {
   getState,
   addCell,
   createPath,
   hasCell,
   clearAllPaths,
-} from "../state.ts";
-import { resetState } from "./helpers.ts";
+} from '../state.ts';
+import { resetState } from './helpers.ts';
 
 const meta: Meta = {
-  title: "State",
+  title: 'State',
 };
 
 export default meta;
@@ -29,8 +29,8 @@ export const ClearAllRemovesPathsAndCells: Story = {
     createPath();
     addCell(3, 3);
 
-    const div = document.createElement("div");
-    div.textContent = "clearAllPaths — removes all paths and cells";
+    const div = document.createElement('div');
+    div.textContent = 'clearAllPaths — removes all paths and cells';
     return div;
   },
   play: async () => {

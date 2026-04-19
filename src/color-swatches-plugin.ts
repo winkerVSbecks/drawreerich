@@ -1,19 +1,14 @@
-import {
-  BladeApi,
-  BladeController,
-  Semver,
-  ViewProps,
-} from "@tweakpane/core";
+import { BladeApi, BladeController, Semver, ViewProps } from '@tweakpane/core';
 import type {
   BaseBladeParams,
   Blade,
   BladePlugin,
   TpPluginBundle,
   View,
-} from "@tweakpane/core";
+} from '@tweakpane/core';
 
 interface ColorSwatchesParams extends BaseBladeParams {
-  view: "color-swatches";
+  view: 'color-swatches';
   label?: string;
 }
 
@@ -55,35 +50,35 @@ class ColorSwatchesView implements View {
   private docClickHandler: (e: MouseEvent) => void;
 
   constructor(doc: Document, label: string) {
-    this.element = doc.createElement("div");
-    this.element.classList.add("tp-clrsw");
+    this.element = doc.createElement('div');
+    this.element.classList.add('tp-clrsw');
 
-    const row = doc.createElement("div");
-    row.className = "tp-clrsw_l";
+    const row = doc.createElement('div');
+    row.className = 'tp-clrsw_l';
     row.textContent = label;
     this.element.appendChild(row);
 
-    const valueWrap = doc.createElement("div");
-    valueWrap.className = "tp-clrsw_v";
+    const valueWrap = doc.createElement('div');
+    valueWrap.className = 'tp-clrsw_v';
     this.element.appendChild(valueWrap);
 
-    this.trigger = doc.createElement("button");
-    this.trigger.type = "button";
-    this.trigger.className = "tp-clrsw-trigger";
-    this.trigger.setAttribute("aria-haspopup", "true");
-    this.trigger.setAttribute("aria-expanded", "false");
+    this.trigger = doc.createElement('button');
+    this.trigger.type = 'button';
+    this.trigger.className = 'tp-clrsw-trigger';
+    this.trigger.setAttribute('aria-haspopup', 'true');
+    this.trigger.setAttribute('aria-expanded', 'false');
     valueWrap.appendChild(this.trigger);
 
-    this.chip = doc.createElement("span");
-    this.chip.className = "tp-clrsw-chip";
+    this.chip = doc.createElement('span');
+    this.chip.className = 'tp-clrsw-chip';
     this.trigger.appendChild(this.chip);
 
-    this.popover = doc.createElement("div");
-    this.popover.className = "tp-clrsw-popover";
+    this.popover = doc.createElement('div');
+    this.popover.className = 'tp-clrsw-popover';
     this.popover.hidden = true;
     valueWrap.appendChild(this.popover);
 
-    this.trigger.addEventListener("click", (e) => {
+    this.trigger.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggleOpen();
     });
@@ -93,7 +88,7 @@ class ColorSwatchesView implements View {
       const target = e.target as Node;
       if (!this.element.contains(target)) this.setOpen(false);
     };
-    doc.addEventListener("click", this.docClickHandler);
+    doc.addEventListener('click', this.docClickHandler);
 
     liveViews.add(this);
     this.refresh();
@@ -105,14 +100,14 @@ class ColorSwatchesView implements View {
     this.chip.style.backgroundColor = current;
 
     const palette = registeredProviders.palette();
-    this.popover.innerHTML = "";
+    this.popover.innerHTML = '';
     for (const color of palette) {
-      const swatch = this.popover.ownerDocument.createElement("button");
-      swatch.type = "button";
-      swatch.className = "tp-clrsw-swatch";
+      const swatch = this.popover.ownerDocument.createElement('button');
+      swatch.type = 'button';
+      swatch.className = 'tp-clrsw-swatch';
       swatch.style.backgroundColor = color;
       swatch.title = color;
-      swatch.addEventListener("click", (e) => {
+      swatch.addEventListener('click', (e) => {
         e.stopPropagation();
         registeredProviders?.onChange(color);
         this.setOpen(false);
@@ -127,12 +122,15 @@ class ColorSwatchesView implements View {
 
   private setOpen(open: boolean): void {
     this.popover.hidden = !open;
-    this.trigger.setAttribute("aria-expanded", String(open));
+    this.trigger.setAttribute('aria-expanded', String(open));
   }
 
   dispose(): void {
     liveViews.delete(this);
-    this.element.ownerDocument.removeEventListener("click", this.docClickHandler);
+    this.element.ownerDocument.removeEventListener(
+      'click',
+      this.docClickHandler,
+    );
   }
 }
 
@@ -148,15 +146,18 @@ class ColorSwatchesController extends BladeController<ColorSwatchesView> {
 }
 
 const colorSwatchesBladePlugin: BladePlugin<ColorSwatchesParams> = {
-  id: "color-swatches",
-  type: "blade",
-  core: new Semver("2.0.0"),
+  id: 'color-swatches',
+  type: 'blade',
+  core: new Semver('2.0.0'),
   accept(params) {
-    if (params["view"] !== "color-swatches") return null;
+    if (params['view'] !== 'color-swatches') return null;
     return {
       params: {
-        view: "color-swatches",
-        label: typeof params["label"] === "string" ? (params["label"] as string) : "color",
+        view: 'color-swatches',
+        label:
+          typeof params['label'] === 'string'
+            ? (params['label'] as string)
+            : 'color',
       },
     };
   },
@@ -174,6 +175,6 @@ const colorSwatchesBladePlugin: BladePlugin<ColorSwatchesParams> = {
 };
 
 export const ColorSwatchesBladePlugin: TpPluginBundle = {
-  id: "color-swatches",
+  id: 'color-swatches',
   plugin: colorSwatchesBladePlugin,
 };

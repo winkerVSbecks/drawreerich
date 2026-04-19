@@ -1,9 +1,5 @@
-import {
-  replaceState,
-  setStroke,
-  setCameraType,
-} from "../state.ts";
-import type { GridConfig, Path } from "../state.ts";
+import { replaceState, setStroke, setCameraType } from '../state.ts';
+import type { GridConfig, Path } from '../state.ts';
 
 export function resetState() {
   const grid: GridConfig = {
@@ -12,11 +8,11 @@ export function resetState() {
     tileSize: 32,
   };
   const paths: Path[] = [
-    { id: "path-100", cells: [], color: "#4477bb", height: 2, depth: 0 },
+    { id: 'path-100', cells: [], color: '#4477bb', height: 2, depth: 0 },
   ];
   replaceState(grid, paths);
   setStroke(true);
-  setCameraType("isometric");
+  setCameraType('isometric');
 }
 
 /** Check if the canvas has any non-transparent pixels. */

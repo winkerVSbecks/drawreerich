@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/web-components-vite";
-import { expect } from "storybook/test";
-import { initGridEditor } from "../grid-editor.ts";
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { expect } from 'storybook/test';
+import { initGridEditor } from '../grid-editor.ts';
 import {
   getState,
   replaceState,
@@ -9,18 +9,18 @@ import {
   getActivePath,
   createPath,
   setPathColor,
-} from "../state.ts";
-import { resetState } from "./helpers.ts";
+} from '../state.ts';
+import { resetState } from './helpers.ts';
 
 function renderEditor(): HTMLDivElement {
   resetState();
-  const container = document.createElement("div");
+  const container = document.createElement('div');
   initGridEditor(container);
   return container;
 }
 
 const meta: Meta = {
-  title: "GridEditor",
+  title: 'GridEditor',
 };
 
 export default meta;
@@ -32,7 +32,7 @@ type Story = StoryObj;
 export const CreatesCanvas: Story = {
   render: renderEditor,
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas");
+    const canvas = canvasElement.querySelector('canvas');
     await expect(canvas).toBeTruthy();
   },
 };
@@ -40,33 +40,32 @@ export const CreatesCanvas: Story = {
 export const CrosshairCursor: Story = {
   render: renderEditor,
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
-    await expect(canvas.style.cursor).toBe("crosshair");
+    const canvas = canvasElement.querySelector('canvas')!;
+    await expect(canvas.style.cursor).toBe('crosshair');
   },
 };
 
 export const CorrectDimensions: Story = {
   render: renderEditor,
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
+    const canvas = canvasElement.querySelector('canvas')!;
     // CELL_SIZE=16, GRID_PAD=1, LABEL_PAD=14
     // width = 16 * 16 + 1 + 14 = 271
-    await expect(canvas.style.width).toBe("271px");
-    await expect(canvas.style.height).toBe("271px");
+    await expect(canvas.style.width).toBe('271px');
+    await expect(canvas.style.height).toBe('271px');
   },
 };
 
 export const ResizesOnGridChange: Story = {
   render: renderEditor,
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
-    replaceState(
-      { cols: 8, rows: 8, tileSize: 32 },
-      [{ id: "path-200", cells: [], color: "#4477bb", height: 2, depth: 0 }],
-    );
+    const canvas = canvasElement.querySelector('canvas')!;
+    replaceState({ cols: 8, rows: 8, tileSize: 32 }, [
+      { id: 'path-200', cells: [], color: '#4477bb', height: 2, depth: 0 },
+    ]);
     // width = 8 * 16 + 1 + 14 = 143
-    await expect(canvas.style.width).toBe("143px");
-    await expect(canvas.style.height).toBe("143px");
+    await expect(canvas.style.width).toBe('143px');
+    await expect(canvas.style.height).toBe('143px');
   },
 };
 
@@ -75,21 +74,21 @@ export const ResizesOnGridChange: Story = {
 export const LeftClickAddsCell: Story = {
   render: renderEditor,
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
+    const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
     // Target cell (2, 3): LABEL_PAD + col * CELL_SIZE + half cell
     const clientX = rect.left + 14 + 2 * 16 + 8;
     const clientY = rect.top + 14 + 3 * 16 + 8;
 
     canvas.dispatchEvent(
-      new MouseEvent("mousedown", {
+      new MouseEvent('mousedown', {
         clientX,
         clientY,
         button: 0,
         bubbles: true,
       }),
     );
-    window.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
     await expect(hasCell(2, 3)).toBe(true);
   },
@@ -101,20 +100,20 @@ export const RightClickRemovesCell: Story = {
     addCell(4, 5);
     await expect(hasCell(4, 5)).toBe(true);
 
-    const canvas = canvasElement.querySelector("canvas")!;
+    const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
     const clientX = rect.left + 14 + 4 * 16 + 8;
     const clientY = rect.top + 14 + 5 * 16 + 8;
 
     canvas.dispatchEvent(
-      new MouseEvent("mousedown", {
+      new MouseEvent('mousedown', {
         clientX,
         clientY,
         button: 2,
         bubbles: true,
       }),
     );
-    window.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
     await expect(hasCell(4, 5)).toBe(false);
   },
@@ -129,24 +128,24 @@ export const ClickExistingCellSwitchesPath: Story = {
 
     // Create second path with a fixed color (avoid random color in visual tests)
     const secondPath = createPath();
-    setPathColor(secondPath.id, "#cc3366");
+    setPathColor(secondPath.id, '#cc3366');
     addCell(5, 5);
 
     // Click on the first path's cell — should switch back
-    const canvas = canvasElement.querySelector("canvas")!;
+    const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
     const clientX = rect.left + 14 + 3 * 16 + 8;
     const clientY = rect.top + 14 + 3 * 16 + 8;
 
     canvas.dispatchEvent(
-      new MouseEvent("mousedown", {
+      new MouseEvent('mousedown', {
         clientX,
         clientY,
         button: 0,
         bubbles: true,
       }),
     );
-    window.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
     await expect(getState().activePathId).toBe(firstPathId);
   },
@@ -155,12 +154,12 @@ export const ClickExistingCellSwitchesPath: Story = {
 export const DragPaintsMultipleCells: Story = {
   render: renderEditor,
   play: async ({ canvasElement }) => {
-    const canvas = canvasElement.querySelector("canvas")!;
+    const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
 
     // mousedown at (1,1)
     canvas.dispatchEvent(
-      new MouseEvent("mousedown", {
+      new MouseEvent('mousedown', {
         clientX: rect.left + 14 + 1 * 16 + 8,
         clientY: rect.top + 14 + 1 * 16 + 8,
         button: 0,
@@ -170,7 +169,7 @@ export const DragPaintsMultipleCells: Story = {
 
     // mousemove to (2,1)
     canvas.dispatchEvent(
-      new MouseEvent("mousemove", {
+      new MouseEvent('mousemove', {
         clientX: rect.left + 14 + 2 * 16 + 8,
         clientY: rect.top + 14 + 1 * 16 + 8,
         button: 0,
@@ -180,7 +179,7 @@ export const DragPaintsMultipleCells: Story = {
 
     // mousemove to (3,1)
     canvas.dispatchEvent(
-      new MouseEvent("mousemove", {
+      new MouseEvent('mousemove', {
         clientX: rect.left + 14 + 3 * 16 + 8,
         clientY: rect.top + 14 + 1 * 16 + 8,
         button: 0,
@@ -188,7 +187,7 @@ export const DragPaintsMultipleCells: Story = {
       }),
     );
 
-    window.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
     await expect(hasCell(1, 1)).toBe(true);
     await expect(hasCell(2, 1)).toBe(true);

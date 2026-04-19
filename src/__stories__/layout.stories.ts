@@ -104,7 +104,8 @@ export const TopBar: Story = {
     const brand = canvasElement.querySelector<HTMLElement>('.brand')!;
     await expect(brand).toHaveTextContent('drawreerich');
 
-    const menus = canvasElement.querySelectorAll<HTMLDetailsElement>('.settings-menu');
+    const menus =
+      canvasElement.querySelectorAll<HTMLDetailsElement>('.settings-menu');
     await expect(menus).toHaveLength(3);
     await expect(menus[0].dataset.menu).toBe('artboard');
     await expect(menus[1].dataset.menu).toBe('camera');
@@ -120,7 +121,8 @@ export const TopBar: Story = {
 export const SettingsMenuOpen: Story = {
   render: () => renderSingleMenu(true),
   play: async ({ canvasElement }) => {
-    const menu = canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
+    const menu =
+      canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
     const body = canvasElement.querySelector<HTMLElement>('.settings-body')!;
 
     // Menu should be open and content visible
@@ -134,9 +136,11 @@ export const SettingsMenuOpen: Story = {
 export const SettingsMenuClosed: Story = {
   render: () => renderSingleMenu(false),
   play: async ({ canvasElement }) => {
-    const menu = canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
+    const menu =
+      canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
     const body = canvasElement.querySelector<HTMLElement>('.settings-body')!;
-    const summary = canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
+    const summary =
+      canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
 
     // Menu should be closed and content hidden
     await expect(menu.open).toBe(false);
@@ -154,8 +158,10 @@ export const SettingsMenuClosed: Story = {
 export const SettingsMenuToggle: Story = {
   render: () => renderSingleMenu(true),
   play: async ({ canvasElement }) => {
-    const menu = canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
-    const summary = canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
+    const menu =
+      canvasElement.querySelector<HTMLDetailsElement>('.settings-menu')!;
+    const summary =
+      canvasElement.querySelector<HTMLElement>('.settings-toggle')!;
 
     // Starts open
     await expect(menu.open).toBe(true);
@@ -206,7 +212,8 @@ function renderAboutDialog(): HTMLDivElement {
 export const AboutDialog: Story = {
   render: () => renderAboutDialog(),
   play: async ({ canvasElement }) => {
-    const dialog = canvasElement.querySelector<HTMLDialogElement>('#about-dialog')!;
+    const dialog =
+      canvasElement.querySelector<HTMLDialogElement>('#about-dialog')!;
     await expect(dialog.open).toBe(true);
 
     const inside = within(dialog);

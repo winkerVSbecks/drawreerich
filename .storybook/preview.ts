@@ -1,4 +1,4 @@
-import type { Preview } from "storybook";
+import type { Preview } from 'storybook';
 
 const preview: Preview = {};
 

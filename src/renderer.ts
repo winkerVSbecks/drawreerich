@@ -100,14 +100,26 @@ function computeStableOffset(
   width: number,
   height: number,
 ): { x: number; y: number } {
-  const { grid, cameraType, cameraAngleDelta, cameraDistance, cameraPitch, rotation } = getState();
+  const {
+    grid,
+    cameraType,
+    cameraAngleDelta,
+    cameraDistance,
+    cameraPitch,
+    rotation,
+  } = getState();
   const key = `${grid.cols},${grid.rows},${grid.tileSize},${rotation.x},${rotation.y},${rotation.z},${cameraType},${cameraAngleDelta},${cameraDistance},${cameraPitch},${width},${height}`;
 
   if (cachedOffset && cachedOffsetKey === key) return cachedOffset;
 
   const refScene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, cameraAngleDelta, cameraDistance, cameraPitch),
+    camera: cameraConfig(
+      cameraType,
+      cameraAngleDelta,
+      cameraDistance,
+      cameraPitch,
+    ),
   });
 
   const plane = planePosition(0, grid.cols, grid.rows);
@@ -239,7 +251,12 @@ function rebuildScene() {
 
   scene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, cameraAngleDelta, cameraDistance, cameraPitch),
+    camera: cameraConfig(
+      cameraType,
+      cameraAngleDelta,
+      cameraDistance,
+      cameraPitch,
+    ),
   });
 
   const ink = contrastingInk(readBackground());
@@ -355,7 +372,10 @@ export function renderScene(
 export function hitTestVoxel(x: number, y: number): string | null {
   if (lastRenderSize.width === 0) return null;
   rebuildScene();
-  const offset = computeStableOffset(lastRenderSize.width, lastRenderSize.height);
+  const offset = computeStableOffset(
+    lastRenderSize.width,
+    lastRenderSize.height,
+  );
   const hit = scene.findByPosition([x - offset.x, y - offset.y]);
   const pathId = hit?.voxel?.meta?.pathId;
   return typeof pathId === 'string' ? pathId : null;

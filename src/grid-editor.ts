@@ -5,7 +5,7 @@ import {
   setActivePath,
   getPathAtCell,
   subscribe,
-} from "./state.ts";
+} from './state.ts';
 
 const CELL_SIZE = 16;
 const GRID_PAD = 1;
@@ -13,7 +13,7 @@ const LABEL_PAD = 14; // reserved pixels for axis labels on top and left edges
 
 /** Return the horizontal and vertical axis names (always XZ plane). */
 export function axisLabels(): { h: string; v: string } {
-  return { h: "X", v: "Z" };
+  return { h: 'X', v: 'Z' };
 }
 
 export class GridEditor {
@@ -25,11 +25,11 @@ export class GridEditor {
   private boundMouseUp: () => void;
 
   constructor(doc: Document) {
-    this.canvas = doc.createElement("canvas");
-    this.canvas.style.display = "block";
-    this.canvas.style.cursor = "crosshair";
+    this.canvas = doc.createElement('canvas');
+    this.canvas.style.display = 'block';
+    this.canvas.style.cursor = 'crosshair';
 
-    this.ctx = this.canvas.getContext("2d")!;
+    this.ctx = this.canvas.getContext('2d')!;
 
     this.resize();
     this.draw();
@@ -41,23 +41,23 @@ export class GridEditor {
 
     this.boundMouseUp = () => this.onMouseUp();
 
-    this.canvas.addEventListener("mousedown", (e) => this.onMouseDown(e));
-    this.canvas.addEventListener("mousemove", (e) => this.onMouseMove(e));
-    window.addEventListener("mouseup", this.boundMouseUp);
-    this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+    this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+    this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    window.addEventListener('mouseup', this.boundMouseUp);
+    this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    this.canvas.addEventListener("touchstart", (e) => this.onTouchStart(e), {
+    this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), {
       passive: false,
     });
-    this.canvas.addEventListener("touchmove", (e) => this.onTouchMove(e), {
+    this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), {
       passive: false,
     });
-    this.canvas.addEventListener("touchend", () => this.onTouchEnd());
+    this.canvas.addEventListener('touchend', () => this.onTouchEnd());
   }
 
   dispose(): void {
     this.unsubscribe();
-    window.removeEventListener("mouseup", this.boundMouseUp);
+    window.removeEventListener('mouseup', this.boundMouseUp);
   }
 
   private resize(): void {
@@ -74,7 +74,7 @@ export class GridEditor {
 
   private cellAtXY(
     clientX: number,
-    clientY: number
+    clientY: number,
   ): { col: number; row: number } | null {
     const rect = this.canvas.getBoundingClientRect();
     const x = clientX - rect.left - LABEL_PAD;
@@ -156,21 +156,21 @@ export class GridEditor {
     this.ctx.clearRect(0, 0, w, h);
 
     // Draw background
-    this.ctx.fillStyle = "#0d1117";
+    this.ctx.fillStyle = '#0d1117';
     this.ctx.fillRect(0, 0, w, h);
 
     // --- Axis labels ---
     const labels = axisLabels();
-    this.ctx.fillStyle = "#556";
-    this.ctx.font = "9px monospace";
+    this.ctx.fillStyle = '#556';
+    this.ctx.font = '9px monospace';
 
     // Horizontal axis label centred above the grid
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
     this.ctx.fillText(
       `${labels.h} →`,
       LABEL_PAD + (cols * CELL_SIZE) / 2,
-      LABEL_PAD / 2
+      LABEL_PAD / 2,
     );
 
     // Vertical axis label centred to the left of the grid (rotated)
@@ -181,7 +181,7 @@ export class GridEditor {
     this.ctx.restore();
 
     // --- Grid lines (offset by LABEL_PAD) ---
-    this.ctx.strokeStyle = "#2a2a4a";
+    this.ctx.strokeStyle = '#2a2a4a';
     this.ctx.lineWidth = 0.5;
     for (let c = 0; c <= cols; c++) {
       const x = LABEL_PAD + c * CELL_SIZE + 0.5;
@@ -213,7 +213,7 @@ export class GridEditor {
         this.ctx.fillRect(cx, cy, cw, ch);
 
         if (isActive) {
-          this.ctx.strokeStyle = "#ffffff";
+          this.ctx.strokeStyle = '#ffffff';
           this.ctx.lineWidth = 1.5;
           this.ctx.strokeRect(cx + 0.5, cy + 0.5, cw - 1, ch - 1);
         }

@@ -29,7 +29,7 @@ export interface GridConfig {
   tileSize: number;
 }
 
-export type CameraType = "isometric" | "oblique" | "orthographic";
+export type CameraType = 'isometric' | 'oblique' | 'orthographic';
 
 export interface AppState {
   grid: GridConfig;
@@ -68,7 +68,7 @@ export function setPathColorSource(colors: string[]) {
 
 /** Get the palette colour for path N (0-indexed), cycling through 9 colours. */
 function paletteColor(): string {
-  if (pathColorSource.length === 0) return "#4477bb";
+  if (pathColorSource.length === 0) return '#4477bb';
   // Use total path count to determine which palette colour to assign
   const idx = state.paths.length % pathColorSource.length;
   return pathColorSource[idx];
@@ -81,7 +81,7 @@ function makePathId(): string {
 const initialPath: Path = {
   id: makePathId(),
   cells: [],
-  color: "#4477bb",
+  color: '#4477bb',
   height: 2,
   depth: 0,
 };
@@ -95,7 +95,7 @@ const state: AppState = {
   paths: [initialPath],
   activePathId: initialPath.id,
   stroke: true,
-  cameraType: "isometric",
+  cameraType: 'isometric',
   cameraAngleDelta: 0,
   cameraDistance: CAMERA_DEFAULTS.distance,
   cameraPitch: CAMERA_DEFAULTS.pitch,
@@ -131,8 +131,8 @@ export function setActivePath(id: string) {
 }
 
 export function clearActivePath() {
-  if (state.activePathId === "") return;
-  state.activePathId = "";
+  if (state.activePathId === '') return;
+  state.activePathId = '';
   notify();
 }
 
@@ -153,7 +153,7 @@ export function createPath(): Path {
 /** Find which path owns a given cell, if any. */
 export function getPathAtCell(col: number, row: number): Path | undefined {
   return state.paths.find((p) =>
-    p.cells.some((c) => c.col === col && c.row === row)
+    p.cells.some((c) => c.col === col && c.row === row),
   );
 }
 
@@ -288,7 +288,7 @@ export function setActivePlaneDepth(depth: number) {
 
 export function hasCell(col: number, row: number): boolean {
   return state.paths.some((p) =>
-    p.cells.some((c) => c.col === col && c.row === row)
+    p.cells.some((c) => c.col === col && c.row === row),
   );
 }
 
@@ -313,7 +313,11 @@ export function clearAllPaths() {
  * Replace the entire app state with the given grid config and paths.
  * Used by storage restore and JSON import.
  */
-export function replaceState(grid: GridConfig, paths: Path[], rotation?: Rotation) {
+export function replaceState(
+  grid: GridConfig,
+  paths: Path[],
+  rotation?: Rotation,
+) {
   state.grid.cols = grid.cols;
   state.grid.rows = grid.rows;
   state.grid.tileSize = grid.tileSize;
@@ -329,7 +333,7 @@ export function replaceState(grid: GridConfig, paths: Path[], rotation?: Rotatio
     const newPath: Path = {
       id: makePathId(),
       cells: [],
-      color: "#4477bb",
+      color: '#4477bb',
       height: 2,
       depth: 0,
     };

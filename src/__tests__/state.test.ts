@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getState,
   getActivePath,
@@ -23,8 +23,8 @@ import {
   setPathColorSource,
   replaceState,
   clearAllPaths,
-} from "../state.ts";
-import type { GridConfig, Path } from "../state.ts";
+} from '../state.ts';
+import type { GridConfig, Path } from '../state.ts';
 
 /**
  * Reset state to a known baseline before each test.
@@ -37,56 +37,56 @@ function resetState() {
     tileSize: 32,
   };
   const paths: Path[] = [
-    { id: "path-100", cells: [], color: "#4477bb", height: 2, depth: 0 },
+    { id: 'path-100', cells: [], color: '#4477bb', height: 2, depth: 0 },
   ];
   replaceState(grid, paths);
   // Also reset stroke and camera which replaceState doesn't cover
   setStroke(true);
-  setCameraType("isometric");
+  setCameraType('isometric');
 }
 
 // ─── getState ────────────────────────────────────────────────────────────────
 
-describe("getState", () => {
+describe('getState', () => {
   beforeEach(resetState);
 
-  it("returns state object with expected shape", () => {
+  it('returns state object with expected shape', () => {
     const s = getState();
-    expect(s).toHaveProperty("grid");
-    expect(s).toHaveProperty("paths");
-    expect(s).toHaveProperty("activePathId");
-    expect(s).toHaveProperty("stroke");
-    expect(s).toHaveProperty("cameraType");
-    expect(s).toHaveProperty("rotation");
+    expect(s).toHaveProperty('grid');
+    expect(s).toHaveProperty('paths');
+    expect(s).toHaveProperty('activePathId');
+    expect(s).toHaveProperty('stroke');
+    expect(s).toHaveProperty('cameraType');
+    expect(s).toHaveProperty('rotation');
   });
 
-  it("reflects resetState values", () => {
+  it('reflects resetState values', () => {
     const s = getState();
     expect(s.grid.cols).toBe(16);
     expect(s.grid.rows).toBe(16);
     expect(s.paths).toHaveLength(1);
-    expect(s.paths[0].id).toBe("path-100");
+    expect(s.paths[0].id).toBe('path-100');
   });
 });
 
 // ─── getActivePath ───────────────────────────────────────────────────────────
 
-describe("getActivePath", () => {
+describe('getActivePath', () => {
   beforeEach(resetState);
 
-  it("returns the active path", () => {
+  it('returns the active path', () => {
     const ap = getActivePath();
     expect(ap).toBeDefined();
-    expect(ap!.id).toBe("path-100");
+    expect(ap!.id).toBe('path-100');
   });
 });
 
 // ─── subscribe ───────────────────────────────────────────────────────────────
 
-describe("subscribe", () => {
+describe('subscribe', () => {
   beforeEach(resetState);
 
-  it("calls listener on state changes", () => {
+  it('calls listener on state changes', () => {
     const listener = vi.fn();
     subscribe(listener);
     // replaceState in resetState already called listeners, so reset the mock
@@ -96,7 +96,7 @@ describe("subscribe", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("unsubscribe stops notifications", () => {
+  it('unsubscribe stops notifications', () => {
     const listener = vi.fn();
     const unsub = subscribe(listener);
     listener.mockClear();
@@ -109,46 +109,46 @@ describe("subscribe", () => {
 
 // ─── setActivePath ───────────────────────────────────────────────────────────
 
-describe("setActivePath", () => {
+describe('setActivePath', () => {
   beforeEach(resetState);
 
-  it("switches active path to a valid id", () => {
+  it('switches active path to a valid id', () => {
     const newPath = createPath();
-    setActivePath("path-100");
-    expect(getState().activePathId).toBe("path-100");
+    setActivePath('path-100');
+    expect(getState().activePathId).toBe('path-100');
     setActivePath(newPath.id);
     expect(getState().activePathId).toBe(newPath.id);
   });
 
-  it("no-ops for an invalid id", () => {
+  it('no-ops for an invalid id', () => {
     const before = getState().activePathId;
-    setActivePath("nonexistent");
+    setActivePath('nonexistent');
     expect(getState().activePathId).toBe(before);
   });
 });
 
 // ─── createPath ──────────────────────────────────────────────────────────────
 
-describe("createPath", () => {
+describe('createPath', () => {
   beforeEach(resetState);
 
-  it("adds a new path and sets it active", () => {
+  it('adds a new path and sets it active', () => {
     const before = getState().paths.length;
     const newPath = createPath();
     expect(getState().paths.length).toBe(before + 1);
     expect(getState().activePathId).toBe(newPath.id);
   });
 
-  it("new path has empty cells and a color", () => {
+  it('new path has empty cells and a color', () => {
     const newPath = createPath();
     expect(newPath.cells).toEqual([]);
-    expect(typeof newPath.color).toBe("string");
+    expect(typeof newPath.color).toBe('string');
     expect(newPath.color.length).toBeGreaterThan(0);
     expect(newPath.height).toBe(2);
   });
 
-  it("uses palette colors when pathColorSource is set", () => {
-    setPathColorSource(["oklch(0.5 0.1 120)", "oklch(0.6 0.2 240)"]);
+  it('uses palette colors when pathColorSource is set', () => {
+    setPathColorSource(['oklch(0.5 0.1 120)', 'oklch(0.6 0.2 240)']);
     const p = createPath();
     expect(p.color).toMatch(/^oklch\(/);
     // Reset to avoid affecting other tests
@@ -158,36 +158,36 @@ describe("createPath", () => {
 
 // ─── addCell / getPathAtCell / hasCell ────────────────────────────────────────
 
-describe("addCell", () => {
+describe('addCell', () => {
   beforeEach(resetState);
 
-  it("adds a cell to the active path", () => {
+  it('adds a cell to the active path', () => {
     addCell(3, 5);
     const ap = getActivePath()!;
     expect(ap.cells).toContainEqual({ col: 3, row: 5 });
   });
 
-  it("hasCell returns true after adding", () => {
+  it('hasCell returns true after adding', () => {
     addCell(3, 5);
     expect(hasCell(3, 5)).toBe(true);
   });
 
-  it("hasCell returns false for unoccupied cell", () => {
+  it('hasCell returns false for unoccupied cell', () => {
     expect(hasCell(99, 99)).toBe(false);
   });
 
-  it("getPathAtCell returns the owning path", () => {
+  it('getPathAtCell returns the owning path', () => {
     addCell(3, 5);
     const owner = getPathAtCell(3, 5);
     expect(owner).toBeDefined();
     expect(owner!.id).toBe(getState().activePathId);
   });
 
-  it("getPathAtCell returns undefined for empty cell", () => {
+  it('getPathAtCell returns undefined for empty cell', () => {
     expect(getPathAtCell(99, 99)).toBeUndefined();
   });
 
-  it("does not add if cell is already owned by another path", () => {
+  it('does not add if cell is already owned by another path', () => {
     addCell(3, 5);
     const firstPathId = getState().activePathId;
 
@@ -201,17 +201,17 @@ describe("addCell", () => {
 
 // ─── removeCell ──────────────────────────────────────────────────────────────
 
-describe("removeCell", () => {
+describe('removeCell', () => {
   beforeEach(resetState);
 
-  it("removes a cell from the active path", () => {
+  it('removes a cell from the active path', () => {
     addCell(2, 3);
     expect(hasCell(2, 3)).toBe(true);
     removeCell(2, 3);
     expect(hasCell(2, 3)).toBe(false);
   });
 
-  it("no-ops if cell is not in active path", () => {
+  it('no-ops if cell is not in active path', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
@@ -220,7 +220,7 @@ describe("removeCell", () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it("auto-removes empty path and creates a fallback", () => {
+  it('auto-removes empty path and creates a fallback', () => {
     addCell(1, 1);
     removeCell(1, 1);
     // The path was auto-removed but a fallback is created if it was the only path
@@ -231,50 +231,50 @@ describe("removeCell", () => {
 
 // ─── setGridCols / setGridRows ───────────────────────────────────────────────
 
-describe("setGridCols", () => {
+describe('setGridCols', () => {
   beforeEach(resetState);
 
-  it("updates grid cols", () => {
+  it('updates grid cols', () => {
     setGridCols(8);
     expect(getState().grid.cols).toBe(8);
   });
 
-  it("clamps to minimum 4", () => {
+  it('clamps to minimum 4', () => {
     setGridCols(1);
     expect(getState().grid.cols).toBe(4);
   });
 
-  it("clamps to maximum 32", () => {
+  it('clamps to maximum 32', () => {
     setGridCols(100);
     expect(getState().grid.cols).toBe(32);
   });
 
-  it("prunes cells outside new bounds", () => {
+  it('prunes cells outside new bounds', () => {
     addCell(15, 0);
     setGridCols(10);
     expect(hasCell(15, 0)).toBe(false);
   });
 });
 
-describe("setGridRows", () => {
+describe('setGridRows', () => {
   beforeEach(resetState);
 
-  it("updates grid rows", () => {
+  it('updates grid rows', () => {
     setGridRows(8);
     expect(getState().grid.rows).toBe(8);
   });
 
-  it("clamps to minimum 4", () => {
+  it('clamps to minimum 4', () => {
     setGridRows(2);
     expect(getState().grid.rows).toBe(4);
   });
 
-  it("clamps to maximum 32", () => {
+  it('clamps to maximum 32', () => {
     setGridRows(50);
     expect(getState().grid.rows).toBe(32);
   });
 
-  it("prunes cells outside new bounds", () => {
+  it('prunes cells outside new bounds', () => {
     addCell(0, 15);
     setGridRows(10);
     expect(hasCell(0, 15)).toBe(false);
@@ -283,10 +283,10 @@ describe("setGridRows", () => {
 
 // ─── setTileSize ─────────────────────────────────────────────────────────────
 
-describe("setTileSize", () => {
+describe('setTileSize', () => {
   beforeEach(resetState);
 
-  it("updates tile size", () => {
+  it('updates tile size', () => {
     setTileSize(64);
     expect(getState().grid.tileSize).toBe(64);
   });
@@ -294,20 +294,20 @@ describe("setTileSize", () => {
 
 // ─── setRotation ─────────────────────────────────────────────────────────────
 
-describe("setRotation", () => {
+describe('setRotation', () => {
   beforeEach(resetState);
 
-  it("changes rotation", () => {
+  it('changes rotation', () => {
     setRotation({ x: 1, y: 2, z: 3 });
     expect(getState().rotation).toEqual({ x: 1, y: 2, z: 3 });
   });
 
-  it("normalizes values to 0-3", () => {
+  it('normalizes values to 0-3', () => {
     setRotation({ x: 4, y: 5, z: -1 });
     expect(getState().rotation).toEqual({ x: 0, y: 1, z: 3 });
   });
 
-  it("notifies subscribers", () => {
+  it('notifies subscribers', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
@@ -319,48 +319,48 @@ describe("setRotation", () => {
 
 // ─── setPathHeight / setPathColor ────────────────────────────────────────────
 
-describe("setPathHeight", () => {
+describe('setPathHeight', () => {
   beforeEach(resetState);
 
-  it("updates path height", () => {
-    setPathHeight("path-100", 5);
+  it('updates path height', () => {
+    setPathHeight('path-100', 5);
     expect(getActivePath()!.height).toBe(5);
   });
 
-  it("no-ops for invalid id", () => {
+  it('no-ops for invalid id', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
 
-    setPathHeight("bogus", 5);
+    setPathHeight('bogus', 5);
     expect(listener).not.toHaveBeenCalled();
   });
 });
 
-describe("setPathColor", () => {
+describe('setPathColor', () => {
   beforeEach(resetState);
 
-  it("updates path color", () => {
-    setPathColor("path-100", "#ff0000");
-    expect(getActivePath()!.color).toBe("#ff0000");
+  it('updates path color', () => {
+    setPathColor('path-100', '#ff0000');
+    expect(getActivePath()!.color).toBe('#ff0000');
   });
 
-  it("no-ops for invalid id", () => {
+  it('no-ops for invalid id', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
 
-    setPathColor("bogus", "#ff0000");
+    setPathColor('bogus', '#ff0000');
     expect(listener).not.toHaveBeenCalled();
   });
 });
 
 // ─── setStroke ───────────────────────────────────────────────────────────────
 
-describe("setStroke", () => {
+describe('setStroke', () => {
   beforeEach(resetState);
 
-  it("toggles stroke", () => {
+  it('toggles stroke', () => {
     setStroke(false);
     expect(getState().stroke).toBe(false);
     setStroke(true);
@@ -370,23 +370,23 @@ describe("setStroke", () => {
 
 // ─── setCameraType ───────────────────────────────────────────────────────────
 
-describe("setCameraType", () => {
+describe('setCameraType', () => {
   beforeEach(resetState);
 
-  it("updates camera type", () => {
-    setCameraType("oblique");
-    expect(getState().cameraType).toBe("oblique");
-    setCameraType("orthographic");
-    expect(getState().cameraType).toBe("orthographic");
+  it('updates camera type', () => {
+    setCameraType('oblique');
+    expect(getState().cameraType).toBe('oblique');
+    setCameraType('orthographic');
+    expect(getState().cameraType).toBe('orthographic');
   });
 });
 
 // ─── clearAllPaths ──────────────────────────────────────────────────────────
 
-describe("clearAllPaths", () => {
+describe('clearAllPaths', () => {
   beforeEach(resetState);
 
-  it("resets to a single empty path", () => {
+  it('resets to a single empty path', () => {
     addCell(1, 1);
     createPath();
     addCell(2, 2);
@@ -398,14 +398,14 @@ describe("clearAllPaths", () => {
     expect(getState().paths[0].cells).toEqual([]);
   });
 
-  it("sets the new path as active", () => {
+  it('sets the new path as active', () => {
     clearAllPaths();
 
     const s = getState();
     expect(s.activePathId).toBe(s.paths[0].id);
   });
 
-  it("removes all existing cells", () => {
+  it('removes all existing cells', () => {
     addCell(0, 0);
     addCell(1, 1);
     createPath();
@@ -418,7 +418,7 @@ describe("clearAllPaths", () => {
     expect(hasCell(3, 3)).toBe(false);
   });
 
-  it("notifies subscribers", () => {
+  it('notifies subscribers', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
@@ -427,12 +427,12 @@ describe("clearAllPaths", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("new path has a valid id, color, and default height", () => {
+  it('new path has a valid id, color, and default height', () => {
     clearAllPaths();
 
     const path = getState().paths[0];
     expect(path.id).toMatch(/^path-\d+$/);
-    expect(typeof path.color).toBe("string");
+    expect(typeof path.color).toBe('string');
     expect(path.color.length).toBeGreaterThan(0);
     expect(path.height).toBe(2);
   });
@@ -440,30 +440,30 @@ describe("clearAllPaths", () => {
 
 // ─── setCameraAngleDelta ─────────────────────────────────────────────────────
 
-describe("setCameraAngleDelta", () => {
+describe('setCameraAngleDelta', () => {
   beforeEach(resetState);
 
-  it("updates cameraAngleDelta", () => {
+  it('updates cameraAngleDelta', () => {
     setCameraAngleDelta(20);
     expect(getState().cameraAngleDelta).toBe(20);
   });
 
-  it("accepts negative values", () => {
+  it('accepts negative values', () => {
     setCameraAngleDelta(-30);
     expect(getState().cameraAngleDelta).toBe(-30);
   });
 
-  it("clamps to maximum 60", () => {
+  it('clamps to maximum 60', () => {
     setCameraAngleDelta(100);
     expect(getState().cameraAngleDelta).toBe(60);
   });
 
-  it("clamps to minimum -60", () => {
+  it('clamps to minimum -60', () => {
     setCameraAngleDelta(-100);
     expect(getState().cameraAngleDelta).toBe(-60);
   });
 
-  it("notifies subscribers", () => {
+  it('notifies subscribers', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
@@ -475,10 +475,10 @@ describe("setCameraAngleDelta", () => {
 
 // ─── resetCameraAngle ───────────────────────────────────────────────────────
 
-describe("resetCameraAngle", () => {
+describe('resetCameraAngle', () => {
   beforeEach(resetState);
 
-  it("resets cameraAngleDelta to 0", () => {
+  it('resets cameraAngleDelta to 0', () => {
     setCameraAngleDelta(25);
     expect(getState().cameraAngleDelta).toBe(25);
 
@@ -486,7 +486,7 @@ describe("resetCameraAngle", () => {
     expect(getState().cameraAngleDelta).toBe(0);
   });
 
-  it("notifies subscribers", () => {
+  it('notifies subscribers', () => {
     setCameraAngleDelta(10);
     const listener = vi.fn();
     subscribe(listener);
@@ -499,25 +499,25 @@ describe("resetCameraAngle", () => {
 
 // ─── setActivePlaneDepth ────────────────────────────────────────────────────
 
-describe("setActivePlaneDepth", () => {
+describe('setActivePlaneDepth', () => {
   beforeEach(resetState);
 
-  it("updates activePlaneDepth", () => {
+  it('updates activePlaneDepth', () => {
     setActivePlaneDepth(5);
     expect(getState().activePlaneDepth).toBe(5);
   });
 
-  it("clamps to minimum 0", () => {
+  it('clamps to minimum 0', () => {
     setActivePlaneDepth(-5);
     expect(getState().activePlaneDepth).toBe(0);
   });
 
-  it("clamps to maximum 20", () => {
+  it('clamps to maximum 20', () => {
     setActivePlaneDepth(25);
     expect(getState().activePlaneDepth).toBe(20);
   });
 
-  it("notifies subscribers", () => {
+  it('notifies subscribers', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
@@ -529,16 +529,16 @@ describe("setActivePlaneDepth", () => {
 
 // ─── createPath inherits activePlaneDepth ───────────────────────────────────
 
-describe("createPath inherits activePlaneDepth", () => {
+describe('createPath inherits activePlaneDepth', () => {
   beforeEach(resetState);
 
-  it("new path inherits current activePlaneDepth", () => {
+  it('new path inherits current activePlaneDepth', () => {
     setActivePlaneDepth(7);
     const newPath = createPath();
     expect(newPath.depth).toBe(7);
   });
 
-  it("new path gets depth 0 when activePlaneDepth is 0", () => {
+  it('new path gets depth 0 when activePlaneDepth is 0', () => {
     const newPath = createPath();
     expect(newPath.depth).toBe(0);
   });
@@ -546,17 +546,23 @@ describe("createPath inherits activePlaneDepth", () => {
 
 // ─── replaceState ────────────────────────────────────────────────────────────
 
-describe("replaceState", () => {
+describe('replaceState', () => {
   beforeEach(resetState);
 
-  it("replaces entire state", () => {
+  it('replaces entire state', () => {
     const grid: GridConfig = {
       cols: 8,
       rows: 8,
       tileSize: 16,
     };
     const paths: Path[] = [
-      { id: "path-50", cells: [{ col: 1, row: 2 }], color: "#aabb00", height: 3, depth: 5 },
+      {
+        id: 'path-50',
+        cells: [{ col: 1, row: 2 }],
+        color: '#aabb00',
+        height: 3,
+        depth: 5,
+      },
     ];
     replaceState(grid, paths, { x: 1, y: 0, z: 0 });
 
@@ -564,12 +570,12 @@ describe("replaceState", () => {
     expect(s.grid.cols).toBe(8);
     expect(s.rotation).toEqual({ x: 1, y: 0, z: 0 });
     expect(s.paths).toHaveLength(1);
-    expect(s.paths[0].id).toBe("path-50");
+    expect(s.paths[0].id).toBe('path-50');
     expect(s.paths[0].depth).toBe(5);
-    expect(s.activePathId).toBe("path-50");
+    expect(s.activePathId).toBe('path-50');
   });
 
-  it("defaults rotation to {0,0,0} when not provided", () => {
+  it('defaults rotation to {0,0,0} when not provided', () => {
     const grid: GridConfig = {
       cols: 8,
       rows: 8,
@@ -580,7 +586,7 @@ describe("replaceState", () => {
     expect(getState().rotation).toEqual({ x: 0, y: 0, z: 0 });
   });
 
-  it("defaults missing depth fields to 0", () => {
+  it('defaults missing depth fields to 0', () => {
     const grid: GridConfig = {
       cols: 8,
       rows: 8,
@@ -588,14 +594,14 @@ describe("replaceState", () => {
     };
     // Simulate old data without depth field
     const paths = [
-      { id: "path-60", cells: [], color: "#000000", height: 1 },
+      { id: 'path-60', cells: [], color: '#000000', height: 1 },
     ] as Path[];
     replaceState(grid, paths);
 
     expect(getState().paths[0].depth).toBe(0);
   });
 
-  it("creates a fallback path if given empty paths array", () => {
+  it('creates a fallback path if given empty paths array', () => {
     const grid: GridConfig = {
       cols: 8,
       rows: 8,
@@ -608,24 +614,24 @@ describe("replaceState", () => {
     expect(s.activePathId).toBe(s.paths[0].id);
   });
 
-  it("advances nextPathNum past existing ids to avoid collisions", () => {
+  it('advances nextPathNum past existing ids to avoid collisions', () => {
     const grid: GridConfig = {
       cols: 8,
       rows: 8,
       tileSize: 16,
     };
     const paths: Path[] = [
-      { id: "path-500", cells: [], color: "#000000", height: 1, depth: 0 },
+      { id: 'path-500', cells: [], color: '#000000', height: 1, depth: 0 },
     ];
     replaceState(grid, paths);
 
     // Creating a new path should have an id > 500
     const newPath = createPath();
-    const num = parseInt(newPath.id.replace("path-", ""), 10);
+    const num = parseInt(newPath.id.replace('path-', ''), 10);
     expect(num).toBeGreaterThan(500);
   });
 
-  it("notifies subscribers", () => {
+  it('notifies subscribers', () => {
     const listener = vi.fn();
     subscribe(listener);
     listener.mockClear();
