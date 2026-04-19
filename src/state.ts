@@ -130,6 +130,12 @@ export function setActivePath(id: string) {
   }
 }
 
+export function clearActivePath() {
+  if (state.activePathId === "") return;
+  state.activePathId = "";
+  notify();
+}
+
 export function createPath(): Path {
   const path: Path = {
     id: makePathId(),

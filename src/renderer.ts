@@ -22,11 +22,29 @@ function contrastingInk(bg: string): '0,0,0' | '255,255,255' {
   return (parsed?.l ?? 0) > 0.5 ? '0,0,0' : '255,255,255';
 }
 
+export type FaceShade = 'normal' | 'highlight' | 'dim';
+
 /**
  * Derive three face-shade levels from a base oklch color string.
- * top = lighter, side = base, front = darker.
+ * top = lighter, side = base, front = darker. `shade` lifts ('highlight') or
+ * lowers ('dim') all three tones so a selected path stands out against the
+ * others.
  */
-export function faceColors(base: string) {
+export function faceColors(base: string, shade: FaceShade = 'normal') {
+  if (shade === 'highlight') {
+    return {
+      top: `oklch(from ${base} calc(l + 0.35) c h)`,
+      side: `oklch(from ${base} calc(l + 0.2) c h)`,
+      front: `oklch(from ${base} calc(l + 0.05) c h)`,
+    };
+  }
+  if (shade === 'dim') {
+    return {
+      top: `oklch(from ${base} calc(l - 0.05) c h)`,
+      side: `oklch(from ${base} calc(l - 0.2) c h)`,
+      front: `oklch(from ${base} calc(l - 0.35) c h)`,
+    };
+  }
   return {
     top: `oklch(from ${base} calc(l + 0.15) c h)`,
     side: base,
@@ -216,6 +234,7 @@ function rebuildScene() {
     cameraPitch,
     activePlaneDepth,
     rotation,
+    activePathId,
   } = getState();
 
   scene = new Heerich({
@@ -263,7 +282,13 @@ function rebuildScene() {
     for (const path of paths) {
       if (path.cells.length === 0) continue;
 
-      const colors = faceColors(path.color);
+      const shade: FaceShade =
+        activePathId === ''
+          ? 'normal'
+          : path.id === activePathId
+            ? 'highlight'
+            : 'dim';
+      const colors = faceColors(path.color, shade);
       const style = {
         top: { fill: colors.top, ...strokeStyle },
         left: { fill: colors.side, ...strokeStyle },

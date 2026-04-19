@@ -2,11 +2,18 @@ import { ssam } from 'ssam';
 import type { Sketch, SketchSettings } from 'ssam';
 import { Pane } from 'tweakpane';
 import type { BladeApi } from '@tweakpane/core';
-import { renderScene, markDirty, setShowPlane, toggleShowPlane, hitTestVoxel } from './renderer.ts';
+import {
+  renderScene,
+  markDirty,
+  setShowPlane,
+  toggleShowPlane,
+  hitTestVoxel,
+} from './renderer.ts';
 import {
   getState,
   getActivePath,
   setActivePath,
+  clearActivePath,
   setTileSize,
   setGridCols,
   setGridRows,
@@ -47,31 +54,73 @@ import { generatePalette } from './palette.ts';
 /** Seed the canvas with Tetris-style pieces on first visit. */
 function loadDefaultComposition(colors: string[]) {
   const c = (i: number) => colors[i % colors.length] ?? '#4477bb';
-  replaceState(
-    { cols: 16, rows: 16, tileSize: 32 },
-    [
-      // I piece – horizontal bar
-      { id: 'path-1', color: c(0), height: 2, depth: 0, cells: [
-        { col: 1, row: 7 }, { col: 2, row: 7 }, { col: 3, row: 7 }, { col: 4, row: 7 },
-      ] },
-      // O piece – 2×2 square
-      { id: 'path-2', color: c(1), height: 4, depth: 0, cells: [
-        { col: 7, row: 10 }, { col: 8, row: 10 }, { col: 7, row: 11 }, { col: 8, row: 11 },
-      ] },
-      // T piece – stem pointing down
-      { id: 'path-3', color: c(2), height: 3, depth: 0, cells: [
-        { col: 4, row: 3 }, { col: 5, row: 3 }, { col: 6, row: 3 }, { col: 5, row: 4 },
-      ] },
-      // L piece
-      { id: 'path-4', color: c(3), height: 3, depth: 0, cells: [
-        { col: 8, row: 3 }, { col: 8, row: 4 }, { col: 8, row: 5 }, { col: 9, row: 5 },
-      ] },
-      // Z piece
-      { id: 'path-5', color: c(4), height: 2, depth: 0, cells: [
-        { col: 2, row: 10 }, { col: 3, row: 10 }, { col: 3, row: 11 }, { col: 4, row: 11 },
-      ] },
-    ]
-  );
+  replaceState({ cols: 16, rows: 16, tileSize: 32 }, [
+    // I piece – horizontal bar
+    {
+      id: 'path-1',
+      color: c(0),
+      height: 2,
+      depth: 0,
+      cells: [
+        { col: 1, row: 7 },
+        { col: 2, row: 7 },
+        { col: 3, row: 7 },
+        { col: 4, row: 7 },
+      ],
+    },
+    // O piece – 2×2 square
+    {
+      id: 'path-2',
+      color: c(1),
+      height: 4,
+      depth: 0,
+      cells: [
+        { col: 7, row: 10 },
+        { col: 8, row: 10 },
+        { col: 7, row: 11 },
+        { col: 8, row: 11 },
+      ],
+    },
+    // T piece – stem pointing down
+    {
+      id: 'path-3',
+      color: c(2),
+      height: 3,
+      depth: 0,
+      cells: [
+        { col: 4, row: 3 },
+        { col: 5, row: 3 },
+        { col: 6, row: 3 },
+        { col: 5, row: 4 },
+      ],
+    },
+    // L piece
+    {
+      id: 'path-4',
+      color: c(3),
+      height: 3,
+      depth: 0,
+      cells: [
+        { col: 8, row: 3 },
+        { col: 8, row: 4 },
+        { col: 8, row: 5 },
+        { col: 9, row: 5 },
+      ],
+    },
+    // Z piece
+    {
+      id: 'path-5',
+      color: c(4),
+      height: 2,
+      depth: 0,
+      cells: [
+        { col: 2, row: 10 },
+        { col: 3, row: 10 },
+        { col: 3, row: 11 },
+        { col: 4, row: 11 },
+      ],
+    },
+  ]);
 }
 
 // Restore saved state from localStorage before reading PARAMS
@@ -83,7 +132,7 @@ startAutoSave();
 // Initialize colour palette
 let currentPalette = generatePalette();
 setPathColorSource(currentPalette.pathColors);
-document.documentElement.style.setProperty("--bg", currentPalette.background);
+document.documentElement.style.setProperty('--bg', currentPalette.background);
 
 registerColorSwatchesSource({
   palette: () => currentPalette.pathColors,
@@ -109,12 +158,13 @@ if (!hasRestoredState) {
 function applyPalette() {
   currentPalette = generatePalette();
   setPathColorSource(currentPalette.pathColors);
-  document.documentElement.style.setProperty("--bg", currentPalette.background);
+  document.documentElement.style.setProperty('--bg', currentPalette.background);
 
   // Recolour all existing paths by cycling through palette colours
   const { paths } = getState();
   for (let i = 0; i < paths.length; i++) {
-    const color = currentPalette.pathColors[i % currentPalette.pathColors.length];
+    const color =
+      currentPalette.pathColors[i % currentPalette.pathColors.length];
     setPathColor(paths[i].id, color);
   }
 
@@ -147,7 +197,9 @@ const PATH_PARAMS = {
 };
 
 // --- Artboard ---
-const artboardPane = new Pane({ container: document.getElementById('pane-artboard')! });
+const artboardPane = new Pane({
+  container: document.getElementById('pane-artboard')!,
+});
 
 artboardPane
   .addBinding(PARAMS, 'cols', { label: 'cols', min: 4, max: 32, step: 1 })
@@ -168,7 +220,9 @@ artboardPane
   });
 
 // --- Camera ---
-const cameraPane = new Pane({ container: document.getElementById('pane-camera')! });
+const cameraPane = new Pane({
+  container: document.getElementById('pane-camera')!,
+});
 
 cameraPane
   .addBinding(PARAMS, 'cameraType', {
@@ -208,8 +262,10 @@ const pitchBinding = cameraPane
 
 function syncCameraTypeSpecific() {
   const type = getState().cameraType;
-  (distanceBinding as BladeApi & { hidden: boolean }).hidden = type !== 'oblique';
-  (pitchBinding as BladeApi & { hidden: boolean }).hidden = type !== 'orthographic';
+  (distanceBinding as BladeApi & { hidden: boolean }).hidden =
+    type !== 'oblique';
+  (pitchBinding as BladeApi & { hidden: boolean }).hidden =
+    type !== 'orthographic';
 }
 
 syncCameraTypeSpecific();
@@ -293,9 +349,11 @@ drawPane
     setActivePlaneDepth(ev.value);
   });
 
-drawPane.addBinding(PARAMS, 'stroke', { label: 'stroke' }).on('change', (ev) => {
-  setStroke(ev.value);
-});
+drawPane
+  .addBinding(PARAMS, 'stroke', { label: 'stroke' })
+  .on('change', (ev) => {
+    setStroke(ev.value);
+  });
 
 drawPane.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
@@ -351,19 +409,33 @@ subscribe(() => markDirty());
 
 // --- Top-bar wiring: About dialog, File menu, modal helpers ---
 
-const aboutDialog = document.getElementById('about-dialog') as HTMLDialogElement;
+const aboutDialog = document.getElementById(
+  'about-dialog',
+) as HTMLDialogElement;
 const aboutButton = document.getElementById('about-button')!;
 aboutButton.addEventListener('click', () => {
   aboutDialog.showModal();
 });
 
-const confirmDialog = document.getElementById('confirm-dialog') as HTMLDialogElement;
-const confirmTitle = confirmDialog.querySelector('.confirm-title') as HTMLElement;
+const confirmDialog = document.getElementById(
+  'confirm-dialog',
+) as HTMLDialogElement;
+const confirmTitle = confirmDialog.querySelector(
+  '.confirm-title',
+) as HTMLElement;
 const confirmBody = confirmDialog.querySelector('.confirm-body') as HTMLElement;
-const confirmButton = confirmDialog.querySelector<HTMLButtonElement>('[data-confirm-action="confirm"]')!;
-const confirmCancel = confirmDialog.querySelector<HTMLButtonElement>('[data-confirm-action="cancel"]')!;
+const confirmButton = confirmDialog.querySelector<HTMLButtonElement>(
+  '[data-confirm-action="confirm"]',
+)!;
+const confirmCancel = confirmDialog.querySelector<HTMLButtonElement>(
+  '[data-confirm-action="cancel"]',
+)!;
 
-function askConfirm(title: string, message: string, confirmLabel = 'Confirm'): Promise<boolean> {
+function askConfirm(
+  title: string,
+  message: string,
+  confirmLabel = 'Confirm',
+): Promise<boolean> {
   confirmTitle.textContent = title;
   confirmBody.textContent = message;
   confirmButton.textContent = confirmLabel;
@@ -387,10 +459,14 @@ function askConfirm(title: string, message: string, confirmLabel = 'Confirm'): P
   });
 }
 
-const alertDialog = document.getElementById('alert-dialog') as HTMLDialogElement;
+const alertDialog = document.getElementById(
+  'alert-dialog',
+) as HTMLDialogElement;
 const alertTitle = alertDialog.querySelector('.confirm-title') as HTMLElement;
 const alertBody = alertDialog.querySelector('.alert-body') as HTMLElement;
-const alertOk = alertDialog.querySelector<HTMLButtonElement>('[data-alert-action="ok"]')!;
+const alertOk = alertDialog.querySelector<HTMLButtonElement>(
+  '[data-alert-action="ok"]',
+)!;
 
 function showAlert(title: string, message: string): Promise<void> {
   alertTitle.textContent = title;
@@ -426,7 +502,9 @@ for (const menu of settingsMenus) {
 }
 
 // File menu
-const fileMenuButton = document.getElementById('file-menu-button') as HTMLButtonElement;
+const fileMenuButton = document.getElementById(
+  'file-menu-button',
+) as HTMLButtonElement;
 const fileMenu = document.getElementById('file-menu') as HTMLElement;
 
 function setFileMenuOpen(open: boolean) {
@@ -442,7 +520,11 @@ fileMenuButton.addEventListener('click', (e) => {
 
 document.addEventListener('click', (e) => {
   const target = e.target as Node;
-  if (!fileMenu.hidden && !fileMenu.contains(target) && target !== fileMenuButton) {
+  if (
+    !fileMenu.hidden &&
+    !fileMenu.contains(target) &&
+    target !== fileMenuButton
+  ) {
     setFileMenuOpen(false);
   }
   for (const menu of settingsMenus) {
@@ -484,7 +566,9 @@ async function runFileAction(action: string) {
       exportJSON();
       break;
     case 'export-image': {
-      const canvas = document.querySelector<HTMLCanvasElement>('#canvas-container canvas');
+      const canvas = document.querySelector<HTMLCanvasElement>(
+        '#canvas-container canvas',
+      );
       if (!canvas || !lastLogicalWidth || !lastLogicalHeight) return;
       const ctx2d = canvas.getContext('2d');
       if (!ctx2d) return;
@@ -507,7 +591,9 @@ async function runFileAction(action: string) {
 }
 
 fileMenu.addEventListener('click', (e) => {
-  const target = (e.target as HTMLElement).closest<HTMLButtonElement>('button[role="menuitem"]');
+  const target = (e.target as HTMLElement).closest<HTMLButtonElement>(
+    'button[role="menuitem"]',
+  );
   if (!target) return;
   const action = target.dataset.action;
   if (action) void runFileAction(action);
@@ -542,7 +628,12 @@ document.addEventListener('keydown', (e) => {
   }
   // Skip shortcuts while typing in an input
   const target = e.target as HTMLElement | null;
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+  if (
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable)
+  ) {
     return;
   }
   // Skip when modifier keys are held or a dialog is open
@@ -644,6 +735,15 @@ const sketch: Sketch<'2d'> = ({
     if (pathId) {
       setActivePath(pathId);
       openSettingsMenuByName('draw');
+      // The browser dispatches a `click` right after this pointerup; the
+      // document-level click handler would otherwise close the menu we just
+      // opened because the canvas is outside it.
+      document.addEventListener('click', (ev) => ev.stopPropagation(), {
+        capture: true,
+        once: true,
+      });
+    } else {
+      clearActivePath();
     }
   });
 
@@ -665,13 +765,25 @@ const sketch: Sketch<'2d'> = ({
     canvas.style.cursor = 'grab';
   });
 
-  wrap.render = ({ width: w, height: h }: { width: number; height: number }) => {
+  wrap.render = ({
+    width: w,
+    height: h,
+  }: {
+    width: number;
+    height: number;
+  }) => {
     lastLogicalWidth = w;
     lastLogicalHeight = h;
     renderScene(ctx, w, h);
   };
 
-  wrap.resize = ({ width: w, height: h }: { width: number; height: number }) => {
+  wrap.resize = ({
+    width: w,
+    height: h,
+  }: {
+    width: number;
+    height: number;
+  }) => {
     markDirty();
     lastLogicalWidth = w;
     lastLogicalHeight = h;
