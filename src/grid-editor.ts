@@ -4,6 +4,7 @@ import {
   removeCell,
   setActivePath,
   getPathAtCell,
+  getActivePath,
   subscribe,
 } from './state.ts';
 
@@ -94,7 +95,8 @@ export class GridEditor {
       this.erasing = true;
       removeCell(cell.col, cell.row);
     } else if (e.button === 0) {
-      const ownerPath = getPathAtCell(cell.col, cell.row);
+      const activePath = getActivePath();
+      const ownerPath = getPathAtCell(cell.col, cell.row, activePath);
       if (ownerPath) {
         setActivePath(ownerPath.id);
       } else {
@@ -124,7 +126,8 @@ export class GridEditor {
     const cell = this.cellAtXY(touch.clientX, touch.clientY);
     if (!cell) return;
 
-    const ownerPath = getPathAtCell(cell.col, cell.row);
+    const activePath = getActivePath();
+    const ownerPath = getPathAtCell(cell.col, cell.row, activePath);
     if (ownerPath) {
       setActivePath(ownerPath.id);
     } else {

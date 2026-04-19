@@ -125,6 +125,18 @@ describe('setActivePath', () => {
     setActivePath('nonexistent');
     expect(getState().activePathId).toBe(before);
   });
+
+  it('syncs activePlaneDepth to the selected path depth', () => {
+    // Create a path at depth 3
+    setActivePlaneDepth(3);
+    const elevated = createPath();
+    // Switch back to the default path (depth 0)
+    setActivePath('path-100');
+    expect(getState().activePlaneDepth).toBe(0);
+    // Switch to elevated path — depth should follow
+    setActivePath(elevated.id);
+    expect(getState().activePlaneDepth).toBe(3);
+  });
 });
 
 // ─── createPath ──────────────────────────────────────────────────────────────
@@ -191,11 +203,82 @@ describe('addCell', () => {
     addCell(3, 5);
     const firstPathId = getState().activePathId;
 
-    createPath(); // new active path
+    createPath(); // new active path (same depth=0, height=2 → overlaps in Y)
     addCell(3, 5); // should be ignored
 
     const owner = getPathAtCell(3, 5);
     expect(owner!.id).toBe(firstPathId);
+  });
+
+  it('allows adding the same (col, row) cell to a second path when Y ranges do not overlap', () => {
+    // First path: depth=0, height=2 → occupies Y 0–1
+    addCell(3, 5);
+    const firstPathId = getState().activePathId;
+
+    // Second path: depth=2, height=2 → occupies Y 2–3 (no overlap)
+    setActivePlaneDepth(2);
+    const secondPath = createPath();
+    setPathHeight(secondPath.id, 2);
+    addCell(3, 5); // should succeed
+
+    expect(secondPath.cells).toContainEqual({ col: 3, row: 5 });
+    expect(getPathAtCell(3, 5)?.id).toBe(firstPathId); // 2D lookup returns first owner
+  });
+
+  it('blocks adding the same (col, row) when Y ranges partially overlap', () => {
+    // First path: depth=1, height=3 → occupies Y 1–3
+    setActivePlaneDepth(1);
+    const firstPath = createPath();
+    setPathHeight(firstPath.id, 3);
+    addCell(4, 4);
+    const firstPathId = firstPath.id;
+
+    // Second path: depth=3, height=2 → occupies Y 3–4 (overlaps at Y=3)
+    setActivePlaneDepth(3);
+    const secondPath = createPath();
+    setPathHeight(secondPath.id, 2);
+    addCell(4, 4); // should be blocked
+
+    expect(secondPath.cells).not.toContainEqual({ col: 4, row: 4 });
+    expect(getPathAtCell(4, 4)?.id).toBe(firstPathId);
+  });
+
+  it('getPathAtCell with relativeTo returns undefined when paths do not overlap in Y', () => {
+    // Path A: depth=0, height=2
+    addCell(1, 1);
+    const pathA = getActivePath()!;
+
+    // Path B: depth=2, height=2 (no Y overlap with A)
+    setActivePlaneDepth(2);
+    const pathB = createPath();
+    setPathHeight(pathB.id, 2);
+    addCell(1, 1);
+
+    expect(getPathAtCell(1, 1, pathA)).toBeUndefined();
+    expect(getPathAtCell(1, 1, pathB)).toBeUndefined();
+  });
+
+  it('getPathAtCell with relativeTo returns conflicting path when Y ranges overlap', () => {
+    // Path A: depth=0, height=4
+    setActivePlaneDepth(0);
+    const pathA = createPath();
+    setPathHeight(pathA.id, 4);
+    addCell(2, 2);
+
+    // Path B: depth=3, height=2 → overlaps with A at Y 3
+    setActivePlaneDepth(3);
+    const pathB = createPath();
+    setPathHeight(pathB.id, 2);
+
+    expect(getPathAtCell(2, 2, pathB)?.id).toBe(pathA.id);
+  });
+
+  it('does not duplicate a cell already in the active path', () => {
+    addCell(0, 0);
+    addCell(0, 0); // second call should be a no-op
+    expect(
+      getActivePath()!.cells.filter((c) => c.col === 0 && c.row === 0),
+    ).toHaveLength(1);
   });
 });
 

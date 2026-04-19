@@ -300,6 +300,46 @@ export const StrokeToggle: Story = {
   },
 };
 
+export const OverlappingPathsAtDifferentHeights: Story = {
+  render: () => {
+    replaceState({ cols: 16, rows: 16, tileSize: 32 }, [
+      {
+        id: 'path-1',
+        cells: [
+          { col: 5, row: 5 },
+          { col: 6, row: 5 },
+          { col: 7, row: 5 },
+        ],
+        color: '#4477bb',
+        height: 2,
+        depth: 0,
+      },
+      {
+        id: 'path-2',
+        cells: [
+          { col: 5, row: 5 },
+          { col: 6, row: 5 },
+          { col: 7, row: 5 },
+        ],
+        color: '#bb4444',
+        height: 2,
+        depth: 2,
+      },
+    ]);
+    markDirty();
+
+    const canvas = createCanvas(600, 600);
+    const ctx = canvas.getContext('2d')!;
+    renderScene(ctx, 600, 600);
+    return canvas;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = canvasElement.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
+    await expect(hasVisiblePixels(ctx, 600, 600)).toBe(true);
+  },
+};
+
 export const PathsAtMultipleDepths: Story = {
   render: () => {
     resetState();
