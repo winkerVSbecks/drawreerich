@@ -58,9 +58,16 @@ let scene = new Heerich({
 
 let dirty = true;
 let showPlane = true;
+let lastRenderSize = { width: 0, height: 0 };
 
 export function setShowPlane(v: boolean): void {
   showPlane = v;
+}
+
+export function toggleShowPlane(): boolean {
+  showPlane = !showPlane;
+  dirty = true;
+  return showPlane;
 }
 
 // Stable offset cache — recomputed only when grid/camera config changes, not when cells are drawn
@@ -75,14 +82,14 @@ function computeStableOffset(
   width: number,
   height: number,
 ): { x: number; y: number } {
-  const { grid, cameraType, cameraAngleDelta, rotation } = getState();
-  const key = `${grid.cols},${grid.rows},${grid.tileSize},${rotation.x},${rotation.y},${rotation.z},${cameraType},${cameraAngleDelta},${width},${height}`;
+  const { grid, cameraType, cameraAngleDelta, cameraDistance, cameraPitch, rotation } = getState();
+  const key = `${grid.cols},${grid.rows},${grid.tileSize},${rotation.x},${rotation.y},${rotation.z},${cameraType},${cameraAngleDelta},${cameraDistance},${cameraPitch},${width},${height}`;
 
   if (cachedOffset && cachedOffsetKey === key) return cachedOffset;
 
   const refScene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, cameraAngleDelta),
+    camera: cameraConfig(cameraType, cameraAngleDelta, cameraDistance, cameraPitch),
   });
 
   const plane = planePosition(0, grid.cols, grid.rows);
@@ -122,8 +129,19 @@ export function markDirty() {
   dirty = true;
 }
 
-export function cameraConfig(type: CameraType, delta: number = 0) {
+export function cameraConfig(
+  type: CameraType,
+  delta: number = 0,
+  distance?: number,
+  pitch?: number,
+) {
   const angle = cameraAngle(delta);
+  if (type === 'oblique') {
+    return { type, angle, distance };
+  }
+  if (type === 'orthographic') {
+    return { type, angle, pitch };
+  }
   return { type, angle };
 }
 
@@ -194,13 +212,15 @@ function rebuildScene() {
     stroke,
     cameraType,
     cameraAngleDelta,
+    cameraDistance,
+    cameraPitch,
     activePlaneDepth,
     rotation,
   } = getState();
 
   scene = new Heerich({
     tile: grid.tileSize,
-    camera: cameraConfig(cameraType, cameraAngleDelta),
+    camera: cameraConfig(cameraType, cameraAngleDelta, cameraDistance, cameraPitch),
   });
 
   const ink = contrastingInk(readBackground());
@@ -260,6 +280,7 @@ function rebuildScene() {
             position: voxelPosition(cell.col, cell.row, y, path.depth),
             size: 1,
             style,
+            meta: { pathId: path.id },
           } as Parameters<typeof scene.addGeometry>[0]);
         }
       }
@@ -278,6 +299,7 @@ export function renderScene(
   width: number,
   height: number,
 ) {
+  lastRenderSize = { width, height };
   rebuildScene();
 
   ctx.clearRect(0, 0, width, height);
@@ -298,6 +320,20 @@ export function renderScene(
   }
 
   ctx.restore();
+}
+
+/**
+ * Hit-test against the current scene. `x`, `y` are in canvas logical pixels
+ * (i.e. CSS pixels, not devicePixelRatio-scaled).
+ * Returns the pathId of the frontmost voxel at that position, or null.
+ */
+export function hitTestVoxel(x: number, y: number): string | null {
+  if (lastRenderSize.width === 0) return null;
+  rebuildScene();
+  const offset = computeStableOffset(lastRenderSize.width, lastRenderSize.height);
+  const hit = scene.findByPosition([x - offset.x, y - offset.y]);
+  const pathId = hit?.voxel?.meta?.pathId;
+  return typeof pathId === 'string' ? pathId : null;
 }
 
 function drawFace(ctx: CanvasRenderingContext2D, face: Face) {
