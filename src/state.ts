@@ -124,8 +124,10 @@ export function getActivePath(): Path | undefined {
 }
 
 export function setActivePath(id: string) {
-  if (state.paths.some((p) => p.id === id)) {
+  const path = state.paths.find((p) => p.id === id);
+  if (path) {
     state.activePathId = id;
+    state.activePlaneDepth = path.depth;
     notify();
   }
 }

@@ -125,6 +125,18 @@ describe('setActivePath', () => {
     setActivePath('nonexistent');
     expect(getState().activePathId).toBe(before);
   });
+
+  it('syncs activePlaneDepth to the selected path depth', () => {
+    // Create a path at depth 3
+    setActivePlaneDepth(3);
+    const elevated = createPath();
+    // Switch back to the default path (depth 0)
+    setActivePath('path-100');
+    expect(getState().activePlaneDepth).toBe(0);
+    // Switch to elevated path — depth should follow
+    setActivePath(elevated.id);
+    expect(getState().activePlaneDepth).toBe(3);
+  });
 });
 
 // ─── createPath ──────────────────────────────────────────────────────────────
