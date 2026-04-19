@@ -38,9 +38,16 @@ export interface AppState {
   stroke: boolean;
   cameraType: CameraType;
   cameraAngleDelta: number;
+  cameraDistance: number;
+  cameraPitch: number;
   activePlaneDepth: number;
   rotation: Rotation;
 }
+
+export const CAMERA_DEFAULTS = {
+  distance: 15,
+  pitch: 35.264,
+} as const;
 
 type Listener = () => void;
 
@@ -90,6 +97,8 @@ const state: AppState = {
   stroke: true,
   cameraType: "isometric",
   cameraAngleDelta: 0,
+  cameraDistance: CAMERA_DEFAULTS.distance,
+  cameraPitch: CAMERA_DEFAULTS.pitch,
   activePlaneDepth: 0,
   rotation: { x: 0, y: 0, z: 0 },
 };
@@ -256,6 +265,16 @@ export function resetCameraAngle() {
   notify();
 }
 
+export function setCameraDistance(distance: number) {
+  state.cameraDistance = Math.max(1, Math.min(60, distance));
+  notify();
+}
+
+export function setCameraPitch(pitch: number) {
+  state.cameraPitch = Math.max(0, Math.min(89, pitch));
+  notify();
+}
+
 export function setActivePlaneDepth(depth: number) {
   state.activePlaneDepth = Math.max(0, Math.min(20, depth));
   notify();
@@ -313,6 +332,8 @@ export function replaceState(grid: GridConfig, paths: Path[], rotation?: Rotatio
 
   state.activePathId = state.paths[0].id;
   state.cameraAngleDelta = 0;
+  state.cameraDistance = CAMERA_DEFAULTS.distance;
+  state.cameraPitch = CAMERA_DEFAULTS.pitch;
   state.activePlaneDepth = 0;
 
   // Advance nextPathNum past any existing path IDs to avoid collisions

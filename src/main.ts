@@ -1,10 +1,12 @@
 import { ssam } from 'ssam';
 import type { Sketch, SketchSettings } from 'ssam';
 import { Pane } from 'tweakpane';
-import { renderScene, markDirty, setShowPlane } from './renderer.ts';
+import type { BladeApi } from '@tweakpane/core';
+import { renderScene, markDirty, setShowPlane, toggleShowPlane, hitTestVoxel } from './renderer.ts';
 import {
   getState,
   getActivePath,
+  setActivePath,
   setTileSize,
   setGridCols,
   setGridRows,
@@ -14,6 +16,8 @@ import {
   setStroke,
   setCameraType,
   setCameraAngleDelta,
+  setCameraDistance,
+  setCameraPitch,
   resetCameraAngle,
   setActivePlaneDepth,
   createPath,
@@ -22,9 +26,15 @@ import {
   replaceState,
   subscribe,
   ROTATION_PRESETS,
+  CAMERA_DEFAULTS,
 } from './state.ts';
 import type { CameraType } from './state.ts';
 import { GridEditorBladePlugin } from './grid-editor-plugin.ts';
+import {
+  ColorSwatchesBladePlugin,
+  registerColorSwatchesSource,
+  refreshColorSwatches,
+} from './color-swatches-plugin.ts';
 import {
   tryRestore,
   startAutoSave,
@@ -75,6 +85,15 @@ let currentPalette = generatePalette();
 setPathColorSource(currentPalette.pathColors);
 document.documentElement.style.setProperty("--bg", currentPalette.background);
 
+registerColorSwatchesSource({
+  palette: () => currentPalette.pathColors,
+  current: () => getActivePath()?.color ?? '#4477bb',
+  onChange: (color) => {
+    const ap = getActivePath();
+    if (ap) setPathColor(ap.id, color);
+  },
+});
+
 if (!hasRestoredState) {
   // First visit — seed with a Tetris-style default composition
   loadDefaultComposition(currentPalette.pathColors);
@@ -101,6 +120,7 @@ function applyPalette() {
 
   // Plane stroke contrast depends on --bg; force a rebuild even when no paths changed.
   markDirty();
+  refreshColorSwatches();
 }
 
 // Tweakpane setup — one pane per top-bar menu
@@ -109,6 +129,8 @@ const PARAMS = {
   rows: getState().grid.rows,
   tileSize: getState().grid.tileSize,
   cameraType: getState().cameraType,
+  cameraDistance: getState().cameraDistance,
+  cameraPitch: getState().cameraPitch,
   stroke: getState().stroke,
   activePlaneDepth: getState().activePlaneDepth,
 };
@@ -122,7 +144,6 @@ const ROT_PARAMS = {
 const activePath = getActivePath();
 const PATH_PARAMS = {
   height: activePath?.height ?? 2,
-  color: activePath?.color ?? '#4477bb',
 };
 
 // --- Artboard ---
@@ -160,11 +181,44 @@ cameraPane
   })
   .on('change', (ev) => {
     setCameraType(ev.value as CameraType);
+    syncCameraTypeSpecific();
   });
+
+const distanceBinding = cameraPane
+  .addBinding(PARAMS, 'cameraDistance', {
+    label: 'distance',
+    min: 2,
+    max: 40,
+    step: 0.5,
+  })
+  .on('change', (ev) => {
+    setCameraDistance(ev.value);
+  });
+
+const pitchBinding = cameraPane
+  .addBinding(PARAMS, 'cameraPitch', {
+    label: 'pitch',
+    min: 0,
+    max: 89,
+    step: 1,
+  })
+  .on('change', (ev) => {
+    setCameraPitch(ev.value);
+  });
+
+function syncCameraTypeSpecific() {
+  const type = getState().cameraType;
+  (distanceBinding as BladeApi & { hidden: boolean }).hidden = type !== 'oblique';
+  (pitchBinding as BladeApi & { hidden: boolean }).hidden = type !== 'orthographic';
+}
+
+syncCameraTypeSpecific();
 
 function resetCamera() {
   setRotation(ROTATION_PRESETS.xz);
   resetCameraAngle();
+  setCameraDistance(CAMERA_DEFAULTS.distance);
+  setCameraPitch(CAMERA_DEFAULTS.pitch);
   syncParamsFromState();
 }
 
@@ -210,6 +264,7 @@ cameraPane
 // --- Draw ---
 const drawPane = new Pane({ container: document.getElementById('pane-draw')! });
 drawPane.registerPlugin(GridEditorBladePlugin);
+drawPane.registerPlugin(ColorSwatchesBladePlugin);
 
 drawPane.addBlade({ view: 'grid-editor' });
 
@@ -225,12 +280,7 @@ const heightBinding = drawPane
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
-drawPane
-  .addBinding(PATH_PARAMS, 'color', { label: 'color' })
-  .on('change', (ev) => {
-    const ap = getActivePath();
-    if (ap) setPathColor(ap.id, ev.value);
-  });
+drawPane.addBlade({ view: 'color-swatches', label: 'color' });
 
 drawPane
   .addBinding(PARAMS, 'activePlaneDepth', {
@@ -260,12 +310,16 @@ function syncParamsFromState() {
   PARAMS.rows = s.grid.rows;
   PARAMS.tileSize = s.grid.tileSize;
   PARAMS.cameraType = s.cameraType;
+  PARAMS.cameraDistance = s.cameraDistance;
+  PARAMS.cameraPitch = s.cameraPitch;
   PARAMS.stroke = s.stroke;
   PARAMS.activePlaneDepth = s.activePlaneDepth;
   ROT_PARAMS.rotX = s.rotation.x;
   ROT_PARAMS.rotY = s.rotation.y;
   ROT_PARAMS.rotZ = s.rotation.z;
   for (const p of settingsPanes) p.refresh();
+  syncCameraTypeSpecific();
+  refreshColorSwatches();
 
   const ap = getActivePath();
   if (ap) {
@@ -276,6 +330,7 @@ function syncParamsFromState() {
 
 // Sync active path controls when active path changes
 let prevActiveId = getState().activePathId;
+let prevActiveColor = getActivePath()?.color ?? '';
 subscribe(() => {
   const ap = getActivePath();
   if (!ap) return;
@@ -284,6 +339,10 @@ subscribe(() => {
     prevActiveId = ap.id;
     PATH_PARAMS.height = ap.height;
     heightBinding.refresh();
+  }
+  if (ap.color !== prevActiveColor) {
+    prevActiveColor = ap.color;
+    refreshColorSwatches();
   }
 });
 
@@ -461,6 +520,12 @@ function toggleSettingsMenuByName(name: string) {
   menu.open = !menu.open;
 }
 
+function openSettingsMenuByName(name: string) {
+  const menu = settingsMenus.find((m) => m.dataset.menu === name);
+  if (!menu || menu.open) return;
+  menu.open = true;
+}
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     let handled = false;
@@ -511,6 +576,11 @@ document.addEventListener('keydown', (e) => {
       resetCamera();
       e.preventDefault();
       break;
+    case 'g':
+      toggleShowPlane();
+      markDirty();
+      e.preventDefault();
+      break;
   }
 });
 
@@ -530,37 +600,56 @@ const sketch: Sketch<'2d'> = ({
   lastLogicalHeight = height;
   renderScene(ctx, width, height);
 
-  // Camera rotation via pointer drag
-  let isDragging = false;
-  let dragStartX = 0;
+  // Camera rotation via pointer drag; a pointerup with <CLICK_THRESHOLD px of
+  // movement is treated as a click and runs a voxel hit-test instead.
+  const CLICK_THRESHOLD = 3;
+  let isDown = false;
+  let startX = 0;
+  let startY = 0;
   let dragStartDelta = 0;
+  let exceededClickThreshold = false;
 
   canvas.addEventListener('pointerdown', (e: PointerEvent) => {
-    isDragging = true;
-    dragStartX = e.clientX;
+    isDown = true;
+    exceededClickThreshold = false;
+    startX = e.clientX;
+    startY = e.clientY;
     dragStartDelta = getState().cameraAngleDelta;
     canvas.setPointerCapture(e.pointerId);
   });
 
   canvas.addEventListener('pointermove', (e: PointerEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragStartX;
-    // Convert pixels to degrees: ~0.5° per pixel
+    if (!isDown) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!exceededClickThreshold && Math.hypot(dx, dy) > CLICK_THRESHOLD) {
+      exceededClickThreshold = true;
+    }
+    if (!exceededClickThreshold) return;
     const newDelta = dragStartDelta + dx * 0.5;
     setCameraAngleDelta(newDelta);
     markDirty();
   });
 
   canvas.addEventListener('pointerup', (e: PointerEvent) => {
-    if (isDragging) {
-      isDragging = false;
-      canvas.releasePointerCapture(e.pointerId);
+    if (!isDown) return;
+    isDown = false;
+    canvas.releasePointerCapture(e.pointerId);
+    if (exceededClickThreshold) return;
+    // Treat as click — hit-test against voxels
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const pathId = hitTestVoxel(x, y);
+    if (pathId) {
+      setActivePath(pathId);
+      openSettingsMenuByName('draw');
     }
   });
 
   canvas.addEventListener('pointercancel', (e: PointerEvent) => {
-    if (isDragging) {
-      isDragging = false;
+    if (isDown) {
+      isDown = false;
       canvas.releasePointerCapture(e.pointerId);
     }
   });
