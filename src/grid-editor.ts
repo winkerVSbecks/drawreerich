@@ -81,10 +81,11 @@ export class GridEditor {
     const x = clientX - rect.left - LABEL_PAD;
     const y = clientY - rect.top - LABEL_PAD;
     const col = Math.floor(x / CELL_SIZE);
-    const row = Math.floor(y / CELL_SIZE);
+    const screenRow = Math.floor(y / CELL_SIZE);
     const { cols, rows } = getState().grid;
-    if (col < 0 || col >= cols || row < 0 || row >= rows) return null;
-    return { col, row };
+    if (col < 0 || col >= cols || screenRow < 0 || screenRow >= rows)
+      return null;
+    return { col, row: rows - 1 - screenRow };
   }
 
   private onMouseDown(e: MouseEvent): void {
@@ -207,7 +208,7 @@ export class GridEditor {
 
       for (const cell of path.cells) {
         const cx = LABEL_PAD + cell.col * CELL_SIZE + 1;
-        const cy = LABEL_PAD + cell.row * CELL_SIZE + 1;
+        const cy = LABEL_PAD + (rows - 1 - cell.row) * CELL_SIZE + 1;
         const cw = CELL_SIZE - 1;
         const ch = CELL_SIZE - 1;
 
