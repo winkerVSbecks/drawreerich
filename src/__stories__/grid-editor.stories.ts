@@ -9,6 +9,8 @@ import {
   getActivePath,
   createPath,
   setPathColor,
+  setActivePlaneDepth,
+  setPathHeight,
 } from '../state.ts';
 import { resetState } from './helpers.ts';
 
@@ -148,6 +150,47 @@ export const ClickExistingCellSwitchesPath: Story = {
     window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
     await expect(getState().activePathId).toBe(firstPathId);
+  },
+};
+
+export const ClickCellOfOverlappingPathAtDifferentHeightPaints: Story = {
+  render: renderEditor,
+  play: async ({ canvasElement }) => {
+    // Path A: depth=0, height=2 at cell (3,3)
+    addCell(3, 3);
+    const pathAId = getActivePath()!.id;
+
+    // Path B: depth=2, height=2 — no Y overlap with A
+    setActivePlaneDepth(2);
+    const pathB = createPath();
+    setPathHeight(pathB.id, 2);
+    setPathColor(pathB.id, '#cc3366');
+
+    // Clicking on cell (3,3) should NOT switch to path A (different height)
+    // — it should start painting on path B instead
+    const canvas = canvasElement.querySelector('canvas')!;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = rect.left + 14 + 3 * 16 + 8;
+    const clientY = rect.top + 14 + 3 * 16 + 8;
+
+    canvas.dispatchEvent(
+      new MouseEvent('mousedown', {
+        clientX,
+        clientY,
+        button: 0,
+        bubbles: true,
+      }),
+    );
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+
+    // Should still be on path B (not switched to A)
+    await expect(getState().activePathId).toBe(pathB.id);
+    // Path B should now also have cell (3,3)
+    await expect(pathB.cells).toContainEqual({ col: 3, row: 3 });
+    // Path A is untouched
+    await expect(
+      getState().paths.find((p) => p.id === pathAId)!.cells,
+    ).toContainEqual({ col: 3, row: 3 });
   },
 };
 

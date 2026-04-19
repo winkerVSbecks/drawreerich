@@ -150,11 +150,27 @@ export function createPath(): Path {
   return path;
 }
 
-/** Find which path owns a given cell, if any. */
-export function getPathAtCell(col: number, row: number): Path | undefined {
-  return state.paths.find((p) =>
-    p.cells.some((c) => c.col === col && c.row === row),
-  );
+function yRangesOverlap(a: Path, b: Path): boolean {
+  return a.depth <= b.depth + b.height - 1 && b.depth <= a.depth + a.height - 1;
+}
+
+/**
+ * Find which path owns a given cell, if any.
+ * When `relativeTo` is provided, only paths whose Y range overlaps with
+ * `relativeTo` are considered — allowing paths at different heights to share
+ * the same (col, row) without conflict.
+ */
+export function getPathAtCell(
+  col: number,
+  row: number,
+  relativeTo?: Path,
+): Path | undefined {
+  return state.paths.find((p) => {
+    if (relativeTo && p.id === relativeTo.id) return false;
+    if (!p.cells.some((c) => c.col === col && c.row === row)) return false;
+    if (!relativeTo) return true;
+    return yRangesOverlap(p, relativeTo);
+  });
 }
 
 export function setTileSize(size: number) {
@@ -190,10 +206,10 @@ export function setRotation(rotation: Rotation) {
 }
 
 export function addCell(col: number, row: number) {
-  // If any path already owns this cell, do nothing
-  if (getPathAtCell(col, row)) return;
   const path = getActivePath();
   if (!path) return;
+  if (path.cells.some((c) => c.col === col && c.row === row)) return;
+  if (getPathAtCell(col, row, path)) return;
   path.cells.push({ col, row });
   notify();
 }
