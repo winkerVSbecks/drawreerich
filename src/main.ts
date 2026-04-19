@@ -324,6 +324,17 @@ drawPane.registerPlugin(ColorSwatchesBladePlugin);
 
 drawPane.addBlade({ view: 'grid-editor' });
 
+drawPane
+  .addBinding(PARAMS, 'activePlaneDepth', {
+    label: 'depth (Y)',
+    min: 0,
+    max: 20,
+    step: 1,
+  })
+  .on('change', (ev) => {
+    setActivePlaneDepth(ev.value);
+  });
+
 const heightBinding = drawPane
   .addBinding(PATH_PARAMS, 'height', {
     label: 'height',
@@ -336,24 +347,13 @@ const heightBinding = drawPane
     if (ap) setPathHeight(ap.id, ev.value);
   });
 
-drawPane.addBlade({ view: 'color-swatches', label: 'color' });
-
-drawPane
-  .addBinding(PARAMS, 'activePlaneDepth', {
-    label: 'depth (Y)',
-    min: 0,
-    max: 20,
-    step: 1,
-  })
-  .on('change', (ev) => {
-    setActivePlaneDepth(ev.value);
-  });
-
 drawPane
   .addBinding(PARAMS, 'stroke', { label: 'stroke' })
   .on('change', (ev) => {
     setStroke(ev.value);
   });
+
+drawPane.addBlade({ view: 'color-swatches', label: 'color' });
 
 drawPane.addButton({ title: 'New Path' }).on('click', () => {
   createPath();
