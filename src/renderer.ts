@@ -259,7 +259,8 @@ function rebuildScene() {
     ),
   });
 
-  const ink = contrastingInk(readBackground());
+  const bg = readBackground();
+  const ink = contrastingInk(bg);
   const planeFill = `rgba(${ink},0.12)`;
   const planeFillSide = `rgba(${ink},0.08)`;
   const planeStroke = `rgba(${ink},0.1)`;
@@ -272,9 +273,11 @@ function rebuildScene() {
     bottom: { fill: planeFillSide, stroke: planeStroke, strokeWidth: 1 },
   };
 
-  const strokeStyle = stroke
+  const enabledStrokeStyle = stroke
     ? { stroke: '#222', strokeWidth: 1 }
     : { stroke: '', strokeWidth: 0 };
+  const highlightStrokeStyle = { stroke: '#fff', strokeWidth: 2 };
+  const disabledStrokeStyle = { stroke: '', strokeWidth: 0 };
 
   scene.batch(() => {
     // Add the semi-transparent active plane (skipped during export)
@@ -306,6 +309,12 @@ function rebuildScene() {
             ? 'highlight'
             : 'dim';
       const colors = faceColors(path.color, shade);
+      const strokeStyle =
+        shade === 'dim'
+          ? disabledStrokeStyle
+          : shade === 'highlight'
+            ? highlightStrokeStyle
+            : enabledStrokeStyle;
       const style = {
         top: { fill: colors.top, ...strokeStyle },
         left: { fill: colors.side, ...strokeStyle },
@@ -400,6 +409,7 @@ function drawFace(ctx: CanvasRenderingContext2D, face: Face) {
   if (style?.stroke) {
     ctx.strokeStyle = style.stroke;
     ctx.lineWidth = style.strokeWidth ?? 1;
+    ctx.lineJoin = 'round';
     ctx.stroke();
   }
 }
