@@ -636,9 +636,23 @@ document.addEventListener('keydown', (e) => {
   ) {
     return;
   }
-  // Skip when modifier keys are held or a dialog is open
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  // Skip when a dialog is open
   if (aboutDialog.open || confirmDialog.open || alertDialog.open) return;
+
+  // Cmd/Ctrl+S: export image
+  if (
+    e.key.toLowerCase() === 's' &&
+    (e.metaKey || e.ctrlKey) &&
+    !e.altKey &&
+    !e.shiftKey
+  ) {
+    e.preventDefault();
+    void runFileAction('export-image');
+    return;
+  }
+
+  // Skip when modifier keys are held
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
 
   if (e.key === '?') {
     aboutDialog.showModal();
@@ -670,6 +684,10 @@ document.addEventListener('keydown', (e) => {
     case 'g':
       toggleShowPlane();
       markDirty();
+      e.preventDefault();
+      break;
+    case 'p':
+      applyPalette();
       e.preventDefault();
       break;
   }

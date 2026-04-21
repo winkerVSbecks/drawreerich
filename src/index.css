@@ -471,7 +471,8 @@ body {
   background: var(--surface-0);
   color: var(--text);
   padding: 28px 32px 30px;
-  max-width: 480px;
+  min-width: 640px;
+  max-width: 640px;
   width: calc(100vw - 32px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   font-family: inherit;
@@ -543,12 +544,19 @@ body {
   gap: 6px;
 }
 
+.shortcuts-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
 .shortcuts {
   display: grid;
   grid-template-columns: max-content 1fr;
   column-gap: 20px;
   row-gap: 8px;
   font-size: 14px;
+  align-content: start;
 }
 
 .shortcuts dt {
