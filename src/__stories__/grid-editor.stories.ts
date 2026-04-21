@@ -21,6 +21,21 @@ function renderEditor(): HTMLDivElement {
   return container;
 }
 
+// Grid row 0 is drawn at the bottom of the canvas (flipped to match 3D Z),
+// so convert (col, row) grid coords to client x/y for dispatching mouse events.
+function cellToClient(
+  rect: DOMRect,
+  col: number,
+  row: number,
+): { clientX: number; clientY: number } {
+  const { rows } = getState().grid;
+  const screenRow = rows - 1 - row;
+  return {
+    clientX: rect.left + 14 + col * 16 + 8,
+    clientY: rect.top + 14 + screenRow * 16 + 8,
+  };
+}
+
 const meta: Meta = {
   title: 'GridEditor',
 };
@@ -78,9 +93,7 @@ export const LeftClickAddsCell: Story = {
   play: async ({ canvasElement }) => {
     const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
-    // Target cell (2, 3): LABEL_PAD + col * CELL_SIZE + half cell
-    const clientX = rect.left + 14 + 2 * 16 + 8;
-    const clientY = rect.top + 14 + 3 * 16 + 8;
+    const { clientX, clientY } = cellToClient(rect, 2, 3);
 
     canvas.dispatchEvent(
       new MouseEvent('mousedown', {
@@ -104,8 +117,7 @@ export const RightClickRemovesCell: Story = {
 
     const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
-    const clientX = rect.left + 14 + 4 * 16 + 8;
-    const clientY = rect.top + 14 + 5 * 16 + 8;
+    const { clientX, clientY } = cellToClient(rect, 4, 5);
 
     canvas.dispatchEvent(
       new MouseEvent('mousedown', {
@@ -136,8 +148,7 @@ export const ClickExistingCellSwitchesPath: Story = {
     // Click on the first path's cell — should switch back
     const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
-    const clientX = rect.left + 14 + 3 * 16 + 8;
-    const clientY = rect.top + 14 + 3 * 16 + 8;
+    const { clientX, clientY } = cellToClient(rect, 3, 3);
 
     canvas.dispatchEvent(
       new MouseEvent('mousedown', {
@@ -170,8 +181,7 @@ export const ClickCellOfOverlappingPathAtDifferentHeightPaints: Story = {
     // — it should start painting on path B instead
     const canvas = canvasElement.querySelector('canvas')!;
     const rect = canvas.getBoundingClientRect();
-    const clientX = rect.left + 14 + 3 * 16 + 8;
-    const clientY = rect.top + 14 + 3 * 16 + 8;
+    const { clientX, clientY } = cellToClient(rect, 3, 3);
 
     canvas.dispatchEvent(
       new MouseEvent('mousedown', {
@@ -203,8 +213,7 @@ export const DragPaintsMultipleCells: Story = {
     // mousedown at (1,1)
     canvas.dispatchEvent(
       new MouseEvent('mousedown', {
-        clientX: rect.left + 14 + 1 * 16 + 8,
-        clientY: rect.top + 14 + 1 * 16 + 8,
+        ...cellToClient(rect, 1, 1),
         button: 0,
         bubbles: true,
       }),
@@ -213,8 +222,7 @@ export const DragPaintsMultipleCells: Story = {
     // mousemove to (2,1)
     canvas.dispatchEvent(
       new MouseEvent('mousemove', {
-        clientX: rect.left + 14 + 2 * 16 + 8,
-        clientY: rect.top + 14 + 1 * 16 + 8,
+        ...cellToClient(rect, 2, 1),
         button: 0,
         bubbles: true,
       }),
@@ -223,8 +231,7 @@ export const DragPaintsMultipleCells: Story = {
     // mousemove to (3,1)
     canvas.dispatchEvent(
       new MouseEvent('mousemove', {
-        clientX: rect.left + 14 + 3 * 16 + 8,
-        clientY: rect.top + 14 + 1 * 16 + 8,
+        ...cellToClient(rect, 3, 1),
         button: 0,
         bubbles: true,
       }),
