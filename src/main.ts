@@ -672,6 +672,10 @@ document.addEventListener('keydown', (e) => {
       markDirty();
       e.preventDefault();
       break;
+    case 'p':
+      applyPalette();
+      e.preventDefault();
+      break;
   }
 });
 
